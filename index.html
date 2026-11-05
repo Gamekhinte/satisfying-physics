@@ -697,7 +697,7 @@ function buildSegs(){
     if(b.kind!=='oven')seg(b.ix1,b.iy0,b.ix1,b.iy1,3,null,true);else seg(b.ix1,b.iy0,b.ix1,b.iy1,3,()=>!b.open,true);
   }
   {const n=9;let px=null,py=null;for(let i=0;i<=n;i++){const th=i/n*Math.PI,x=bowl.cx+bowl.w/2*Math.cos(th),y=bowl.rim+bowl.h*Math.sin(th);if(px!==null)seg(px,py,x,y,3);px=x;py=y}}
-  seg(plate.x0+8,plate.y,plate.x1-8,plate.y,3);seg(plate.x0-2,plate.y-6,plate.x0+8,plate.y,3);seg(plate.x1-8,plate.y,plate.x1+2,plate.y-6,3);
+  seg(plate.x0+12,plate.y,plate.x1-12,plate.y,3);seg(plate.x0-4,plate.y-13,plate.x0+12,plate.y,3);seg(plate.x1-12,plate.y,plate.x1+4,plate.y-13,3);
 }
 function inBox(b,x,y){return x>b.ix0&&x<b.ix1&&y>b.iy0-4&&y<b.iy1+2}
 function boxOf(b){for(const o of BOXES)if(inBox(o,b.cx,b.cy))return o;return null}
@@ -889,7 +889,7 @@ cv.addEventListener('pointermove',e=>{
 function up(){
   if(ptr.combo>=3){fx.push({k:'text',x:clamp(ptr.cx,camX+LY.side+70,camX+W-70),y:Math.max(110,ptr.cy-50),t:0,life:70,txt:`${ptr.combo}er-Schnitt!`});sfx.combo(ptr.combo);buzz(40)}
   if(ptr.pan){const dx=ptr.sx-ptr.sx0;let i=Math.round(ptr.cam0/LY.vw);if(dx<-45)i++;else if(dx>45)i--;goStation(i)}
-  else if(ptr.grab)goStation(camT/LY.vw);
+  else if(ptr.grab){goStation(camT/LY.vw);const b=ptr.grab,[vx,vy]=bodyVel(b),v=Math.hypot(vx,vy),cap=14;if(v>cap){const k=cap/v;for(const p of b.pts){p.px=p.x-(p.x-p.px)*k;p.py=p.y-(p.y-p.py)*k}}}
   ptr.combo=0;ptr.down=false;ptr.grab=null;ptr.pan=false;ptr.canPan=false;for(const b of bodies)b.hits=[]}
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
 
@@ -1081,7 +1081,7 @@ function step(){
   for(let it=0;it<4;it++){
     const first=it===0;
     for(const b of bodies){shapeMatch(b,b.ke*.5,first&&b!==ptr.grab);edges(b);pressure(b)}
-    if(ptr.grab&&ptr.down){const b=ptr.grab,n=b.pts.length,g=b.pts[ptr.gi],dx=(ptr.x-g.x)*.12,dy=(ptr.y-g.y)*.12;for(const p of b.pts){p.x+=dx;p.y+=dy}for(let k=-2;k<=2;k++){const p=b.pts[(ptr.gi+k+n)%n],w=k?.15:.4;p.x+=(ptr.x-p.x)*w;p.y+=(ptr.y-p.y)*w}}
+    if(ptr.grab&&ptr.down){const b=ptr.grab,n=b.pts.length,g=b.pts[ptr.gi],dx=(ptr.x-g.x)*.22,dy=(ptr.y-g.y)*.22;for(const p of b.pts){p.x+=dx;p.y+=dy}for(let k=-2;k<=2;k++){const p=b.pts[(ptr.gi+k+n)%n],w=k?.15:.4;p.x+=(ptr.x-p.x)*w;p.y+=(ptr.y-p.y)*w}}
     for(const b of bodies)aabb(b);
     for(let i=0;i<bodies.length;i++)for(let j=i+1;j<bodies.length;j++){const a=bodies[i],c=bodies[j];
       if(a.maxX<c.minX||c.maxX<a.minX||a.maxY<c.minY||c.maxY<a.minY)continue;pushPoints(a,c,first);pushPoints(c,a,first)}
@@ -2161,6 +2161,11 @@ function resize(){
   scr('rotate').hidden=!(H>W*1.05&&W<900);
 }
 addEventListener('resize',resize);resize();
+addEventListener('orientationchange',()=>{setTimeout(resize,250);setTimeout(resize,800)});
+if(window.visualViewport)visualViewport.addEventListener('resize',()=>setTimeout(resize,50));
+let lastCheck=0;
+function sizeCheck(t){if(t-lastCheck<250)return;lastCheck=t;const r=cv.getBoundingClientRect();
+  if(Math.abs(r.width-W)>1||Math.abs(r.height-H)>1||Math.round(r.width*DPR)!==cv.width)resize()}
 openMenu();
 document.fonts&&document.fonts.ready.then(()=>{drawBg();scr('logoBig').innerHTML=logoSVG()});
 
@@ -2170,7 +2175,7 @@ function loop(t){
   while(acc>=1000/60&&n<3){sndBudget=0;step();acc-=1000/60;n++}
   if(game.running){game.time-=dt/1000;if(++tick%6===0)updTimer();if(game.time<=0){game.time=0;game.running=false;updTimer();serve(true)}}
   if(game.mode==='tutorial')tutTick();
-  render();if(tick++%10===0)updMess();
+  sizeCheck(t);render();if(tick++%10===0)updMess();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
