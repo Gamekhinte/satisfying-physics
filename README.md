@@ -24,7 +24,11 @@ Die Küche hat 5 Stationen. Wisch auf einer freien Stelle nach links oder rechts
 
 **Kelle:** Tippe mit der Kelle auf Teig, Saft, Soße oder etwas Gemixtes. Sie schöpft eine kleine Portion ab, die du vorsichtig woanders hinträgst, zum Beispiel einen Klecks Pfannkuchenteig in die Pfanne.
 
-**Entsafter:** Obst oder Gemüse oben hineinlegen und auf PRESSEN tippen. Der Saft läuft ins Glas daneben, der Trester bleibt im Entsafter. Aus einer Orange wird Orangensaft, aus Orange, Apfel und Karotte ein Orangen-Apfel-Karotten-Saft, aus viel Obst ein Multivitaminsaft. Was im Glas ist, wird beim Servieren mitgegeben.
+**Entsafter:** Obst oder Gemüse oben hineinlegen und auf PRESSEN tippen. Der Saft läuft ins Glas daneben, der Trester bleibt im Entsafter. Aus einer Orange wird Orangensaft, aus Orange, Apfel und Karotte ein Orangen-Apfel-Karotten-Saft, aus viel Obst ein Multivitaminsaft. 
+
+**Getränke im Glas:** Säfte, Milchshakes, Kakao und Smoothies trägst du immer im Glas. Glas greifen und an den Tisch bringen (oder oben auf den Tab „Teller“ ziehen). Nur ein Glas beim Gast wird mitserviert. Ein Getränk ohne Glas auf dem Teller gibt Punktabzug. Hältst du das Glas über Schüssel, Pfanne, Topf oder Fritteuse und lässt los, wird es ausgegossen. Zu wildes Schwenken verschüttet etwas. Das Glas muss unter dem Ausguss stehen, sonst läuft der Saft auf die Theke.
+
+**Reaktionen:** Der Gast reagiert sichtbar auf dein Essen: Feuer und Dampf bei zu scharf, Zittern bei zu kalt, ein verzogenes Gesicht bei sauer, Husten bei verbrannt, grünes Gesicht bei roh und Herzaugen, wenn es perfekt ist. Ein Getränk dazu mildert die Schärfe.
 
 **Mehrere Sachen auf einmal:** Finger kurz auf eine freie Stelle halten und einen Rahmen ziehen. Alles darin ist ausgewählt (gelb gestrichelt). Ziehst du eins davon, kommen alle mit. Antippen fügt einzelne Stücke hinzu oder nimmt sie weg.
 
