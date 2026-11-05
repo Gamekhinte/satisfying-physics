@@ -6,6 +6,8 @@ Ein Koch- und Physikspiel fürs Handy im Querformat. Alles ist weich und wabbeli
 
 - **Tutorial:** zeigt in 9 Schritten alles Wichtige.
 - **Story:** 100 Gäste in 10 Kapiteln (Omas Küche, Zuckerbäckerei, Grillabend, Gartenfrisch, Feuer & Säure, Backstube, Am Meer, Imbissbude, Eiszeit, Die große Gala). Jeder Gast hat eigene Wünsche, gibt dir nur bestimmte Zutaten und lässt dir begrenzt Zeit. Am Ende jedes Kapitels wartet ein Boss-Kritiker. Bewertet wird nach Geschmack, Garzustand, Temperatur, Portion, Vielfalt, Feinheit, Sauberkeit und mehr, mit bis zu 3 Sternen. 1 Stern schaltet den nächsten Gast frei.
+- **Tagesgast:** Jeden Tag ein neuer Gast, für alle gleich. Dein Bestwert des Tages, die letzten 7 Tage und deine Serie werden gespeichert (nur auf deinem Gerät).
+- **Rezeptbuch:** 32 Gerichte zum Entdecken, zum Beispiel Waffel, Toast, Schnitzel, Pommes, Multivitaminsaft oder Kakao. Unentdeckte zeigen einen Hinweis, wie man sie kocht.
 - **Sandkasten:** 230 Zutaten in 11 Kategorien (inklusive Vorrat wie Mehl, Milch, Zucker, Salz, Öl und Soßen), alles unbegrenzt. Du kannst jeden Kritiker probieren lassen.
 
 ## Die Küche
@@ -16,9 +18,9 @@ Die Küche hat 5 Stationen. Wisch auf einer freien Stelle nach links oder rechts
 |---|---|
 | Brett | Schneidebrett, Entsafter mit Glas und Glasschüssel mit Mixer |
 | Herd | Pfanne, Glastopf und Grill, jeweils mit Drehknopf |
-| Ofen | Backofen (180 °C oder 250 °C) und Mikrowelle |
+| Ofen | Backofen (180 °C oder 250 °C), Mikrowelle, Toaster und Waffeleisen |
 | Fritte | Fritteuse, Gefrierfach und Panierstraße |
-| Teller | Teller und der Gast am Tisch |
+| Teller | Teller, Gewürzstreuer und der Gast am Tisch |
 
 **Werkzeuge:** Greifen, Messer, Fleischklopfer und Kelle.
 
@@ -37,6 +39,14 @@ Die Küche hat 5 Stationen. Wisch auf einer freien Stelle nach links oder rechts
 **Panieren:** Bei der Fritteuse stehen drei Schalen. Erst Mehl, dann Ei, dann Brösel, danach ab in die Fritteuse. Aus Fleisch wird ein Schnitzel, aus Fisch ein Backfisch, aus Käse Backkäse.
 
 **Mixen:** Zutaten in die Schüssel legen und auf MIXEN tippen. Daraus wird zum Beispiel ein Obst-Smoothie, eine Schoko-Creme, Scharfe Salsa, ein Rührei-Mix oder Kuchenteig. Kuchenteig wird im Ofen zu Kuchen, eine Frucht-Creme im Gefrierfach zu Eis. Mehl, Milch und Ei ergeben Pfannkuchenteig für die Pfanne, Obst mit Milch einen Milchshake.
+
+**Toaster und Waffeleisen:** Toastbrot in den Schlitz stecken und TOASTEN drücken, nach ein paar Sekunden springt der Toast hoch. Teig (am besten mit der Kelle) aufs Waffeleisen geben und WAFFELN drücken, der Deckel presst eine Waffel mit Gittermuster.
+
+**Würzen:** Am Teller stehen Salz, Pfeffer, Chili, Kräuter und Zimt. Streuer greifen, über das Essen halten und schnell hoch und runter wischen. Das verändert den Geschmack. Zu viel Salz mag niemand.
+
+**Anrichten von oben:** An der Station Teller auf ANRICHTEN tippen. Du siehst den Teller von oben, kannst alles verschieben und drehen und mit Kräutern, Beeren, Zitrone, Blüten, Soßen und Puderzucker dekorieren. Schön angerichtet gibt es bis zu 8 Bonuspunkte, im Ergebnis siehst du ein Foto deines Tellers.
+
+**Getränkewünsche:** Manche Gäste möchten ein Getränk im Glas dazu.
 
 **Verbrannt:** Wird etwas zu lange erhitzt, bekommt es dunkle Brandflecken, einen dunklen Rand und raucht.
 

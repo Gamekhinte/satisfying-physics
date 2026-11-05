@@ -109,6 +109,24 @@ button,select{font-family:var(--ui)}
 .menu .cta{font-size:20px;padding:12px 16px;text-align:left;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .menu .cta small{font:700 12px var(--ui);opacity:.9}
 .menu .note{color:var(--muted);font-size:12px}
+.menu .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}.menu .pair .cta{font-size:15px;flex-direction:column;align-items:flex-start;gap:2px;color:#fff}
+.book{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.rc{border:2px dashed #c8b08a;border-radius:6px;padding:6px 8px;display:grid;gap:2px;background:#fffdf6}.rc b{font:13px var(--sign);color:#b8a080}.rc small{font:400 10px/1.3 var(--mono);color:#7a5a3a}
+.rc.ok{border-style:solid;border-color:var(--ink);background:#fff4d8}.rc.ok b{color:var(--tomato-dk)}
+.plating{position:absolute;inset:0;z-index:6;background:#3a2414;touch-action:none}
+.plating canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.ptop{position:absolute;left:max(10px,env(safe-area-inset-left,0px));top:calc(8px + env(safe-area-inset-top,0px));display:flex;gap:10px;align-items:center;color:var(--fg);pointer-events:none}
+.ptop b{font:16px var(--sign);color:var(--mustard)}.ptop span{font:600 12px var(--ui);color:#e8d4b4;max-width:34ch}.ptop .tm{font:700 14px var(--mono);color:#fff;background:rgba(0,0,0,.35);border-radius:6px;padding:2px 6px}
+.pal{position:absolute;top:0;bottom:0;right:0;width:calc(170px + env(safe-area-inset-right,0px));padding:calc(8px + env(safe-area-inset-top,0px)) calc(8px + env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) 8px;
+  background:var(--rail);border-left:2px solid #120d09;display:flex;flex-direction:column;gap:6px;overflow-y:auto}
+.pal h4{margin:2px 0 0;font:10px var(--sign);color:var(--muted);letter-spacing:.06em}
+.pgrp{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.pb{appearance:none;border:1px solid var(--line);background:#16110d;border-radius:8px;color:var(--muted);font:600 9px/1.1 var(--ui);padding:3px 1px;display:grid;justify-items:center;gap:1px;cursor:pointer}
+.pb canvas{position:static;width:26px;height:26px}.ptop .tm:empty{display:none}.pb[aria-pressed="true"]{background:var(--mustard);color:var(--ink)}
+.prow{position:fixed;left:max(10px,env(safe-area-inset-left,0px));bottom:max(10px,env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:auto auto;gap:8px}.prow button{appearance:none;border:0;border-radius:10px;font:700 15px var(--ui);padding:11px 18px;cursor:pointer;background:#3a3028;color:var(--fg)}
+.prow .go{background:var(--tomato);color:#fff}
+.who img{width:116px;height:116px;border-radius:50%;border:2px solid var(--ink);display:block}
+@media (max-height:430px){.menu .cta{padding:8px 14px;font-size:17px}.menu .btns{gap:7px}}
 .chaps{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:thin}
 .chap{appearance:none;flex:none;border:2px solid var(--ink);background:#fff8ec;color:var(--ink);border-radius:6px;padding:6px 10px;font:700 12px var(--ui);cursor:pointer;text-align:left;display:grid;gap:1px}
 .chap small{font:400 10px var(--mono);color:#7a5a3a}
@@ -190,6 +208,7 @@ button,select{font-family:var(--ui)}
       <div class="btns">
         <button class="cta" id="goStory">Story <small id="storyProg"></small></button>
         <button class="cta green" id="goSandbox">Sandkasten <small id="sandCount"></small></button>
+        <div class="pair"><button class="cta" id="goDaily" style="background:#2c3e70">Tagesgast <small id="dailyProg"></small></button><button class="cta" id="goBook" style="background:#7a4a1a">Rezepte <small id="bookProg"></small></button></div>
         <button class="cta yellow" id="goTut">Tutorial <small>3 Minuten</small></button>
         <p class="note" id="menuNote"></p>
       </div>
@@ -216,9 +235,26 @@ button,select{font-family:var(--ui)}
     </div>
   </div>
 
+  <div class="plating" id="plating" hidden>
+    <canvas id="pc"></canvas>
+    <div class="ptop"><b>Anrichten</b><span class="tm" id="pTimer"></span><span id="pHint">Zieh das Essen zurecht. Antippen zeigt den Dreh-Griff.</span></div>
+    <div class="pal">
+      <h4>DEKO</h4><div class="pgrp" id="pDeco"></div>
+      <h4>SOSSE MALEN</h4><div class="pgrp" id="pSauce"></div>
+      <div class="prow"><button id="pUndo">↶ Rückgängig</button><button id="pDone" class="go">Fertig</button></div>
+    </div>
+  </div>
+
+  <div class="screen" id="scrBook" hidden>
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px"><div><h2>Rezeptbuch</h2><small id="bookCount" style="font-family:var(--mono);color:#7a5a3a"></small></div><button class="cta ghost" data-back="menu">Zurück</button></div>
+      <div class="book" id="bookGrid"></div>
+    </div>
+  </div>
+
   <div class="screen" id="scrResult" hidden>
     <div class="card two">
-      <div class="who"><canvas id="resFace" width="232" height="232"></canvas><h2 id="resName"></h2><p class="quote" id="resQuote"></p></div>
+      <div class="who"><canvas id="resFace" width="232" height="232"></canvas><h2 id="resName"></h2><p class="quote" id="resQuote"></p><img id="resPlate" alt="Dein angerichteter Teller" hidden></div>
       <div>
         <div class="row" style="justify-content:space-between"><div class="score" id="resScore">0<small> / 100</small></div><div class="bigstars" id="resStars"></div></div>
         <p class="dish" id="resDish"></p>
@@ -643,7 +679,8 @@ const micro={kind:'micro',open:false,lvl:0,T:ROOM,timer:0};
 const freezer={kind:'freezer',open:false,T:-18};
 const grill={lvl:0,T:ROOM},fryer={lvl:0,T:ROOM};
 const BOXES=[oven,micro,freezer];
-const bowl={},plate={},juicer={},glass={};let mixT=0,juiceT=0;
+const bowl={},plate={},juicer={},glass={},toaster={on:false,t:0,down:false},waffle={on:false,t:0,lid:0};let mixT=0,juiceT=0;
+const SHAKERS=[{k:'salt',name:'Salz',col:'#ffffff',cap:'#c8ccd2'},{k:'pepper',name:'Pfeffer',col:'#3a3330',cap:'#2a2b2f'},{k:'chili',name:'Chili',col:'#d8341f',cap:'#8a1a10'},{k:'herbs',name:'Kräuter',col:'#4a8a2a',cap:'#2e5a1a'},{k:'cinnamon',name:'Zimt',col:'#a8642a',cap:'#5a3418'}];
 const BREAD=[{k:0,name:'Mehl',col:'#fbf6ec'},{k:1,name:'Ei',col:'#ffc83a'},{k:2,name:'Brösel',col:'#d8a050'}];
 
 function P(x,y,vx=0,vy=0){return{x,y,px:x-vx,py:y-vy,cut:false,stem:false,s1:Math.random(),s2:Math.random()}}
@@ -666,10 +703,10 @@ function initBody(type,pts,o){
   const A=polyArea(pts),s=o.state||{},mm=o.mat||M[type];
   return{type,m:mm,pts,rest,L,restArea:A,R:Math.sqrt(A/Math.PI),rot:0,cx,cy,health:s.health??100,imp:0,inv:o.inv||0,
     chunk:!!o.chunk,shard:false,tex:o.tex,texOff:o.texOff||{x:0,y:0},texRot0:o.texRot0||0,hits:[],id:++uid,
-    T:s.T??(mm.startT??ROOM),cook:s.cook||0,fried:s.fried||0,grill:s.grill||0,bread:s.bread||0,melt:s.melt||0,grow:s.grow||1,popAt:rnd(0,40),
+    T:s.T??(mm.startT??ROOM),cook:s.cook||0,fried:s.fried||0,grill:s.grill||0,bread:s.bread||0,toast:s.toast||0,waffle:s.waffle||0,season:s.season||null,melt:s.melt||0,grow:s.grow||1,popAt:rnd(0,40),
     minX:0,maxX:0,minY:0,maxY:0,sndCd:0,ke:mm.k,ee:mm.edge,pl:mm.plastic};
 }
-function stateOf(b){return{T:b.T,cook:b.cook,melt:b.melt,grow:b.grow,fried:b.fried,grill:b.grill,bread:b.bread,health:Math.max(b.health,40)}}
+function stateOf(b){return{T:b.T,cook:b.cook,melt:b.melt,grow:b.grow,fried:b.fried,grill:b.grill,bread:b.bread,toast:b.toast,waffle:b.waffle,season:b.season?Object.assign({},b.season):null,health:Math.max(b.health,40)}}
 function add(b){bodies.push(b);trimBodies();return b}
 function trimBodies(){
   while(bodies.length>60){const i=bodies.findIndex(b=>b.chunk||b.shard||b.type==='popcorn'||b.type==='yolk');if(i<0)break;burst(bodies[i],true)}
@@ -700,6 +737,9 @@ function layout(){
   const mw=clamp(vw*.24,150,240),mh=Math.min(mw*.62,counterTop-top-70);
   Object.assign(micro,{x:Math.max(oven.x+ow+14,sx(2,.45)),y:top+24,w:mw,h:mh});
   micro.pw=mw*.27;micro.ix0=micro.x+8;micro.ix1=micro.x+mw-micro.pw-4;micro.iy0=micro.y+8;micro.iy1=micro.y+mh-10;
+  toaster.w=clamp(vw*.13,74,104);toaster.h=Math.min(52,toaster.w*.62);toaster.cx=sx(2,.6);toaster.x0=toaster.cx-toaster.w/2;toaster.x1=toaster.cx+toaster.w/2;toaster.y=floorY-2;toaster.top=toaster.y-toaster.h;
+  toaster.sx0=toaster.cx-toaster.w*.3;toaster.sx1=toaster.cx+toaster.w*.3;toaster.kx=toaster.cx;
+  waffle.w=clamp(vw*.15,84,118);waffle.cx=sx(2,.86);waffle.x0=waffle.cx-waffle.w/2;waffle.x1=waffle.cx+waffle.w/2;waffle.y=floorY-16;waffle.kx=waffle.cx;
   // 3: fryer + freezer
   fryer.w=clamp(vw*.24,110,190);fryer.cx=sx(3,.27);fryer.x0=fryer.cx-fryer.w/2;fryer.x1=fryer.cx+fryer.w/2;fryer.y=floorY-6;fryer.h=Math.min(fryer.w*.62,H*.24);fryer.oil=fryer.y-fryer.h*.58;
   const fw=clamp(vw*.22,150,230),fh=Math.min(fw*.66,counterTop-top-60);
@@ -709,8 +749,9 @@ function layout(){
   // 4: serving
   plate.w=clamp(vw*.3,140,240);plate.cx=sx(4,.5);plate.x0=plate.cx-plate.w/2;plate.x1=plate.cx+plate.w/2;plate.y=floorY-7;
   LY.critic={x:plate.cx,size:Math.min(counterTop-top-6,vw*.34,230)};
-  LY.drop=[(LY.board.x0+LY.board.x1)/2,pan.cx,sx(2,.55),sx(3,.465),sx(4,.18)];
-  for(const o of[pan,pot,grill,fryer,bowl])o.kx=o.cx;
+  LY.drop=[(LY.board.x0+LY.board.x1)/2,pan.cx,sx(2,.45),sx(3,.465),plate.cx-plate.w*.2];
+  SHAKERS.forEach((o,i)=>{o.hx=sx(4,.05+i*.045);o.hy=floorY-4;if(!o.held){o.x=o.hx;o.y=o.hy;o.fly=false}});
+  for(const o of[pan,pot,grill,fryer,bowl,plate])o.kx=o.cx;
   buildSegs();
 }
 function seg(ax,ay,bx,by,r=3,on=null,box=false){segs.push({ax,ay,bx,by,r,on,box})}
@@ -722,6 +763,8 @@ function buildSegs(){
   const pb=pan.y;seg(pan.x0+8,pb,pan.x1-8,pb,3);seg(pan.x0-2,pb-14,pan.x0+8,pb,3);seg(pan.x1-8,pb,pan.x1+2,pb-14,3);
   const tb=pot.y;seg(pot.x0+3,tb,pot.x1-3,tb,3);seg(pot.x0,tb-pot.h,pot.x0+3,tb,3);seg(pot.x1-3,tb,pot.x1,tb-pot.h,3);
   seg(grill.x0,grill.y,grill.x1,grill.y,3);seg(grill.x0-3,grill.y-8,grill.x0+2,grill.y,3);seg(grill.x1-2,grill.y,grill.x1+3,grill.y-8,3);
+  {const t=toaster,fl=t.down?t.y-6:t.top+16;seg(t.sx0,fl,t.sx1,fl,3);seg(t.sx0-2,t.top-4,t.sx0-2,t.y-6,3);seg(t.sx1+2,t.top-4,t.sx1+2,t.y-6,3);seg(t.x0,t.top,t.sx0-2,t.top,3);seg(t.sx1+2,t.top,t.x1,t.top,3)}
+  {const w=waffle;seg(w.x0+4,w.y,w.x1-4,w.y,3);seg(w.x0-2,w.y-9,w.x0+4,w.y,3);seg(w.x1-4,w.y,w.x1+2,w.y-9,3)}
   const fb=fryer.y;seg(fryer.x0+4,fb,fryer.x1-4,fb,3);seg(fryer.x0,fb-fryer.h,fryer.x0+4,fb,3);seg(fryer.x1-4,fb,fryer.x1,fb-fryer.h,3);
   for(const b of BOXES){
     seg(b.x,b.y,b.x+b.w,b.y,3,null,true);seg(b.x,b.y+b.h,b.x+b.w,b.y+b.h,3,null,true);
@@ -742,6 +785,8 @@ function inJuicer(b){return b.cx>juicer.x0-2&&b.cx<juicer.x1+2&&b.cy>juicer.top-
 function inGlass(b){return b.cx>glass.x0-2&&b.cx<glass.x1+2&&b.cy>glass.top-50&&b.cy<glass.y+3}
 function inPlate(b){return b.cx>plate.x0&&b.cx<plate.x1&&b.cy>plate.y-170&&b.cy<plate.y+4}
 function where(b){const o=boxOf(b);if(o)return o.kind;if(inPot(b))return'pot';if(inPan(b))return'pan';
+  if(b.cx>toaster.sx0-2&&b.cx<toaster.sx1+2&&b.cy>toaster.top-44&&b.cy<toaster.y)return'toaster';
+  if(b.cx>waffle.x0&&b.cx<waffle.x1&&b.cy>waffle.y-60&&b.cy<waffle.y+3)return'waffle';
   if(b.cx>grill.x0&&b.cx<grill.x1&&b.cy>grill.y-70&&b.cy<grill.y+2)return'grill';
   if(b.cx>fryer.x0&&b.cx<fryer.x1&&b.cy>fryer.y-fryer.h-10&&b.cy<fryer.y+2)return'fryer';
   if(dishOf(b))return'dish';if(inJuicer(b))return'juicer';if(inGlass(b))return'glass';if(inBowl(b))return'bowl';if(inPlate(b))return'plate';return null}
@@ -833,6 +878,8 @@ function heatSource(b){
   if(w==='pan')return[pan.T,1];
   if(w==='pot')return[pot.T,.9];
   if(w==='grill')return[grill.T,1.1];
+  if(w==='toaster')return toaster.on?[235,1.3]:[ROOM,.15];
+  if(w==='waffle')return waffle.on?[220,1.6]:[ROOM,.15];
   if(w==='fryer')return(b.subFrac||0)>.3?[fryer.T,1.7]:[lerp(ROOM,fryer.T,.3),.4];
   if(w==='oven')return oven.open?[lerp(ROOM,oven.T,.4),.3]:[oven.T,.65];
   if(w==='micro')return(!micro.open&&micro.lvl)?[b.m.pop?215:130,1.8]:[micro.T,.3];
@@ -847,8 +894,11 @@ function cookStep(b){
   if(m.melt){if(b.T>m.melt.T)b.melt=Math.min(1,b.melt+(b.T-m.melt.T)*.00035);else if(b.T<m.melt.T-6)b.melt=Math.max(0,b.melt-.0015)}
   if(m.rise&&b.T>m.rise.T&&b.grow<m.rise.max){const f=1.0012;b.grow*=f;for(const r of b.rest){r.x*=f;r.y*=f}for(let i=0;i<b.L.length;i++)b.L[i]*=f;b.restArea*=f*f;b.R*=f}
   const wz=where(b);
+  if((frame+b.id)%40===0&&(b.cook>.45||b.fried>.4||b.grill>.4||b.T<-2||b.m.pop))discover(dishName(b));
   if(wz==='fryer'&&fryer.T>140&&(b.subFrac||0)>.3)b.fried=Math.min(1.5,(b.fried||0)+.0024);
   if(wz==='grill'&&grill.T>140)b.grill=Math.min(1,(b.grill||0)+.005);
+  if(wz==='toaster'&&toaster.on)b.toast=Math.min(1,(b.toast||0)+.004);
+  if(wz==='waffle'&&waffle.on&&waffle.lid>.8)b.waffle=Math.min(1,(b.waffle||0)+.005);
   let k=lerp(m.k,.008,b.melt),e=lerp(m.edge,.05,b.melt),pl=b.melt>.15?lerp(m.plastic,.06,b.melt):m.plastic;
   if(b.T<-3){k=Math.max(k,.85);e=Math.max(e,.9);pl=0}
   if(m.rise&&b.cook>.55){k=Math.max(k,.32);pl=0}
@@ -879,6 +929,9 @@ function inR(x,y,a,b,c,d){return x>=a&&x<=c&&y>=b&&y<=d}
 function controls(x,y){
   if(Math.abs(x-bowl.kx)<38&&Math.abs(y-LY.ky)<20){startMix();return true}
   if(Math.abs(x-juicer.kx)<38&&Math.abs(y-LY.ky)<20){startJuice();return true}
+  if(Math.abs(x-toaster.kx)<38&&Math.abs(y-LY.ky)<20){startToast();return true}
+  if(Math.abs(x-plate.kx)<44&&Math.abs(y-LY.ky)<20){openPlating();return true}
+  if(Math.abs(x-waffle.kx)<38&&Math.abs(y-LY.ky)<20){startWaffle();return true}
   for(const[o,name,n]of KNOBS()){if(Math.hypot(x-o.kx,y-LY.ky)<26){o.lvl=(o.lvl+1)%n;sfx.click();
     toast(o.lvl?(n===2?`${name} an (180 °C)`:`${name}: ${o.lvl===1?'mittlere':'volle'} Hitze`):`${name} aus`);return true}}
   const o=oven;
@@ -905,15 +958,16 @@ function blocked(b){const o=boxOf(b);return o&&!o.open}
 const sel=new Set();let tabRects=[];
 function ctr(b){let x=0,y=0;for(const p of b.pts){x+=p.x;y+=p.y}return{x:x/b.pts.length,y:y/b.pts.length}}
 function carried(){const out=[];if(ptr.grab){out.push(ptr.grab);if(sel.has(ptr.grab))for(const b of sel)if(b!==ptr.grab&&bodies.includes(b))out.push(b)}return out}
-function jumpCarry(i){const old=camT;goStation(i);const d=camT-old;if(!d)return;camX=camT;if(ptr.glass){placeGlass(clamp(glass.cx+d,LY.xl+glass.w,LY.xr-glass.w),glass.y);sfx.click();buzz(10);return}
+function jumpCarry(i){const old=camT;goStation(i);const d=camT-old;if(!d)return;camX=camT;if(ptr.shaker){ptr.shaker.x+=d;sfx.click();return}if(ptr.glass){placeGlass(clamp(glass.cx+d,LY.xl+glass.w,LY.xr-glass.w),glass.y);sfx.click();buzz(10);return}
   for(const b of carried()){for(const p of b.pts){p.x+=d;p.px+=d}b._lc=ctr(b)}sfx.click();buzz(10)}
 cv.addEventListener('pointerdown',e=>{
   audioInit();
   const[x,y,sx]=local(e);
   if(controls(x,y))return;
   cv.setPointerCapture(e.pointerId);clearTimeout(ptr.lp);
-  Object.assign(ptr,{ladle:false,glass:false,down:true,x,y,lx:x,ly:y,sx,sx0:sx,t0:performance.now(),cam0:camT,pan:false,canPan:false,lasso:null,tapBody:null,trail:[{x,y,t:performance.now()}],combo:0});
+  Object.assign(ptr,{ladle:false,glass:false,shaker:null,down:true,x,y,lx:x,ly:y,sx,sx0:sx,t0:performance.now(),cam0:camT,pan:false,canPan:false,lasso:null,tapBody:null,trail:[{x,y,t:performance.now()}],combo:0});
   for(const b of bodies)b.hits=[];
+  if(tool==='hand'){const sh=shakerAt(x,y);if(sh){grabShaker(sh,x,y);return}}
   if(tool==='hand'&&!glass.fly&&hitGlass(x,y)){grabGlass(x,y);return}
   if(tool==='hand'){
     let pick=null;
@@ -934,12 +988,13 @@ cv.addEventListener('pointermove',e=>{
   for(const ev of(evs.length?evs:[e])){const[x,y,sx]=local(ev);ptr.sx=sx;
     if(ptr.lasso){ptr.x=x;ptr.y=y;continue}
     if(ptr.canPan){const dx=sx-ptr.sx0;if(Math.abs(dx)>10){ptr.pan=true;clearTimeout(ptr.lp)}if(ptr.pan){camT=clamp(ptr.cam0-dx,0,LY.maxCam);camX=camT;continue}}
-    if(ptr.grab||ptr.glass)for(let i=0;i<tabRects.length;i++){const t=tabRects[i];if(ev.clientX>=t.left&&ev.clientX<=t.right&&ev.clientY>=t.top-8&&ev.clientY<=t.bottom+14&&i!==stationIdx()){jumpCarry(i);break}}
+    if(ptr.grab||ptr.glass||ptr.shaker)for(let i=0;i<tabRects.length;i++){const t=tabRects[i];if(ev.clientX>=t.left&&ev.clientX<=t.right&&ev.clientY>=t.top-8&&ev.clientY<=t.bottom+14&&i!==stationIdx()){jumpCarry(i);break}}
     ptr.lx=ptr.x;ptr.ly=ptr.y;ptr.x=x+(camX-(x-sx));ptr.x=sx+camX;ptr.y=y;
     if(tool==='knife'){ptr.trail.push({x:ptr.x,y,t:performance.now()});knife(ptr.lx,ptr.ly,ptr.x,y)}}
 });
 function up(){
   clearTimeout(ptr.lp);
+  if(ptr.shaker){ptr.shaker.held=false;ptr.shaker=null;goStation(camT/LY.vw);ptr.down=false;ptr.pan=false;ptr.canPan=false;return}
   if(ptr.glass){releaseGlass();ptr.glass=false;ptr.down=false;ptr.pan=false;ptr.canPan=false;return}
   if(ptr.combo>=3){fx.push({k:'text',x:clamp(ptr.cx,camX+LY.side+70,camX+W-70),y:Math.max(110,ptr.cy-50),t:0,life:70,txt:`${ptr.combo}er-Schnitt!`});sfx.combo(ptr.combo);buzz(40)}
   const quick=performance.now()-ptr.t0<260&&Math.abs(ptr.sx-ptr.sx0)<8&&!ptr.pan&&!ptr.lasso;
@@ -1116,7 +1171,7 @@ function mergeBowl(){
   const r=Math.min(Math.sqrt(A/Math.PI)*.85,bowl.w*.42);
   const nb=add(makeBody('mix',bowl.cx,bowl.rim+bowl.h-Math.min(r,bowl.h)*.9,{r,n:26,blob:rnd(.5,9),mat:m,state:{T:T/A,cook:ck/A,melt:0,grow:1,health:100}}));nb.inv=20;
   for(let i=0;i<12;i++)drop(bowl.cx+rnd(-r,r),bowl.rim+rnd(0,bowl.h*.4),rnd(-2,2),rnd(-4,-1),m.juice,rnd(1.5,3));
-  sfx.splat(.4);toast(m.label+' fertig gemixt!');
+  sfx.splat(.4);toast(m.label+' fertig gemixt!');discover(m.label);
 }
 
 /* ================= juicer ================= */
@@ -1178,7 +1233,7 @@ function finishJuice(){
   if(!under){for(let i=0;i<24;i++)drop(jx+rnd(-20,20),floorY-10,rnd(-3,3),rnd(-3,0),m.juice,rnd(1.5,3));mess=Math.min(100,mess+5);toast('Kein Glas unter dem Ausguss! Der Saft läuft auf die Theke.',3000)}
   else if(spill>0){for(let i=0;i<Math.min(40,spill/12);i++)drop(rnd(glass.x0,glass.x1),glass.top,rnd(-3,3),rnd(-2,0),m.juice,rnd(1.5,3));mess=Math.min(100,mess+3);toast(m.label+' fertig! Das Glas ist übergelaufen.')}
   else toast(m.label+' fertig gepresst!');
-  sfx.splat(.35);juiceCol=null;game.ev.juice=1;
+  sfx.splat(.35);sfx.pour();juiceCol=null;game.ev.juice=1;discover(m.label);
 }
 function scaleBody(b,f){const c=ctr(b);for(const p of b.pts){p.x=c.x+(p.x-c.x)*f;p.y=c.y+(p.y-c.y)*f;p.px=c.x+(p.px-c.x)*f;p.py=c.y+(p.py-c.y)*f}
   for(const q of b.rest){q.x*=f;q.y*=f}b.L=b.L.map(l=>l*f);b.restArea*=f*f;b.R*=f}
@@ -1195,10 +1250,10 @@ function pourTarget(x){for(const t of POUR())if(x>t[0]-4&&x<t[1]+4)return t;retu
 function glassLand(x){const t=pourTarget(x);if(t)return t[2];const B=LY.board;if(x>B.x0&&x<B.x1)return B.y;if(x>plate.x0&&x<plate.x1)return plate.y-1;return floorY-4}
 function hitGlass(x,y){return x>glass.x0-8&&x<glass.x1+8&&y>glass.top-12&&y<glass.y+6}
 function grabGlass(x,y){Object.assign(ptr,{glass:true,canPan:false});glass.held=true;glass.fly=false;glass.vy=0;glass.ox=glass.cx-x;glass.oy=glass.y-y;
-  glass.load=bodies.filter(b=>where(b)==='glass');tabRects=[...tabsEl.children].map(t=>t.getBoundingClientRect());sfx.click();game.ev.glass=1}
+  glass.load=bodies.filter(b=>where(b)==='glass');tabRects=[...tabsEl.children].map(t=>t.getBoundingClientRect());sfx.clink();buzz(8);game.ev.glass=1}
 function releaseGlass(){glass.held=false;goStation(camT/LY.vw);
   const t=pourTarget(glass.cx),has=glass.load.some(b=>bodies.includes(b));
-  if(t){if(has){for(let i=0;i<10;i++)drop(glass.cx+rnd(-6,6),glass.y-rnd(0,glass.h),rnd(-1,1),rnd(0,2),hexOr(glass.load[0].m.juice,'#f0a030'),rnd(1.2,2.4));sfx.splat(.3);toast('Ausgegossen.')}
+  if(t){if(has){for(let i=0;i<10;i++)drop(glass.cx+rnd(-6,6),glass.y-rnd(0,glass.h),rnd(-1,1),rnd(0,2),hexOr(glass.load[0].m.juice,'#f0a030'),rnd(1.2,2.4));sfx.pour();buzz(20);toast('Ausgegossen.')}
     glass.load=[];glass.fly=true}
   else if(Math.hypot(glass.cx-glass.hx,glass.y-glass.hy)<45)glass.fly=true}
 function glassStep(){const g=glass;
@@ -1208,8 +1263,170 @@ function glassStep(){const g=glass;
   if(g.held)g.held=false;
   if(g.fly){const nx=g.cx+(g.hx-g.cx)*.14,ny=g.y+(g.hy-g.y)*.14-Math.min(6,Math.abs(g.hx-g.cx)*.04);
     if(Math.hypot(g.hx-g.cx,g.hy-g.y)<2){g.fly=false;g.load=[];setGlassGeo(g.hx,g.hy);buildSegs();sfx.click()}else{g.load=[];placeGlass(nx,ny)}return}
-  const land=glassLand(g.cx);if(g.y<land-.5){g.vy+=.6;g.load=bodies.filter(b=>where(b)==='glass');placeGlass(g.cx,Math.min(land,g.y+g.vy));if(g.y>=land-.5){g.vy=0;sfx.click()}}}
+  const land=glassLand(g.cx);if(g.y<land-.5){g.vy+=.6;g.load=bodies.filter(b=>where(b)==='glass');placeGlass(g.cx,Math.min(land,g.y+g.vy));if(g.y>=land-.5){g.vy=0;sfx.clink()}}}
 function isDrink(b){return !!b.m.drink}
+
+/* ================= toaster, waffle iron ================= */
+function startToast(){const t=toaster;if(t.on){toast('Der Toaster läuft schon.');return}
+  const it=bodies.filter(b=>where(b)==='toaster');if(!it.length){toast('Steck Brot oder Toast oben in den Schlitz.');sfx.click();return}
+  t.on=true;t.t=0;t.down=true;buildSegs();sfx.door();buzz(15)}
+function startWaffle(){const w=waffle;if(w.on){toast('Das Waffeleisen ist schon zu.');return}
+  const it=bodies.filter(b=>where(b)==='waffle');if(!it.length){toast('Gib Teig auf das Waffeleisen, zum Beispiel mit der Kelle.');sfx.click();return}
+  w.on=true;w.t=0;sfx.door();buzz(15)}
+function applianceStep(){
+  const t=toaster;if(t.on){t.t++;if(t.t%3===0&&Math.random()<.4)puff(rnd(t.sx0,t.sx1),t.top-4,'steam');
+    if(t.t>=270){t.on=false;t.down=false;buildSegs();const it=bodies.filter(b=>where(b)==='toaster');
+      for(const b of it){for(const p of b.pts){p.py=p.y+8.5}discover(dishName(b))}sfx.toastPop();buzz(30);toast(it.length?'Pling! '+dishName(it[0])+' ist fertig.':'Pling!')}}
+  const w=waffle;if(w.on){w.t++;w.lid=Math.min(1,w.lid+.06);
+    if(w.lid>.5){const ly=w.y-6-(1-w.lid)*40;for(const b of bodies){if(where(b)!=='waffle')continue;for(const p of b.pts)if(p.y<ly){p.y=ly;p.py=ly}b.imp=0;b.health=Math.max(b.health,60)}}
+    if(w.t%4===0)puff(rnd(w.x0+8,w.x1-8),w.y-14,'steam');
+    if(w.t>=320){w.on=false;const it=bodies.filter(b=>where(b)==='waffle');sfx.ding();buzz(30);if(it.length){const n=dishName(it[0]);discover(n);toast(n+' ist fertig!')}}}
+  else if(w.lid>0)w.lid=Math.max(0,w.lid-.05);
+  loops.set('waffle',w.on?.05:0);loops.set('toaster',t.on?.03:0);
+}
+function drawToasterBack(){const t=toaster;
+  X.fillStyle='rgba(60,30,10,.25)';X.beginPath();X.ellipse(t.cx,floorY+1,t.w*.52,5,0,0,TAU);X.fill();
+  X.fillStyle='#1a1410';X.fillRect(t.sx0-2,t.top-2,t.sx1-t.sx0+4,t.h-4);
+  if(t.on){X.fillStyle=`rgba(255,90,20,${.35+.15*Math.sin(frame*.3)})`;X.fillRect(t.sx0,t.top+4,t.sx1-t.sx0,t.h-12)}}
+function drawToasterFront(){const t=toaster;
+  const g=X.createLinearGradient(t.x0,0,t.x1,0);g.addColorStop(0,'#9aa0a8');g.addColorStop(.3,'#f2f4f6');g.addColorStop(.6,'#c8ccd2');g.addColorStop(1,'#80868e');
+  X.fillStyle=g;rr(X,t.x0,t.top,t.w,t.h,10);X.fill();
+  X.fillStyle='#1a1410';rr(X,t.sx0-2,t.top-2,t.sx1-t.sx0+4,5,2);X.fill();
+  if(t.on){X.fillStyle='rgba(255,120,40,.8)';X.fillRect(t.sx0,t.top-1,t.sx1-t.sx0,2)}
+  X.fillStyle='rgba(255,255,255,.55)';X.fillRect(t.x0+8,t.top+6,3,t.h-14);
+  const ly=t.top+10+(t.down?t.h-24:0);X.fillStyle='#2a2b2f';rr(X,t.x1-2,ly,9,6,2);X.fill();
+  X.fillStyle=t.on?'#ff5a2a':'#3a2a24';X.beginPath();X.arc(t.x0+t.w*.5,t.y-9,2.2,0,TAU);X.fill();
+  X.fillStyle='#2a2b2f';X.fillRect(t.x0+10,t.y-2,8,3);X.fillRect(t.x1-18,t.y-2,8,3)}
+function drawWaffleBack(){const w=waffle;
+  X.fillStyle='rgba(60,30,10,.25)';X.beginPath();X.ellipse(w.cx,floorY+1,w.w*.55,5,0,0,TAU);X.fill();
+  X.fillStyle='#2a2b2f';rr(X,w.x0-4,w.y,w.w+8,floorY-w.y,8);X.fill();
+  X.fillStyle='#1a1b1e';X.fillRect(w.x0+2,w.y-3,w.w-4,5);
+  X.strokeStyle='#3a3b40';X.lineWidth=1;for(let x=w.x0+8;x<w.x1-4;x+=8){X.beginPath();X.moveTo(x,w.y-3);X.lineTo(x,w.y+2);X.stroke()}
+  X.fillStyle=w.on?'#ff5a2a':'#3a2a24';X.beginPath();X.arc(w.x0+8,w.y+8,2,0,TAU);X.fill()}
+function drawWaffleFront(){const w=waffle,a=-(1-w.lid)*1.25,hx=w.x1+2,hy=w.y-6;
+  X.save();X.translate(hx,hy);X.rotate(a);
+  const g=X.createLinearGradient(0,-16,0,4);g.addColorStop(0,'#4a4b52');g.addColorStop(1,'#1e1f23');X.fillStyle=g;rr(X,-w.w-6,-16,w.w+8,16,8);X.fill();
+  X.fillStyle='#16171a';X.fillRect(-w.w-2,-2,w.w,3);X.fillStyle='#c8a030';rr(X,-w.w-18,-12,14,6,3);X.fill();X.restore()}
+
+/* ================= plating (top view) ================= */
+const DECO={parsley:{n:'Petersilie',col:'#3f8f2a'},mint:{n:'Minze',col:'#5ab84a'},lemon:{n:'Zitrone',col:'#f6d838'},berry:{n:'Himbeere',col:'#d8203a'},blueberry:{n:'Heidelbeere',col:'#2a3a8a'},
+  flower:{n:'Blüte',col:'#ff7ab8'},chive:{n:'Schnittlauch',col:'#4aa83a'},choco:{n:'Schoko',col:'#4a2414'},cherry:{n:'Tomate',col:'#e0301e'}};
+const SAUCE={balsamico:{n:'Balsamico',col:'#3a1a10'},schoko:{n:'Schoko',col:'#5a2c16'},erdbeer:{n:'Erdbeer',col:'#d81e3a'},oel:{n:'Kräuteröl',col:'#6a9a2a'},joghurt:{n:'Joghurt',col:'#fbf6ec'},
+  puder:{n:'Puderzucker',col:'#ffffff',dust:true},paprika:{n:'Paprika',col:'#d8501a',dust:true}};
+function drawDeco(g,k,x,y,u,rot=0){g.save();g.translate(x,y);g.rotate(rot);const c=DECO[k].col;
+  const circ=(cx,cy,r,col)=>{g.fillStyle=col;g.beginPath();g.arc(cx,cy,r,0,TAU);g.fill()};
+  if(k==='parsley'){g.strokeStyle='#2e6a1a';g.lineWidth=u*.18;g.beginPath();g.moveTo(0,u*1.4);g.lineTo(0,0);g.stroke();for(const[a,b]of[[-.7,-.5],[.7,-.5],[0,-1],[-.5,.4],[.5,.4]]){circ(a*u,b*u,u*.55,c);circ(a*u+u*.12,b*u-u*.12,u*.2,'#6ac84a')}}
+  else if(k==='mint'){for(const s of[-1,1]){g.save();g.rotate(s*.5);g.fillStyle=c;g.beginPath();g.ellipse(0,-u*.8,u*.55,u*1,0,0,TAU);g.fill();g.strokeStyle='#2e7a2a';g.lineWidth=u*.1;g.beginPath();g.moveTo(0,0);g.lineTo(0,-u*1.6);g.stroke();g.restore()}}
+  else if(k==='lemon'){circ(0,0,u*1.3,'#f0c020');circ(0,0,u*1.15,'#fff8c0');g.strokeStyle='#f0d040';g.lineWidth=u*.1;for(let i=0;i<8;i++){const a=i*Math.PI/4;g.beginPath();g.moveTo(0,0);g.lineTo(Math.cos(a)*u*1.05,Math.sin(a)*u*1.05);g.stroke()}circ(0,0,u*.15,'#fff')}
+  else if(k==='berry'){for(let i=0;i<7;i++){const a=i/7*TAU;circ(Math.cos(a)*u*.45*(i?1:0),Math.sin(a)*u*.45*(i?1:0),u*.42,i%2?c:'#e8384a')}circ(-u*.2,-u*.25,u*.15,'rgba(255,255,255,.5)')}
+  else if(k==='blueberry'){for(const[a,b]of[[-.5,0],[.5,.1],[0,-.6]]){circ(a*u,b*u,u*.55,c);circ(a*u-u*.15,b*u-u*.18,u*.14,'rgba(200,210,255,.6)');circ(a*u,b*u,u*.12,'#141a40')}}
+  else if(k==='flower'){for(let i=0;i<5;i++){const a=i/5*TAU;g.fillStyle=i%2?c:'#ff9ac8';g.beginPath();g.ellipse(Math.cos(a)*u*.6,Math.sin(a)*u*.6,u*.55,u*.32,a,0,TAU);g.fill()}circ(0,0,u*.3,'#ffd040')}
+  else if(k==='chive'){g.strokeStyle=c;g.lineWidth=u*.22;g.lineCap='round';for(let i=0;i<4;i++){g.beginPath();g.moveTo(-u*1.3,(i-1.5)*u*.35);g.lineTo(u*1.3,(i-1.5)*u*.35+u*.2);g.stroke()}}
+  else if(k==='choco'){g.fillStyle=c;for(let i=0;i<7;i++){g.save();g.translate(Math.cos(i*2.4)*u*.7,Math.sin(i*2.4)*u*.7);g.rotate(i);g.fillRect(-u*.35,-u*.12,u*.7,u*.24);g.restore()}}
+  else if(k==='cherry'){circ(0,0,u*1,c);circ(0,0,u*.8,'#f05a3a');g.fillStyle='#ffe0a0';for(let i=0;i<5;i++){const a=i/5*TAU;g.beginPath();g.ellipse(Math.cos(a)*u*.45,Math.sin(a)*u*.45,u*.12,u*.07,a,0,TAU);g.fill()}}
+  g.restore()}
+const PL={open:false,sel:null,mode:'move',act:null,R:1,cx:0,cy:0,u:1,sprites:new Map()};
+const pc=()=>scr('pc');
+function plState(){if(!game.plating)game.plating={pos:{},deco:[],sauce:[],undo:[],done:false};return game.plating}
+function plItems(){return bodies.filter(b=>where(b)==='plate'&&!b.m.drink)}
+function openPlating(){const P=plState();PL.open=true;scr('plating').hidden=false;PL.sel=null;PL.mode='move';PL.sprites.clear();
+  const items=plItems();items.forEach((b,i)=>{if(!P.pos[b.id])P.pos[b.id]={x:clamp((b.cx-plate.cx)/(plate.w*.5),-.6,.6),y:(i%2?.18:-.18)*(1+i*.15)%.6,rot:0}});
+  for(const id in P.pos)if(!items.some(b=>b.id==id))delete P.pos[id];
+  plResize();buildPalette();sfx.click();buzz(10);if(!items.length)toast('Der Teller ist noch leer. Du kannst trotzdem schon dekorieren.',3000)}
+function closePlating(keep=true){if(!PL.open)return;PL.open=false;scr('plating').hidden=true;if(keep&&game.plating){game.plating.done=true;game.plating.snap=plSnapshot();const s=platingScore();toast(`Angerichtet: ${s.note}`,2500)}}
+function plResize(){const c=pc(),r=c.getBoundingClientRect();c.width=Math.round(r.width*DPR);c.height=Math.round(r.height*DPR);
+  const pw=170+(LY.saR||0),aw=r.width-pw;PL.cx=aw/2+(LY.saL||0)/2;PL.cy=r.height/2+14;PL.R=Math.min(aw*.4,(r.height-40)*.46);PL.u=PL.R*.055}
+function buildPalette(){const mk=(host,k,label,draw,on)=>{const b=document.createElement('button');b.className='pb';const c=document.createElement('canvas');c.width=c.height=60;draw(c.getContext('2d'));b.append(c,label);b.addEventListener('click',on);host.append(b);return b};
+  const d=scr('pDeco'),sa=scr('pSauce');d.innerHTML='';sa.innerHTML='';
+  for(const k in DECO)mk(d,k,DECO[k].n,g=>drawDeco(g,k,30,30,13),()=>{const P=plState();const o={k,x:rnd(-.25,.25),y:rnd(-.25,.25),rot:rnd(0,TAU)};P.deco.push(o);P.undo.push(['deco',o]);PL.sel=o;setMode('move');sfx.squish(.15);buzz(6)});
+  for(const k in SAUCE){const S=SAUCE[k];const b=mk(sa,k,S.n,g=>{if(S.dust){g.fillStyle=S.col==='#ffffff'?'#e8e8e8':S.col;for(let i=0;i<40;i++)g.fillRect(10+Math.random()*40,15+Math.random()*30,2,2)}else{g.strokeStyle=S.col;g.lineWidth=7;g.lineCap='round';g.beginPath();g.moveTo(10,40);g.bezierCurveTo(22,8,38,52,50,20);g.stroke()}},()=>setMode(PL.mode==='s:'+k?'move':'s:'+k));b.dataset.mode='s:'+k}}
+function setMode(m){PL.mode=m;document.querySelectorAll('#pSauce .pb').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===m)));
+  scr('pHint').textContent=m==='move'?'Zieh Essen und Deko zurecht. Antippen zeigt den Dreh-Griff. Deko vom Teller ziehen löscht sie.':`Mal mit dem Finger ${SAUCE[m.slice(2)].dust?'Puder':'Soße'} auf den Teller. Nochmal antippen beendet.`}
+function plObjects(){const P=plState(),out=[];for(const b of plItems()){const q=P.pos[b.id];if(q)out.push({o:q,b,r:Math.max(.08,b.R/(plate.w*.5)*1.05)})}for(const d of P.deco)out.push({o:d,deco:1,r:PL.u*1.4/PL.R});return out}
+function plLocal(e){const r=pc().getBoundingClientRect();return{x:(e.clientX-r.left-PL.cx)/PL.R,y:(e.clientY-r.top-PL.cy)/PL.R}}
+function plDown(e){const p=plLocal(e),P=plState();pc().setPointerCapture(e.pointerId);
+  if(PL.mode.startsWith('s:')){const k=PL.mode.slice(2),S=SAUCE[k];const st={k,c:S.col,dust:!!S.dust,pts:[]};P.sauce.push(st);P.undo.push(['sauce',st]);PL.act={t:'paint',st};plPaint(p);return}
+  if(PL.sel){const s=PL.sel,hx=s.x+Math.cos(-.8)*(selR()+.07),hy=s.y+Math.sin(-.8)*(selR()+.07);if(Math.hypot(p.x-hx,p.y-hy)<.07){PL.act={t:'rot',o:s,a0:Math.atan2(p.y-s.y,p.x-s.x)-s.rot};return}}
+  const objs=plObjects();let hit=null;for(let i=objs.length-1;i>=0;i--){const q=objs[i];if(Math.hypot(p.x-q.o.x,p.y-q.o.y)<q.r){hit=q;break}}
+  if(hit){PL.sel=hit.o;PL.act={t:'move',o:hit.o,deco:hit.deco,dx:hit.o.x-p.x,dy:hit.o.y-p.y,t0:performance.now(),x0:p.x,y0:p.y};sfx.squish(.1)}else PL.sel=null}
+function selR(){const q=plObjects().find(q=>q.o===PL.sel);return q?q.r:.08}
+function plPaint(p){const a=PL.act;if(Math.hypot(p.x,p.y)>.92)return;const L=a.st.pts,l=L[L.length-1];if(l&&Math.hypot(p.x-l.x,p.y-l.y)<.012)return;
+  if(a.st.dust){for(let i=0;i<4;i++)L.push({x:p.x+rnd(-.03,.03),y:p.y+rnd(-.03,.03)})}else L.push({x:p.x,y:p.y});if(L.length%6===0){noise(.05,'lowpass',900,400,.05,1)}}
+function plMove(e){const a=PL.act;if(!a)return;const p=plLocal(e);
+  if(a.t==='paint')plPaint(p);else if(a.t==='rot')a.o.rot=Math.atan2(p.y-a.o.y,p.x-a.o.x)-a.a0;
+  else{a.o.x=clamp(p.x+a.dx,-1.25,1.25);a.o.y=clamp(p.y+a.dy,-1.25,1.25)}}
+function plUp(){const a=PL.act;PL.act=null;if(!a)return;const P=plState();
+  if(a.t==='paint'&&a.st.pts.length<2){P.sauce.splice(P.sauce.indexOf(a.st),1)}
+  if(a.t==='move'){if(a.deco&&Math.hypot(a.o.x,a.o.y)>1.08){P.deco.splice(P.deco.indexOf(a.o),1);PL.sel=null;sfx.click()}
+    else if(!a.deco&&Math.hypot(a.o.x,a.o.y)>.95){const d=Math.hypot(a.o.x,a.o.y);a.o.x*=.9/d;a.o.y*=.9/d}
+    if(performance.now()-a.t0<220&&Math.hypot(a.o.x-a.x0-a.dx,a.o.y-a.y0-a.dy)<.02){}}}
+function plUndo(){const P=plState(),u=P.undo.pop();if(!u){toast('Nichts zum Rückgängigmachen.');return}const L=u[0]==='deco'?P.deco:P.sauce,i=L.indexOf(u[1]);if(i>=0)L.splice(i,1);if(PL.sel===u[1])PL.sel=null;sfx.click()}
+function plSprite(b){let sp=PL.sprites.get(b.id);const k=PL.R/(plate.w*.5);if(sp&&sp.k===k)return sp;aabb(b);const m=6,w=b.maxX-b.minX+m*2,h=b.maxY-b.minY+m*2;
+  const c=document.createElement('canvas');c.width=Math.ceil(w*k*DPR);c.height=Math.ceil(h*k*DPR);const g=c.getContext('2d');g.scale(k*DPR,k*DPR);g.translate(-b.minX+m,-b.minY+m);
+  const old=X;X=g;try{drawBody(b)}catch(e){}X=old;sp={c,w:w*k,h:h*k,ox:(b.cx-b.minX+m)*k,oy:(b.cy-b.minY+m)*k,k};PL.sprites.set(b.id,sp);return sp}
+function drawPlateTop(g,R,cx,cy,P,withSel){
+  g.fillStyle='#4a2c18';g.fillRect(-cx*2,-cy*2,cx*6,cy*6);
+  g.save();g.globalAlpha=.18;g.strokeStyle='#1e1008';g.lineWidth=2;for(let y=-cy;y<cy*3;y+=23){g.beginPath();g.moveTo(-cx,y);g.bezierCurveTo(cx*.5,y+8,cx*1.5,y-8,cx*3,y+4);g.stroke()}g.restore();
+  g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.arc(cx+R*.04,cy+R*.06,R*1.02,0,TAU);g.fill();
+  let rg=g.createRadialGradient(cx-R*.3,cy-R*.35,R*.1,cx,cy,R);rg.addColorStop(0,'#ffffff');rg.addColorStop(1,'#e6e0d4');g.fillStyle=rg;g.beginPath();g.arc(cx,cy,R,0,TAU);g.fill();
+  g.strokeStyle='rgba(180,170,150,.6)';g.lineWidth=R*.012;g.beginPath();g.arc(cx,cy,R*.82,0,TAU);g.stroke();
+  g.strokeStyle='rgba(200,60,40,.5)';g.lineWidth=R*.01;g.beginPath();g.arc(cx,cy,R*.95,0,TAU);g.stroke();
+  for(const st of P.sauce){if(st.dust){g.globalAlpha=.85;for(const q of st.pts){g.fillStyle='rgba(90,70,50,.25)';g.beginPath();g.arc(cx+q.x*R+.8,cy+q.y*R+.8,R*.007,0,TAU);g.fill();g.fillStyle=st.c;g.beginPath();g.arc(cx+q.x*R,cy+q.y*R,R*.006+((q.x*997)%1+1)%1*R*.006,0,TAU);g.fill()}g.globalAlpha=1;continue}
+    g.lineCap='round';g.lineJoin='round';g.strokeStyle=st.c;g.lineWidth=R*.035;g.beginPath();st.pts.forEach((q,i)=>i?g.lineTo(cx+q.x*R,cy+q.y*R):g.moveTo(cx+q.x*R,cy+q.y*R));if(st.pts.length===1)g.lineTo(cx+st.pts[0].x*R+.1,cy+st.pts[0].y*R);g.stroke();
+    g.strokeStyle='rgba(255,255,255,.35)';g.lineWidth=R*.008;g.beginPath();st.pts.forEach((q,i)=>i?g.lineTo(cx+q.x*R-R*.006,cy+q.y*R-R*.008):g.moveTo(cx+q.x*R-R*.006,cy+q.y*R-R*.008));g.stroke()}
+  for(const b of plItems()){const q=P.pos[b.id];if(!q)continue;const sp=plSprite(b);g.save();g.translate(cx+q.x*R,cy+q.y*R);g.rotate(q.rot);
+    g.fillStyle='rgba(60,40,20,.18)';g.beginPath();g.ellipse(R*.012,R*.02,sp.w*.42,sp.h*.42,0,0,TAU);g.fill();g.drawImage(sp.c,-sp.ox,-sp.oy,sp.w,sp.h);g.restore()}
+  const u=R*.055;for(const d of P.deco)drawDeco(g,d.k,cx+d.x*R,cy+d.y*R,u,d.rot);
+  if(withSel&&PL.sel){const s=PL.sel,r=selR()*R;g.save();g.setLineDash([6,5]);g.strokeStyle='#ffcf3a';g.lineWidth=2.5;g.beginPath();g.arc(cx+s.x*R,cy+s.y*R,r,0,TAU);g.stroke();g.setLineDash([]);
+    const hx=cx+(s.x+Math.cos(-.8)*(selR()+.07))*R,hy=cy+(s.y+Math.sin(-.8)*(selR()+.07))*R;g.fillStyle='#ffcf3a';g.beginPath();g.arc(hx,hy,R*.05,0,TAU);g.fill();
+    g.strokeStyle='#1a1208';g.lineWidth=2;g.beginPath();g.arc(hx,hy,R*.026,-.3,Math.PI*1.3);g.stroke();g.restore()}}
+function renderPlating(){if(!PL.open)return;const c=pc(),g=c.getContext('2d'),P=plState();g.setTransform(DPR,0,0,DPR,0,0);g.clearRect(0,0,c.width,c.height);
+  drawPlateTop(g,PL.R,PL.cx,PL.cy,P,true);scr('pTimer').textContent=timed()?fmtTime(game.time):''}
+function plSnapshot(){const c=document.createElement('canvas');c.width=c.height=240;const g=c.getContext('2d'),R0=PL.R,cx=PL.cx,cy=PL.cy;
+  PL.R=108;PL.sprites.clear();g.save();drawPlateTop(g,108,120,120,plState(),false);g.restore();PL.R=R0;PL.sprites.clear();try{return c.toDataURL('image/png')}catch(e){return null}}
+function hueBucket(col){const c=rgb(hexOr(col,'#888888')),mx=Math.max(...c),mn=Math.min(...c);if(mx-mn<30)return mx>200?'w':mx<70?'k':'g';let h;const[r,gg,b]=c;
+  if(mx===r)h=(gg-b)/(mx-mn);else if(mx===gg)h=2+(b-r)/(mx-mn);else h=4+(r-gg)/(mx-mn);return'h'+Math.floor(((h*60+360)%360)/45)}
+function platingScore(){const P=game.plating;if(!P)return null;const objs=[];for(const b of plItems()){const q=P.pos[b.id];if(q)objs.push({x:q.x,y:q.y,r:Math.max(.08,b.R/(plate.w*.5)),w:b.R*b.R,col:skinOf(b)[1]})}
+  for(const d of P.deco)objs.push({x:d.x,y:d.y,r:.07,w:30,col:DECO[d.k].col,deco:1});
+  if(!objs.length)return{s:0,note:'leer'};
+  const inside=objs.filter(o=>Math.hypot(o.x,o.y)+o.r*.7<=.88).length/objs.length;
+  let wx=0,wy=0,ws=0;for(const o of objs)if(!o.deco){wx+=o.x*o.w;wy+=o.y*o.w;ws+=o.w}const bal=ws?1-clamp(Math.hypot(wx/ws,wy/ws)/.4,0,1):.5;
+  const food=objs.filter(o=>!o.deco);let ov=0,np=0;for(let i=0;i<food.length;i++)for(let j=i+1;j<food.length;j++){const a=food[i],b=food[j];ov+=clamp((a.r+b.r-Math.hypot(a.x-b.x,a.y-b.y))/Math.min(a.r,b.r),0,1.5);np++}
+  const ovS=np?1-clamp(ov/np-.25,0,1):1;
+  const n=P.deco.length+P.sauce.length,decoS=n===0?.15:n<=6?Math.min(1,.45+n*.14):Math.max(.25,1-(n-6)*.08);
+  const cols=new Set(objs.map(o=>hueBucket(o.col)));for(const st of P.sauce)cols.add(hueBucket(st.c));const colS=Math.min(1,cols.size/4);
+  const s=clamp(.25*inside+.2*bal+.15*ovS+.25*decoS+.15*colS,0,1);
+  const note=inside<.75?'hängt über den Rand':n>10?'zu überladen':n===0?'ohne Deko':ovS<.5?'alles übereinander':s>.85?'wunderschön':s>.65?'hübsch':'naja';
+  return{s,note}}
+setTimeout(()=>{scr('pDone').addEventListener('click',()=>closePlating(true));
+scr('pUndo').addEventListener('click',plUndo);
+pc().addEventListener('pointerdown',e=>{audioInit();plDown(e)});pc().addEventListener('pointermove',plMove);pc().addEventListener('pointerup',plUp);pc().addEventListener('pointercancel',plUp);},0);
+addEventListener('resize',()=>{if(PL.open){plResize();PL.sprites.clear()}});
+
+/* ================= spice shakers ================= */
+function shakerAt(x,y){for(const o of SHAKERS)if(Math.abs(x-o.x)<14&&y>o.y-44&&y<o.y+6&&!o.fly)return o;return null}
+function grabShaker(o,x,y){Object.assign(ptr,{shaker:o,canPan:false});o.held=true;o.fly=false;o.lvy=0;o.ly=o.y;tabRects=[...tabsEl.children].map(t=>t.getBoundingClientRect());sfx.click();
+  if(!game.shakeHint){game.shakeHint=1;toast('Halt den Streuer über das Essen und wisch schnell hoch und runter.',3500)}}
+function shakeOut(o){const cx=o.x,cy=o.y+4;
+  for(let i=0;i<4;i++)drops.push({k:'crumb',x:cx+rnd(-4,4),y:cy,vx:rnd(-.5,.5),vy:rnd(1,3),c:o.col==='#ffffff'?'#f4f4f4':o.col,s:rnd(.8,1.5),fy:landY(cx)});
+  let tgt=null,best=1e9;for(const b of bodies){if(blocked(b)||isDrink(b))continue;aabb(b);if(cx>b.minX-10&&cx<b.maxX+10&&b.maxY>cy&&b.minY<best){best=b.minY;tgt=b}}
+  if(tgt){tgt.season=tgt.season||{};tgt.season[o.k]=(tgt.season[o.k]||0)+1}
+  sfx.shake();buzz(5)}
+function shakerStep(){for(const o of SHAKERS){
+  if(o.held&&ptr.down&&ptr.shaker===o){const nx=o.x+(ptr.x-o.x)*.75,ny=o.y+(ptr.y-14-o.y)*.75,vy=ny-o.y;
+    if(Math.sign(vy)!==Math.sign(o.lvy)&&Math.abs(vy-o.lvy)>3.5)shakeOut(o);if(Math.abs(vy)>1)o.lvy=vy;o.x=nx;o.y=ny;continue}
+  o.held=false;if(o.x!==o.hx||o.y!==o.hy){o.x+=(o.hx-o.x)*.15;o.y+=(o.hy-o.y)*.15;if(Math.hypot(o.hx-o.x,o.hy-o.y)<1){o.x=o.hx;o.y=o.hy}}}}
+function drawShakers(){
+  {const a=SHAKERS[0],b=SHAKERS[SHAKERS.length-1];X.fillStyle='#8a5a32';rr(X,a.hx-14,floorY-5,b.hx-a.hx+28,6,2);X.fill();X.fillStyle='rgba(255,230,190,.3)';X.fillRect(a.hx-12,floorY-5,b.hx-a.hx+24,1)}
+  for(const o of SHAKERS){const inv=o.held||Math.hypot(o.x-o.hx,o.y-o.hy)>20;X.save();X.translate(o.x,o.y-(inv?-16:0));if(inv)X.rotate(Math.PI+Math.sin(frame*.4)*.08);
+    const h=34,w=17;X.fillStyle='rgba(225,238,245,.35)';rr(X,-w/2,-h,w,h-8,5);X.fill();
+    X.fillStyle=o.col;rr(X,-w/2+2,-h*.62,w-4,h*.62-10,3);X.fill();
+    if(o.k==='salt'||o.k==='pepper'||o.k==='herbs'){X.fillStyle='rgba(0,0,0,.18)';for(let i=0;i<8;i++)X.fillRect(-w/2+3+((i*5)%(w-6)),-h*.55+((i*7)%14),1,1)}
+    X.strokeStyle='rgba(235,245,255,.75)';X.lineWidth=1.2;rr(X,-w/2,-h,w,h-8,5);X.stroke();
+    X.fillStyle=o.cap;rr(X,-w/2-1,-h-6,w+2,9,3);X.fill();X.fillStyle='rgba(255,255,255,.4)';X.fillRect(-w/2+1,-h-5,w-2,1.5);
+    X.restore();
+    if(!inv){X.font=`700 7px ${UIFONT}`;X.textAlign='center';X.textBaseline='middle';X.fillStyle='rgba(90,60,30,.6)';X.fillText(o.name.toUpperCase(),o.hx,floorY+16)}}}
+const SPICE={salt:[0,.5,0,0,0],pepper:[0,.25,0,.35,0],chili:[0,.05,0,1,0],herbs:[0,.35,0,0,.05],cinnamon:[.6,0,0,0,.1]};
 
 /* ================= ladle ================= */
 const LADLE_A=Math.PI*11*11;
@@ -1255,7 +1472,7 @@ function step(){
   frame++;
   for(const o of[pan,pot])o.T+=(LEVELS[o.lvl]-o.T)*.012;
   grill.T+=([ROOM,210,290][grill.lvl]-grill.T)*.012;fryer.T+=([ROOM,180][fryer.lvl]-fryer.T)*.006;
-  if(ptr.down&&(ptr.grab||ptr.glass)&&LY.vw){if(ptr.sx<LY.side+40)camT=Math.max(0,camT-14);else if(ptr.sx>W-40)camT=Math.min(LY.maxCam,camT+14)}
+  if(ptr.down&&(ptr.grab||ptr.glass||ptr.shaker)&&LY.vw){if(ptr.sx<LY.side+40)camT=Math.max(0,camT-14);else if(ptr.sx>W-40)camT=Math.min(LY.maxCam,camT+14)}
   const ot=[ROOM,180,250][oven.lvl];oven.T+=((oven.open?lerp(ROOM,ot,.45):ot)-oven.T)*.006;
   if(micro.lvl){micro.T=lerp(micro.T,45,.01);if(--micro.timer<=0||micro.open){micro.lvl=0;if(!micro.open){sfx.ding();toast('Pling! Mikrowelle fertig.')}}}else micro.T=lerp(micro.T,ROOM,.01);
   if(mixT>0){mixT++;const cx=bowl.cx,cy=bowl.rim+bowl.h*.55;
@@ -1265,7 +1482,7 @@ function step(){
     for(const b of bodies){if(where(b)!=='juicer')continue;for(const p of b.pts){if(p.y<py){p.y=py;p.py=py}p.x+=rnd(-.3,.3)}b.imp=0;b.health=Math.max(b.health,60)}
     if(juiceT%6===0)drop(juicer.cx,juicer.hb+8,rnd(-.4,.4),1,juiceCol||'#f0a030',rnd(1.2,2.2));
     if(juiceT>JUICE_LEN){juiceT=0;finishJuice()}}
-  glassStep();
+  glassStep();applianceStep();shakerStep();
   for(const b of bodies.slice())cookStep(b);
   for(const b of bodies){const d=dishOf(b);if(!d){b.coatT=0;b.coatD=-1;continue}if(b.coatD!==d.k){b.coatD=d.k;b.coatT=0}b.coatT++;
     if(b.coatT===14){const lv=b.bread||0;if(lv===d.k){b.bread=lv+1;sfx.squish(.2);puff(b.cx,b.minY,'steam');if(b.bread===3)toast('Paniert! Jetzt ab in die Fritteuse.')}
@@ -1429,7 +1646,7 @@ function drawBg(){
   for(let x=rnd(-30,0);x<WW;x+=rnd(28,46)){g.fillStyle='rgba(0,0,0,.25)';g.fillRect(x,cf+2,1,H-cf)}
   const plateK=(a,b)=>{lg=g.createLinearGradient(0,LY.ky-20,0,LY.ky+20);lg.addColorStop(0,'#2a2b2f');lg.addColorStop(1,'#141518');
     g.fillStyle=lg;rr(g,a,LY.ky-21,b-a,44,10);g.fill();g.strokeStyle='rgba(255,255,255,.1)';rr(g,a+.5,LY.ky-20.5,b-a-1,43,10);g.stroke()};
-  plateK(pan.kx-32,grill.kx+40);plateK(juicer.kx-46,bowl.kx+46);plateK(fryer.kx-40,fryer.kx+44);
+  plateK(pan.kx-32,grill.kx+40);plateK(juicer.kx-46,bowl.kx+46);plateK(toaster.kx-46,waffle.kx+46);plateK(plate.kx-52,plate.kx+52);plateK(fryer.kx-40,fryer.kx+44);
 }
 /* ================= food rendering ================= */
 function trace(p){const n=p.length,a=p[n-1],b=p[0];X.moveTo((a.x+b.x)/2,(a.y+b.y)/2);
@@ -1473,6 +1690,9 @@ function drawBody(b){
     for(let i=0;i<n;i++){const q=d[(i*7)%d.length],rr2=1.5+q.s*(2+k*4);X.globalAlpha=.55+k*.25;X.fillStyle='#1a0e08';X.beginPath();X.ellipse(cx+q.x*.85,cy+q.y*.85,rr2,rr2*.75,q.s*5,0,TAU);X.fill();
       X.globalAlpha=.35*k;X.fillStyle='#8a8580';X.beginPath();X.arc(cx+q.x*.85-rr2*.3,cy+q.y*.85-rr2*.3,rr2*.35,0,TAU);X.fill()}
     X.globalAlpha=.35+k*.35;X.strokeStyle='#1a0e08';X.lineWidth=2+k*3;X.beginPath();trace(b.pts);X.stroke();X.globalAlpha=baseA}}
+  if(b.season){const d=b.tex.dots;let o=0;for(const sh of SHAKERS){const n=Math.min(60,(b.season[sh.k]||0)*4);X.fillStyle=sh.col==='#ffffff'?'#fbfbfb':sh.col;X.globalAlpha=.9;
+    for(let i=0;i<n;i++){const q=d[(i*11+o)%d.length];X.fillRect(cx+q.x*.85,cy+q.y*.85-R*.15,sh.k==='herbs'?2:1.4,sh.k==='herbs'?1.2:1.4)}o+=37}X.globalAlpha=baseA}
+  if(b.waffle>.2){X.globalAlpha=clamp(b.waffle,0,.8);X.strokeStyle=mix(skin[2],'#3a1a08',.5);X.lineWidth=2;for(let x=b.minX-((b.minX)%7);x<b.maxX;x+=7){X.beginPath();X.moveTo(x,b.minY);X.lineTo(x,b.maxY);X.stroke()}for(let y=b.minY-((b.minY)%7);y<b.maxY;y+=7){X.beginPath();X.moveTo(b.minX,y);X.lineTo(b.maxX,y);X.stroke()}X.globalAlpha=baseA}
   if(b.grill>.1){X.save();X.translate(cx,cy);X.rotate(.55);X.globalAlpha=Math.min(.75,b.grill);X.strokeStyle='#2a1004';X.lineWidth=Math.max(2,R*.12);for(let k=-4;k<=4;k++){X.beginPath();X.moveTo(k*R*.38,-R*2);X.lineTo(k*R*.38,R*2);X.stroke()}X.restore();X.globalAlpha=baseA}
   if(b.T<-1){X.globalAlpha=clamp(-b.T/25,0,.45);X.fillStyle='#e6f4ff';X.fillRect(b.minX-3,b.minY-3,b.maxX-b.minX+6,b.maxY-b.minY+6);X.globalAlpha=clamp(-b.T/15,0,.9);X.fillStyle='#ffffff';
     for(let i=0;i<b.tex.dots.length;i+=4){const d=b.tex.dots[i];X.fillRect(cx+d.x*.8,cy+d.y*.8,1.5,1.5)}X.globalAlpha=baseA}
@@ -1780,6 +2000,10 @@ function drawKnobs(){
    if(on){X.fillStyle='rgba(255,255,255,.35)';rr(X,x-w/2,y-h/2,Math.max(26,w*juiceT/JUICE_LEN),h,13);X.fill()}
    X.font=`700 10px ${UIFONT}`;X.fillStyle=on?'#fff':'#1a1b1e';X.fillText('PRESSEN',x,y+1);
    X.font=`700 8px ${UIFONT}`;X.fillStyle='rgba(246,234,216,.6)';X.fillText('ENTSAFTER',x,y+h/2+9)}
+  for(const[o,lab,sub,on,f]of[[plate,'ANRICHTEN','VON OBEN',false,0],[toaster,'TOASTEN','TOASTER',toaster.on,toaster.t/270],[waffle,'WAFFELN','WAFFELEISEN',waffle.on,waffle.t/320]]){const x=o.kx;
+   X.fillStyle='rgba(0,0,0,.4)';rr(X,x-w/2+1,y-h/2+2,w,h,13);X.fill();X.fillStyle=on?'#ff7a1a':steel(X,0,y-h/2,0,y+h/2);rr(X,x-w/2,y-h/2,w,h,13);X.fill();
+   if(on){X.fillStyle='rgba(255,255,255,.35)';rr(X,x-w/2,y-h/2,Math.max(26,w*f),h,13);X.fill()}
+   X.font=`700 10px ${UIFONT}`;X.fillStyle=on?'#fff':'#1a1b1e';X.fillText(lab,x,y+1);X.font=`700 8px ${UIFONT}`;X.fillStyle='rgba(246,234,216,.6)';X.fillText(sub,x,y+h/2+9)}
 }
 function drawGrill(){const o=grill,y=o.y,hot=clamp((o.T-60)/200,0,1);
   X.fillStyle='#1a1a1c';X.fillRect(o.x0+8,y+6,6,floorY-y-6);X.fillRect(o.x1-14,y+6,6,floorY-y-6);
@@ -1932,13 +2156,15 @@ function drawPlate(){const o=plate,y=o.y;
   X.fillStyle=g;X.beginPath();X.ellipse(o.cx,y,o.w/2+2,8,0,0,TAU);X.fill();
   X.fillStyle='#f6f1e8';X.beginPath();X.ellipse(o.cx,y-1,o.w*.36,5,0,0,TAU);X.fill();
   X.strokeStyle='rgba(200,60,40,.55)';X.lineWidth=1.2;X.beginPath();X.ellipse(o.cx,y,o.w/2-4,6.5,0,0,TAU);X.stroke();
-  X.font=`700 8px ${UIFONT}`;X.textAlign='center';X.fillStyle='rgba(90,60,30,.55)';X.fillText('TELLER',o.cx,floorY+16)}
+  X.font=`700 8px ${UIFONT}`;X.textAlign='center';X.fillStyle='rgba(90,60,30,.55)';X.fillText('TELLER',o.cx,floorY+16);
+  const P=game.plating;if(P){for(const st of P.sauce){X.fillStyle=st.c;X.globalAlpha=.8;for(let i=0;i<st.pts.length;i+=3){const q=st.pts[i];X.fillRect(o.cx+q.x*o.w*.45-2,y-2+q.y*2,4,2)}}X.globalAlpha=1;
+    for(const d of P.deco){const c=DECO[d.k].col;X.fillStyle=c;X.beginPath();X.ellipse(o.cx+d.x*o.w*.45,y-2.5+d.y*1.5,4,2.2,0,0,TAU);X.fill()}}}
 
 /* ================= frame render ================= */
 function render(){
   const s=reduce?0:shake;shakeX=rnd(-s,s)*.5*DPR;shakeY=rnd(-s,s)*.5*DPR;
   camX+=(camT-camX)*.22;if(Math.abs(camT-camX)<.4)camX=camT;
-  if(ptr.down&&(ptr.grab||ptr.glass))ptr.x=ptr.sx+camX;
+  if(ptr.down&&(ptr.grab||ptr.glass||ptr.shaker))ptr.x=ptr.sx+camX;
   ctx.setTransform(DPR,0,0,DPR,shakeX,shakeY);X=ctx;
   ctx.drawImage(bg,camX*BD,0,W*BD,H*BD,0,0,W,H);
   ctx.save();ctx.translate(-camX,0);
@@ -1946,7 +2172,7 @@ function render(){
   ctx.restore();
   ctx.drawImage(st,camX*BD,0,W*BD,H*BD,0,0,W,H);
   ctx.save();ctx.translate(-camX,0);
-  const v0=camX-80,v1=camX+W+80,groups={dish:[],oven:[],micro:[],freezer:[],pot:[],pan:[],grill:[],fryer:[],bowl:[],plate:[],juicer:[],glass:[],out:[]};
+  const v0=camX-80,v1=camX+W+80,groups={dish:[],oven:[],micro:[],freezer:[],pot:[],pan:[],grill:[],fryer:[],bowl:[],plate:[],juicer:[],glass:[],toaster:[],waffle:[],out:[]};
   for(const b of bodies){aabb(b);if(b.maxX<v0||b.minX>v1)continue;groups[where(b)||'out'].push(b)}
   for(const b of groups.oven)drawBody(b);drawOvenFront();
   for(const b of groups.micro)drawBody(b);drawMicroFront();
@@ -1955,6 +2181,8 @@ function render(){
   drawPanBack();for(const b of groups.pan)drawBody(b);drawPanFront();
   drawPotBack();for(const b of groups.pot)drawBody(b);drawPotFront();
   drawGrill();for(const b of groups.grill)drawBody(b);flames(grill,floorY-4,0);
+  drawToasterBack();for(const b of groups.toaster)drawBody(b);drawToasterFront();
+  drawWaffleBack();for(const b of groups.waffle)drawBody(b);drawWaffleFront();
   drawFryerBack();for(const b of groups.fryer)drawBody(b);drawFryerFront();
   drawBowlBack();for(const b of groups.bowl)drawBody(b);drawBowlFront();
   drawJuicerBack();for(const b of groups.juicer)drawBody(b);drawJuicerFront();
@@ -1964,12 +2192,12 @@ function render(){
   for(const b of groups.out)drawBody(b);
   if(sel.size){X.save();X.setLineDash([5,4]);X.strokeStyle='#ffcf3a';X.lineWidth=2.5;for(const b of[...sel]){if(!bodies.includes(b)){sel.delete(b);continue}X.beginPath();trace(b.pts);X.stroke()}X.restore()}
   if(ptr.lasso){const l=ptr.lasso,x=Math.min(l.x0,ptr.x),y=Math.min(l.y0,ptr.y),w=Math.abs(ptr.x-l.x0),h=Math.abs(ptr.y-l.y0);X.save();X.setLineDash([6,5]);X.fillStyle='rgba(255,207,58,.14)';X.fillRect(x,y,w,h);X.strokeStyle='#ffcf3a';X.lineWidth=2;X.strokeRect(x,y,w,h);X.restore()}
-  drawLadle();drawDrops();drawPuffs();drawKnobs();drawFx();if(tool==='knife')drawTrail();
+  drawShakers();drawLadle();drawDrops();drawPuffs();drawKnobs();drawFx();if(tool==='knife')drawTrail();
   if(game.mark){const t=performance.now()/300;X.strokeStyle=`rgba(255,210,60,${.55+.35*Math.sin(t)})`;X.lineWidth=3;X.setLineDash([6,5]);X.beginPath();X.arc(game.mark.x,game.mark.y,game.mark.r+3*Math.sin(t),0,TAU);X.stroke();X.setLineDash([])}
   ctx.restore();
   const rg=ctx.createRadialGradient(W/2,H*.45,Math.min(W,H)*.45,W/2,H*.45,Math.max(W,H)*.8);rg.addColorStop(0,'rgba(0,0,0,0)');rg.addColorStop(1,'rgba(30,18,8,.35)');ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);
   if(stationIdx()!==game.lastStn){game.lastStn=stationIdx();updTabs()}
-  tabsEl.classList.toggle('drop',!!(ptr.down&&(ptr.grab||ptr.glass)));
+  tabsEl.classList.toggle('drop',!!(ptr.down&&(ptr.grab||ptr.glass||ptr.shaker)));
 }
 /* ================= audio ================= */
 let AC=null,NB=null,muted=false,sndBudget=0;
@@ -1977,7 +2205,7 @@ const loops={nodes:{},set(k,v){const n=this.nodes[k];if(n&&AC)n.gain.setTargetAt
 function audioInit(){if(AC)return;try{AC=new(window.AudioContext||window.webkitAudioContext)();const n=AC.sampleRate*2;NB=AC.createBuffer(1,n,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
   const mk=(type,f,q,osc)=>{const g=AC.createGain();g.gain.value=0;let src;if(osc){src=AC.createOscillator();src.frequency.value=osc}else{src=AC.createBufferSource();src.buffer=NB;src.loop=true}
     const fl=AC.createBiquadFilter();fl.type=type;fl.frequency.value=f;fl.Q.value=q;src.connect(fl).connect(g).connect(AC.destination);src.start();return g};
-  loops.nodes.sizzle=mk('bandpass',4200,.6);loops.nodes.gas=mk('lowpass',380,.7);loops.nodes.hum=mk('lowpass',200,1,120);loops.nodes.oven=mk('lowpass',260,.8);loops.nodes.mixer=mk('bandpass',1500,2.5);
+  loops.nodes.sizzle=mk('bandpass',4200,.6);loops.nodes.gas=mk('lowpass',380,.7);loops.nodes.hum=mk('lowpass',200,1,120);loops.nodes.oven=mk('lowpass',260,.8);loops.nodes.mixer=mk('bandpass',1500,2.5);loops.nodes.waffle=mk('bandpass',5200,.8);loops.nodes.toaster=mk('lowpass',300,1,95);
 }catch(e){AC=null}}
 function ok(){if(!AC||muted||sndBudget>5)return false;sndBudget++;if(AC.state==='suspended')AC.resume();return true}
 function noise(dur,type,f0,f1,vol,q=1){if(!ok())return;const t=AC.currentTime,s=AC.createBufferSource();s.buffer=NB;s.playbackRate.value=rnd(.7,1.3);
@@ -2000,6 +2228,10 @@ const sfx={
   win:()=>{[523,659,784,1046].forEach((f,k)=>setTimeout(()=>tone(f,f,.25,.14,'triangle'),k*110))},
   meh:()=>{tone(392,330,.3,.12,'triangle');setTimeout(()=>tone(330,262,.4,.12,'triangle'),220)},
   ding:()=>{tone(1760,1750,1.2,.18);tone(2637,2630,.9,.06)},
+  shake:()=>{for(let k=0;k<3;k++)setTimeout(()=>noise(.03,'highpass',5000,8000,.12,1),k*25)},
+  toastPop:()=>{tone(300,900,.08,.25,'triangle');noise(.06,'bandpass',2500,1500,.3,3);setTimeout(()=>tone(1500,1500,.3,.06),90)},
+  pour:()=>{for(let k=0;k<5;k++)setTimeout(()=>tone(rnd(180,320),rnd(120,200),.07,.12),k*70)},
+  clink:()=>{tone(2600,2550,.25,.07);tone(3900,3850,.15,.03)},
 };
 function buzz(ms){try{if(navigator.userActivation&&!navigator.userActivation.hasBeenActive)return;navigator.vibrate&&navigator.vibrate(ms)}catch(e){}}
 
@@ -2123,24 +2355,24 @@ const CRITICS=[
 CRITICS[6].pantry=Object.fromEntries(Object.entries(CRITICS[6].pantry).filter(([k,v])=>v&&M[k]));
 const LINES={taste:'Das schmeckt mir überhaupt nicht.',raw:'Das ist ja noch roh!',burnt:'Das schmeckt nach Holzkohle.',warm:'Kalt? Ernsthaft?',
   portion:'Davon wird ja keiner satt.',variety:'Etwas eintönig, oder?',fine:'Die Stücke sind viel zu grob.',clean:'Wie sieht denn die Küche aus?!',
-  mixed:'Ich wollte etwas Gemischtes.',baked:'Wo ist das Gebäck?',cold:'Das sollte doch kalt sein!',fried:'Wo ist das Knusprige?',breaded:'Wo ist die Panade?',grilled:'Ich schmecke keinen Grill.'};
+  mixed:'Ich wollte etwas Gemischtes.',baked:'Wo ist das Gebäck?',cold:'Das sollte doch kalt sein!',fried:'Wo ist das Knusprige?',breaded:'Wo ist die Panade?',grilled:'Ich schmecke keinen Grill.',drink:'Und was soll ich dazu trinken?'};
 const CHAPTERS=[
  {name:'Omas Küche',cats:['gemuese','fleisch','milch','backen'],want:['herzhaft','cremig'],hate:['scharf'],extra:['warm','portion','done','variety'],boss:0,quotes:['Wie bei Muttern, bitte.','Ich hab Hunger wie ein Bär.','Schön deftig soll es sein.','Was Warmes für den Bauch!']},
- {name:'Zuckerbäckerei',cats:['suess','obst','beeren','milch'],want:['süß','cremig'],hate:['herzhaft','scharf'],extra:['mixed','portion','variety','fine'],boss:1,quotes:['Ich habe einen süßen Zahn.','Nachtisch zuerst!','Zucker ist mein Gemüse.']},
+ {name:'Zuckerbäckerei',cats:['suess','obst','beeren','milch'],want:['süß','cremig'],hate:['herzhaft','scharf'],extra:['mixed','portion','variety','fine','drink'],boss:1,quotes:['Ich habe einen süßen Zahn.','Nachtisch zuerst!','Zucker ist mein Gemüse.']},
  {name:'Grillabend',cats:['fleisch','gemuese','milch'],want:['herzhaft'],hate:['süß'],extra:['grilled','done','warm','portion'],boss:2,quotes:['Wo ist der Rost?','Riecht nach Sommer!','Bitte mit Streifen.']},
- {name:'Gartenfrisch',cats:['obst','beeren','gemuese','pilze'],want:['süß','sauer'],hate:['scharf'],extra:['fine','variety','clean','cold'],boss:3,quotes:['Frisch aus dem Beet, bitte.','Leicht und bunt.','Ich esse mit den Augen.']},
+ {name:'Gartenfrisch',cats:['obst','beeren','gemuese','pilze'],want:['süß','sauer'],hate:['scharf'],extra:['fine','variety','clean','cold','drink'],boss:3,quotes:['Frisch aus dem Beet, bitte.','Leicht und bunt.','Ich esse mit den Augen.']},
  {name:'Feuer & Säure',cats:['gemuese','fleisch','obst','fisch'],want:['scharf','sauer'],hate:['süß'],extra:['warm','variety','done','mixed'],boss:4,quotes:['Mach mir Feuer!','Sauer macht lustig.','Ohne Chili ess ich nicht.']},
  {name:'Backstube',cats:['backen','suess','milch','obst','nuesse','vorrat'],want:['süß','cremig'],hate:['scharf'],extra:['baked','mixed','warm','portion'],boss:5,quotes:['Riecht hier nach Kuchen?','Bitte frisch aus dem Ofen.','Ein Stück vom Glück.']},
  {name:'Am Meer',cats:['fisch','gemuese','pilze','obst'],want:['herzhaft','sauer'],hate:['süß'],extra:['done','grilled','fine','variety'],boss:7,quotes:['Was schwimmt, schmeckt.','Frisch vom Kutter!','Ein Hauch Meer, bitte.']},
- {name:'Imbissbude',cats:['gemuese','fleisch','fisch','backen','milch','vorrat'],want:['herzhaft'],hate:[],extra:['fried','breaded','warm','portion','done'],boss:8,quotes:['Einmal mit alles!','Knusprig, bitte.','Schnell und heiß.']},
- {name:'Eiszeit',cats:['suess','beeren','obst','milch','nuesse'],want:['süß','cremig'],hate:['herzhaft'],extra:['cold','mixed','variety','fine'],boss:9,quotes:['Mir ist zu warm.','Eis, Eis, Baby.','Kalt wie mein Herz.']},
- {name:'Die große Gala',cats:null,want:['süß','herzhaft','cremig'],hate:[],extra:['done','warm','variety','portion','clean','fine','mixed'],boss:6,quotes:['Ich erwarte Großes.','Beeindrucken Sie mich.','Heute nur das Beste.']},
+ {name:'Imbissbude',cats:['gemuese','fleisch','fisch','backen','milch','vorrat'],want:['herzhaft'],hate:[],extra:['fried','breaded','warm','portion','done','drink'],boss:8,quotes:['Einmal mit alles!','Knusprig, bitte.','Schnell und heiß.']},
+ {name:'Eiszeit',cats:['suess','beeren','obst','milch','nuesse'],want:['süß','cremig'],hate:['herzhaft'],extra:['cold','mixed','variety','fine','drink'],boss:9,quotes:['Mir ist zu warm.','Eis, Eis, Baby.','Kalt wie mein Herz.']},
+ {name:'Die große Gala',cats:null,want:['süß','herzhaft','cremig'],hate:[],extra:['done','warm','variety','portion','clean','fine','mixed','drink'],boss:6,quotes:['Ich erwarte Großes.','Beeindrucken Sie mich.','Heute nur das Beste.']},
 ];
 const FIRST=['Hilde','Klaus','Jens','Mia','Karl','Fritz','Lotte','Ben','Ida','Emil','Paul','Rita','Udo','Uschi','Theo','Nele','Otto','Frida','Kurt','Elli','Hans','Lina','Moritz','Tilda','Heinz','Anni','Gustav','Wanda','Bodo','Edda'];
 const LAST=['Pfeffer','Krümel','Schmalz','Löffelholz','Senf','Kümmel','Butterbrot','Zwiebel','Knusper','Rübe','Gurkner','Salzmann','Brösel','Schnitzel','Hefe','Muskat','Petersil','Sahnig','Brezel','Quark','Zimt','Grieß','Möhre','Speckmann','Knödel','Paprika','Dill','Rahm','Kloß','Waffel'];
 const TITLES=['Stammgast','Food-Bloggerin','Hobbykoch','Lokalreporter','Feinschmeckerin','Nachbar von oben','Kantinenchef','Taxifahrer','Opernsängerin','Postbote','Zahnärztin','Rentner','Studentin','Bauarbeiter','Gärtnerin','Bürgermeister'];
 const HINT={warm:'warm servieren',portion:'eine große Portion',done:'alles gar, nichts roh',variety:'viele verschiedene Zutaten',fine:'klein schneiden',clean:'sauber arbeiten',
-  mixed:'in der Schüssel mixen',cold:'im Gefrierfach kühlen (Station Fritte)',fried:'in der Fritteuse frittieren',grilled:'auf dem Grill grillen (Station Herd)',breaded:'in Mehl, Ei und Bröseln panieren und frittieren',baked:'Teig mixen und im Ofen backen'};
+  mixed:'in der Schüssel mixen',cold:'im Gefrierfach kühlen (Station Fritte)',fried:'in der Fritteuse frittieren',grilled:'auf dem Grill grillen (Station Herd)',breaded:'in Mehl, Ei und Bröseln panieren und frittieren',baked:'Teig mixen und im Ofen backen',drink:'Saft im Entsafter pressen und im Glas zum Gast bringen'};
 function randLook(R){const p=a=>a[Math.floor(R()*a.length)];
   const L={skin:p(['#f2c9a8','#e8b890','#c58a5c','#8a5a3a','#f6d3bc','#dc9a72','#6a4028']),hair:p(['#1c1a24','#3a2418','#8a3a1a','#e0c070','#a8a8b0','#ebe6dc','#c8502a','#ff8fb5','#2a4a8a']),
     style:p(['bun','curly','bald','bob','spiky','long','short']),shirt:p(['#7a5a9a','#c0392b','#2c3e70','#3f8f3a','#e8a020','#1a1a1a','#f4efe6','#5a8aa0'])};
@@ -2152,6 +2384,7 @@ function mkWish(t,d,R){const w={t,w:1};
   if(t==='warm')w.v=Math.round(40+d*20);else if(t==='portion')w.v=Math.round(2+d*4+R());else if(t==='variety')w.v=2+Math.round(d*3);
   else if(t==='fine')w.v=4+Math.round(d*8);else if(t==='clean')w.v=Math.round(60-d*35);else if(t==='mixed')w.v=2+Math.round(d*2);else if(t==='cold')w.v=Math.round(10-d*14);
   if(t==='done'||t==='baked'||t==='fried'||t==='grilled'||t==='breaded')w.w=1.3;return w}
+function juicyKey(k){const m=M[k];if(!m)return false;if(k in JUICY)return JUICY[k]>.3;return m.cat==='obst'||m.cat==='beeren'}
 const LVCACHE={};
 function level(idx){
   if(LVCACHE[idx])return LVCACHE[idx];
@@ -2173,6 +2406,7 @@ function level(idx){
     if(wants.some(w=>w.t==='fine')){const fw=wants.find(w=>w.t==='fine');const big=Object.keys(pantry).sort((a,b)=>M[b].r-M[a].r)[0];if(big)pantry[big]+=fw.v>8?1:0}
     const pw=wants.find(w=>w.t==='portion');if(pw){const ks=Object.keys(pantry);let bites=ks.reduce((s,k)=>s+pantry[k]*Math.PI*M[k].r*M[k].r*.8/900,0),g=0;
       while(bites<pw.v*1.6&&g<12&&ks.length){const k=ks[g%ks.length];pantry[k]++;bites+=Math.PI*M[k].r**2*.8/900;g++}}
+    if(wants.some(w=>w.t==='drink')&&!Object.keys(pantry).some(k=>juicyKey(k)))pantry[R()<.5?'orange':'apple']=2;
     const hs=wants.filter(w=>w.t!=='taste').map(w=>HINT[w.t]);
     lv={name:p(FIRST)+' '+p(LAST),title:p(TITLES),quote:p(C.quotes),look:randLook(R),wants,pantry,time:Math.round(200-d*100),
       hint:hs.length?'Tipp: '+hs.join(', ')+'.':'',good:p(['Wunderbar!','Genau so!','Köstlich, danke!','Ich komme wieder!']),ok:p(['Ganz okay.','Geht so.','Nicht schlecht.']),bad:p(['Nee, wirklich nicht.','Das war nichts.','Ich geh lieber woanders hin.'])}}
@@ -2180,12 +2414,12 @@ function level(idx){
 }
 function chipLines(c){const out=[];for(const w of c.wants){
   if(w.t==='taste'){const a=Object.keys(w.want);if(a.length)out.push([a.join(' · '),0]);const h=Object.keys(w.hate);if(h.length)out.push(['nicht '+h.join(', '),1])}
-  else out.push([{warm:`warm (${w.v}°+)`,portion:`satt (${w.v} Bissen)`,done:'gut gegart',variety:`${w.v}+ Zutaten`,fine:`${w.v}+ Stücke`,clean:`Sauerei < ${w.v}%`,mixed:`gemixt (${w.v}+)`,baked:'gebacken',cold:`kalt (≤ ${w.v}°)`,fried:'frittiert',grilled:'gegrillt',breaded:'paniert'}[w.t],0])}
+  else out.push([{warm:`warm (${w.v}°+)`,portion:`satt (${w.v} Bissen)`,done:'gut gegart',variety:`${w.v}+ Zutaten`,fine:`${w.v}+ Stücke`,clean:`Sauerei < ${w.v}%`,mixed:`gemixt (${w.v}+)`,baked:'gebacken',cold:`kalt (≤ ${w.v}°)`,fried:'frittiert',grilled:'gegrillt',breaded:'paniert',drink:'mit Getränk'}[w.t],0])}
   return out}
 function wishText(w){if(w.t==='taste')return'Geschmack: '+Object.keys(w.want).join(', ')+(Object.keys(w.hate).length?'. Bloß nicht '+Object.keys(w.hate).join(', '):'')+(w.balance?'. Ausgewogen':'');
   return{warm:`Warm serviert, mindestens ${w.v} °C`,portion:`Satt werden: ${w.v} Bissen`,done:'Alles gar: nichts roh, nichts verbrannt',variety:`Mindestens ${w.v} verschiedene Zutaten`,
     fine:`Fein geschnitten: ${w.v}+ Stücke`,clean:`Saubere Küche: Sauerei unter ${w.v} %`,mixed:`Etwas Gemixtes aus ${w.v}+ Zutaten`,baked:'Etwas Gebackenes aus dem Ofen',
-    cold:`Kalt serviert, höchstens ${w.v} °C`,fried:'Etwas Frittiertes',grilled:'Etwas vom Grill',breaded:'Etwas Paniertes, knusprig frittiert'}[w.t]}
+    cold:`Kalt serviert, höchstens ${w.v} °C`,fried:'Etwas Frittiertes',grilled:'Etwas vom Grill',drink:'Ein Getränk im Glas dazu, zum Beispiel frischer Saft',breaded:'Etwas Paniertes, knusprig frittiert'}[w.t]}
 
 /* --- judging --- */
 function dishName(b){
@@ -2195,6 +2429,8 @@ function dishName(b){
   else if(b.type==='eggwhite'||b.type==='yolk')n=b.cook>.45?'Spiegelei':'rohes Ei';
   else if(b.type==='dough'&&b.cook>.45)n='Brot';
   else if(b.type==='kernel')n='Maiskorn';
+  if(b.waffle>.4&&b.cook>.4){n=(m.mix&&(m.batter||/teig/i.test(m.label)))||['cakedough','pancake','waffle','dough'].includes(b.type)?'Waffel':n+' (gewaffelt)'}
+  else if(b.toast>.3&&b.cook>.3){n=b.type==='toast'?'Toast':m.cat==='backen'?'Geröstetes '+n:n+' (getoastet)'}
   if(b.cook>1.5)n='verbrannt: '+n;else if(m.needsCook&&b.cook<.45&&!/rohes/.test(n))n='roh: '+n;
   if(b.bread>=3){const meat=['steak','porkchop','chickenbreast','turkey','chickenleg','duck','lambchop'],cat=m.cat;
     if(b.fried>.4)return meat.includes(b.type)?(b.type==='chickenbreast'||b.type==='turkey'?'Hähnchenschnitzel':'Schnitzel'):cat==='fisch'?'Backfisch':cat==='milch'?'Backkäse':'Paniert: '+n;
@@ -2202,6 +2438,10 @@ function dishName(b){
   if(b.fried>.4)n+=' (frittiert)';else if(b.grill>.4)n+=' (gegrillt)';
   return n}
 function analyse(items){
+  const food=items.filter(b=>!b.m.drink),dr=items.filter(b=>b.m.drink),a=analyseFood(food.length?food:dr);
+  a.drinks=dr.length;a.drink=dr.length?1:0;if(dr.length&&food.length){a.prof[3]*=.65;for(const b of dr){const nm=dishName(b);a.names[nm]=(a.names[nm]||0)+1}}
+  return a}
+function analyseFood(items){
   let fire=0,food=0,drink=0,tot=0,tw=0,T=0,raw=0,burnt=0,pieces=0,mixedMax=0,baked=0,fried=0,grilled=0,breaded=0;const prof=[0,0,0,0,0],ingr={},names={};
   for(const b of items){const w=Math.abs(polyArea(b.pts));tot+=w;const m=b.m;
     const q=(b.cook>1.5?.35:1)*(m.str||1);tw+=w*(m.str||1);for(let i=0;i<5;i++)prof[i]+=m.taste[i]*w*q;
@@ -2215,8 +2455,9 @@ function analyse(items){
     if(b.m.drink)drink+=w;else{food+=w;if(m.taste[3]*(m.str||1)>=.6&&b.cook<1.5)fire+=w}
     pieces++;const nm=dishName(b);names[nm]=(names[nm]||0)+1}
   if(tw)for(let i=0;i<5;i++)prof[i]/=tw;
-  if(drink&&drink<tot)prof[3]*=.65;
-  return{fire:food?fire/food:0,drink:tot?drink/tot:0,tot,T:tot?T/tot:ROOM,raw:tot?raw/tot:0,burnt:tot?burnt/tot:0,fried:tot?fried/tot:0,grilled:tot?grilled/tot:0,breaded:tot?breaded/tot:0,pieces,mixedMax,baked,prof,
+  const SS={};for(const b of items)if(b.season)for(const k in b.season)SS[k]=(SS[k]||0)+b.season[k];
+  for(const k in SS){const S=tot?SS[k]*90/tot:0;SS[k]=S;if(SPICE[k])for(let i=0;i<5;i++)prof[i]+=SPICE[k][i]*Math.min(S,1.5)*.5}
+  return{salt:SS.salt||0,spiced:Object.keys(SS).length,fire:food?fire/food:0,drink:tot?drink/tot:0,tot,T:tot?T/tot:ROOM,raw:tot?raw/tot:0,burnt:tot?burnt/tot:0,fried:tot?fried/tot:0,grilled:tot?grilled/tot:0,breaded:tot?breaded/tot:0,pieces,mixedMax,baked,prof,
     variety:Object.keys(ingr).filter(k=>ingr[k]/tot>.03).length,bites:tot/900,names}}
 function judge(c,items,opt={}){
   const a=analyse(items),res=[];
@@ -2238,10 +2479,12 @@ function judge(c,items,opt={}){
     else if(w.t==='baked'){s=a.baked;label='Gebacken';note=a.baked>=1?'goldbraun':a.baked?'noch roh':'nichts'}
     else if(w.t==='fried'){s=clamp(a.fried/.3,0,1);label='Frittiert';note=Math.round(a.fried*100)+' %'}
     else if(w.t==='breaded'){s=clamp(a.breaded/.3,0,1);label='Paniert';note=Math.round(a.breaded*100)+' %'}
+    else if(w.t==='drink'){s=a.drinks?1:0;label='Getränk';note=a.drinks?'im Glas':'keins'}
     else if(w.t==='grilled'){s=clamp(a.grilled/.3,0,1);label='Gegrillt';note=Math.round(a.grilled*100)+' %'}
     res.push({t:w.t,w:w.w,s,label,note})}
   let score=0,ws=0;for(const r of res){score+=r.s*r.w;ws+=r.w}score=Math.round(score/ws*100);
-  if(a.burnt>.5)score=Math.round(score*.6);if(opt.loose)score=Math.round(score*.75);if(!items.length)score=0;
+  if(opt.plating){const ps=opt.plating,bonus=clamp(Math.round((ps.s-.4)*14),-3,8);res.push({t:'plating',w:0,s:ps.s,label:'Anrichten',note:`${ps.note} (${bonus>=0?'+':''}${bonus})`});opt.bonus=bonus}
+  if(a.burnt>.5)score=Math.round(score*.6);if(opt.loose)score=Math.round(score*.75);if(a.salt>.9)score=Math.round(score*.85);if(opt.bonus)score=clamp(score+opt.bonus,0,100);if(!items.length)score=0;
   const worst=res.slice().sort((x,y)=>x.s-y.s)[0];
   let quote=score>=85?c.good:score>=50?c.ok:c.bad;
   if(!items.length)quote='Der Teller ist ja leer!';
@@ -2251,19 +2494,56 @@ function judge(c,items,opt={}){
   if(opt.loose&&items.length)quote='Ein Getränk ohne Glas auf dem Teller? '+quote;
   return{emo:em.emo,emoText:em.text,score,res,quote,dish,stars:score>=85?3:score>=65?2:score>=45?1:0}}
 
+/* --- recipe book --- */
+const RECIPES=[
+ ['Toast',/^Toast$/,'Toastbrot in den Toaster (Station Ofen)'],['Waffel',/^Waffel$/,'Teig mixen und ins Waffeleisen geben'],
+ ['Pfannkuchen',/^Pfannkuchen$/,'Mehl, Milch und Ei mixen, dann ab in die Pfanne'],['Kuchen',/Kuchen$/,'Süßen Teig mixen und im Ofen backen'],
+ ['Brot',/^Brot$/,'Brotteig im Ofen backen'],['Pizza',/^Pizza$/,'Teig mit Tomate oder Käse mixen und backen'],
+ ['Spiegelei',/^Spiegelei$/,'Ein Ei in die heiße Pfanne hauen'],['Rührei',/^Rührei$/,'Eier mixen und braten'],
+ ['Popcorn',/^Popcorn/,'Maiskörner in die Mikrowelle'],['Schnitzel',/^Schnitzel$/,'Fleisch panieren und frittieren'],
+ ['Hähnchenschnitzel',/^Hähnchenschnitzel$/,'Hähnchenbrust panieren und frittieren'],['Backfisch',/^Backfisch$/,'Fisch panieren und frittieren'],
+ ['Backkäse',/^Backkäse$/,'Käse panieren und frittieren'],['Frikadelle',/^Frikadelle$/,'Fleisch mixen und braten'],
+ ['Fischfrikadelle',/^Fischfrikadelle$/,'Fisch mixen und braten'],['Tomatensuppe',/^Tomatensuppe$/,'Tomaten mit etwas mixen und im Topf kochen'],
+ ['Scharfe Salsa',/^Scharfe Salsa$/,'Tomate und Chili mixen'],['Gemüseeintopf',/^Gemüseeintopf$/,'Verschiedenes Gemüse mixen und kochen'],
+ ['Pommes',/^Kartoffel.*\(frittiert\)$/,'Kartoffel schneiden und frittieren'],['Grillsteak',/^Steak \(gegrillt\)$/,'Steak auf den heißen Grill'],
+ ['Grillmais',/^Maiskolben \(gegrillt\)$/,'Maiskolben auf den Grill'],['Orangensaft',/^Orangensaft$/,'Orangen in den Entsafter'],
+ ['Tomatensaft',/^Tomatensaft$/,'Tomaten in den Entsafter'],['Multivitaminsaft',/^Multivitaminsaft$/,'Drei oder mehr Obstsorten entsaften'],
+ ['Grüner Saft',/^Grüner Saft$/,'Gurke, Spinat, Kiwi oder Limette entsaften'],['Gemüsesaft',/^Gemüsesaft$/,'Viel Gemüse entsaften'],
+ ['Milchshake',/Milchshake$/,'Obst mit Milch mixen'],['Kakao',/^Kakao$/,'Kakaopulver mit Milch mixen'],
+ ['Obst-Smoothie',/^Obst-Smoothie$/,'Mehrere Obstsorten mixen'],['Fruchteis',/(eis|-Eis)$/,'Frucht-Creme ins Gefrierfach'],
+ ['Schoko-Creme',/^Schoko-.*-Creme$/,'Schokolade mit Obst mixen'],['Geröstetes Brot',/^Geröstetes /,'Brot oder Brötchen toasten'],
+];
+function discover(name){if(!name||/^(roh|verbrannt): /.test(name)||!game.save)return;const B=game.save.book;
+  for(const[r,re]of RECIPES)if(re.test(name)&&!B.includes(r)){B.push(r);saveGame();toast('Neu im Rezeptbuch: '+r+'!',2600);sfx.combo(3);buzz(20)}}
+function openBook(){show('scrBook');const B=game.save.book;scr('bookCount').textContent=`${B.length} / ${RECIPES.length} entdeckt`;
+  scr('bookGrid').innerHTML=RECIPES.map(([r,,h])=>B.includes(r)?`<div class="rc ok"><b>${r}</b><small>${h}</small></div>`:`<div class="rc"><b>???</b><small>${h}</small></div>`).join('')}
+
+/* --- daily guest --- */
+function dayKey(d=new Date()){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function dailyLevel(){const k=dayKey();if(game.dailyL&&game.dailyL.key===k)return game.dailyL;
+  const n=Math.floor(new Date(k+'T12:00:00').getTime()/864e5),R=srand(n*104729+7),pick=a=>a[Math.floor(R()*a.length)];
+  let idx=10+Math.floor(R()*89);if(idx%10===9)idx--;const B=level(idx);
+  const L=Object.assign({},B,{name:pick(FIRST)+' '+pick(LAST),title:'Tagesgast',look:randLook(R),wants:B.wants.map(w=>Object.assign({},w)),pantry:Object.assign({},B.pantry),daily:true,key:k,idx:-1,boss:false,time:B.time+20});
+  if(!L.wants.some(w=>w.t==='drink')&&R()<.5){L.wants.push({t:'drink',w:1});if(!Object.keys(L.pantry).some(juicyKey))L.pantry.orange=2}
+  return game.dailyL=L}
+function dailyHistory(){const D=game.save.daily,out=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=dayKey(d);out.push([['So','Mo','Di','Mi','Do','Fr','Sa'][d.getDay()],D[k]])}return out}
+function streak(){let n=0;const d=new Date();for(;;){if(game.save.daily[dayKey(d)]===undefined)break;n++;d.setDate(d.getDate()-1)}return n}
+const timed=()=>game.mode==='story'||game.mode==='daily';
+const curLevel=()=>game.mode==='daily'?dailyLevel():level(game.level);
+
 /* --- emotions --- */
 const EMO_TEXT={spicy:['SCHARF!!','Feuer! Wasser!','Meine Zunge brennt!'],hot:['Heiß, heiß!','Autsch, heiß!'],cold:['Brrr!','Eiskalt!'],sour:['Uff, sauer!','Sauer!'],
-  sweet:['Viel zu süß!','Zuckerschock!'],burnt:['*hust hust*','Verkohlt!'],raw:['Bäh, roh!','Das lebt ja noch!'],yuck:['Igitt!','Bäh!'],love:['Mmmh!','Himmlisch!'],happy:['Lecker!','Gut!'],meh:['Hm.','Naja.'],loose:['Wo ist das Glas?!']};
+  sweet:['Viel zu süß!','Zuckerschock!'],burnt:['*hust hust*','Verkohlt!'],raw:['Bäh, roh!','Das lebt ja noch!'],yuck:['Igitt!','Bäh!'],salty:['Viel zu salzig!','Salzig! Wasser!'],love:['Mmmh!','Himmlisch!'],happy:['Lecker!','Gut!'],meh:['Hm.','Naja.'],loose:['Wo ist das Glas?!']};
 function emotionOf(c,a,score,opt={}){
   let hates={},wants={},cold=false;for(const w of c.wants){if(w.t==='taste'){Object.assign(hates,w.hate);Object.assign(wants,w.want)}if(w.t==='cold')cold=true}
   const P=k=>a.prof[DIMS.indexOf(k)],tol=hates.scharf?.12:wants.scharf?.6:.3;let e='meh';
   if(opt.loose)e='loose';
-  else if(a.burnt>.35)e='burnt';else if(P('scharf')>tol||(!(wants.scharf>.5)&&a.fire>(hates.scharf?.08:.18)))e='spicy';else if(a.raw>.3)e='raw';
+  else if(a.burnt>.35)e='burnt';else if(a.salt>.9)e='salty';else if(P('scharf')>tol||(!(wants.scharf>.5)&&a.fire>(hates.scharf?.08:.18)))e='spicy';else if(a.raw>.3)e='raw';
   else if(a.T<4&&!cold)e='cold';else if(a.T>80)e='hot';else if(P('sauer')>(hates.sauer?.26:.45))e='sour';else if(P('süß')>(hates['süß']?.3:.85))e='sweet';
   else if(score>=85)e='love';else if(score>=60)e='happy';else if(score<35)e='yuck';
   const L=EMO_TEXT[e];let text=L[Math.floor(Math.random()*L.length)];
   if(e==='spicy'&&a.drink>0)text='SCHARF! Gut, dass es was zu trinken gibt!';
-  return{emo:e==='loose'?'yuck':e,text}}
+  return{emo:e==='loose'?'yuck':e==='salty'?'sour':e,text}}
 
 /* --- faces --- */
 function drawFace(g,c,mood=0,size=120,bgOn=true,emo=null,t=0){
@@ -2353,16 +2633,17 @@ function emoFx(g,emo,t){g.save();
 
 /* ================= game state & screens ================= */
 const game={mode:'menu',level:-1,pantry:null,ev:{},time:0,running:false,lastStn:-1,taster:0,bust:null,bustName:'',mark:null,save:loadSave()};
-function loadSave(){try{const s=JSON.parse(localStorage.getItem('squishKitchen.v2')||'{}');return{stars:Array.isArray(s.stars)?s.stars:[],tut:!!s.tut}}catch(e){return{stars:[],tut:false}}}
+function loadSave(){try{const s=JSON.parse(localStorage.getItem('squishKitchen.v2')||'{}');return{stars:Array.isArray(s.stars)?s.stars:[],tut:!!s.tut,book:Array.isArray(s.book)?s.book:[],daily:s.daily&&typeof s.daily==='object'?s.daily:{}}}catch(e){return{stars:[],tut:false,book:[],daily:{}}}}
 function saveGame(){try{localStorage.setItem('squishKitchen.v2',JSON.stringify(game.save))}catch(e){}}
-const SCREENS=['scrMenu','scrLevels','scrIntro','scrResult'];
-function show(id){for(const s of SCREENS)scr(s).hidden=s!==id;game.running=!id&&game.mode==='story'&&game.time>0}
+const SCREENS=['scrMenu','scrLevels','scrIntro','scrResult','scrBook'];
+function show(id){for(const s of SCREENS)scr(s).hidden=s!==id;game.running=!id&&timed()&&game.time>0}
 document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',()=>openMenu()));
 function openMenu(){
   game.mode='menu';show('scrMenu');scr('hud').hidden=true;scr('coach').hidden=true;game.mark=null;
   const n=game.save.stars.filter(x=>x>0).length;scr('storyProg').textContent=`${n} / 100 Gäste`;scr('sandCount').textContent=`${FOODS.length} Zutaten`;
   scr('menuNote').textContent=game.save.tut?'':'Neu hier? Das Tutorial zeigt in drei Minuten alles Wichtige.';
   scr('goTut').classList.toggle('pulse',!game.save.tut);
+  {const v=game.save.daily[dayKey()];scr('dailyProg').textContent=v===undefined?'neu heute':`heute ${v} P.`;scr('bookProg').textContent=`${game.save.book.length} / ${RECIPES.length}`}
   resetKitchen();setBust(null);goStation(0);camX=camT;demoScene();
 }
 function unlocked(i){return i===0||(game.save.stars[i-1]||0)>0}
@@ -2383,28 +2664,28 @@ function openLevels(ch){
 }
 function pantryText(p){return Object.entries(p).map(([k,v])=>`<span>${v}× ${M[k].label}</span>`).join('')}
 function openIntro(i){
-  const L=level(i);game.level=i;show('scrIntro');game.running=false;
+  const L=i<0?dailyLevel():level(i);game.level=i;show('scrIntro');game.running=false;
   drawFace(scr('introFace').getContext('2d'),L,0,232);
   scr('introName').textContent=L.name;scr('introTitle').textContent=L.title+(L.boss?' · Boss':'');scr('introQuote').textContent='„'+L.quote+'“';
-  scr('introNo').textContent=`GAST ${String(i+1).padStart(3,'0')}`;scr('introTime').textContent=`ZEIT ${fmtTime(L.time)}`;
+  scr('introNo').textContent=i<0?`TAGESGAST ${L.key.slice(8)}.${L.key.slice(5,7)}.`:`GAST ${String(i+1).padStart(3,'0')}`;scr('introTime').textContent=`ZEIT ${fmtTime(L.time)}`;
   scr('introWish').innerHTML=L.wants.map(w=>`<li>${wishText(w)}</li>`).join('');
-  scr('introPantry').innerHTML=pantryText(L.pantry);scr('introHint').textContent=L.hint||'';
-  scr('introGo').textContent=game.mode==='story'&&game.inLevel===i&&game.time>0?'Weiter kochen':'Kochen';
+  scr('introPantry').innerHTML=pantryText(L.pantry);scr('introHint').textContent=i<0?`Jeden Tag ein neuer Gast. Bestwert heute: ${game.save.daily[L.key]??'noch keiner'}. Serie: ${streak()} Tage.`:(L.hint||'');
+  scr('introGo').textContent=timed()&&game.inLevel===i&&game.time>0?'Weiter kochen':'Kochen';
 }
-scr('introBack').addEventListener('click',()=>{if(game.mode==='story'&&game.inLevel===game.level&&game.time>0)show(null);else openLevels(Math.floor(game.level/10))});
-scr('introGo').addEventListener('click',()=>{if(game.mode==='story'&&game.inLevel===game.level&&game.time>0){show(null);return}startLevel(game.level)});
+scr('introBack').addEventListener('click',()=>{if(timed()&&game.inLevel===game.level&&game.time>0)show(null);else if(game.level<0)openMenu();else openLevels(Math.floor(game.level/10))});
+scr('introGo').addEventListener('click',()=>{if(timed()&&game.inLevel===game.level&&game.time>0){show(null);return}startLevel(game.level)});
 function fmtTime(t){t=Math.max(0,Math.ceil(t));return`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`}
 function setHud(c,mode){
   const h=scr('hud');h.hidden=false;const face=scr('hudFace').getContext('2d');
   if(mode==='sandbox'){const t=CRITICS[game.taster];drawFace(face,t,0,76);scr('hudName').textContent='Sandkasten';scr('hudTitle').textContent='Wer probiert? Gesicht antippen.';
     scr('hudTimer').textContent='';scr('hudWish').innerHTML=`<li>${t.name}</li>`;scr('serve').textContent='Probieren lassen';setBust(t);return}
-  drawFace(face,c,0,76);scr('hudName').textContent=c.name;scr('hudTitle').textContent=mode==='tutorial'?'Tutorial':`Gast ${c.idx+1}${c.boss?' · Boss':''}`;
+  drawFace(face,c,0,76);scr('hudName').textContent=c.name;scr('hudTitle').textContent=mode==='tutorial'?'Tutorial':c.daily?'Tagesgast':`Gast ${c.idx+1}${c.boss?' · Boss':''}`;
   scr('hudWish').innerHTML=chipLines(c).map(([t,no])=>`<li${no?' class="no"':''}>${t}</li>`).join('');scr('serve').textContent='Servieren';setBust(c);updTimer();
 }
-function updTimer(){const el=scr('hudTimer');if(game.mode!=='story'){el.textContent='';return}el.textContent=fmtTime(game.time);el.classList.toggle('low',game.time<20)}
-scr('hudFace').addEventListener('click',()=>{if(game.mode==='story')openIntro(game.level);else if(game.mode==='sandbox'){game.taster=(game.taster+1)%CRITICS.length;setHud(null,'sandbox')}});
+function updTimer(){const el=scr('hudTimer');if(!timed()){el.textContent='';return}el.textContent=fmtTime(game.time);el.classList.toggle('low',game.time<20)}
+scr('hudFace').addEventListener('click',()=>{if(timed())openIntro(game.level);else if(game.mode==='sandbox'){game.taster=(game.taster+1)%CRITICS.length;setHud(null,'sandbox')}});
 function startLevel(i){
-  const L=level(i);game.mode='story';game.level=i;game.inLevel=i;game.time=L.time;
+  const L=i<0?dailyLevel():level(i);game.mode=i<0?'daily':'story';game.level=i;game.inLevel=i;game.time=L.time;
   game.pantry=Object.assign({},L.pantry);resetKitchen();updTray();goStation(0);camX=camT;show(null);setHud(L,'story');
   if(L.hint)toast(L.hint,5500);lockLandscape();
 }
@@ -2412,6 +2693,8 @@ function startSandbox(){game.mode='sandbox';game.pantry=null;resetKitchen();demo
 scr('goStory').addEventListener('click',()=>{audioInit();lockLandscape();openLevels()});
 scr('goSandbox').addEventListener('click',()=>{audioInit();startSandbox()});
 scr('goTut').addEventListener('click',()=>{audioInit();startTutorial()});
+scr('goDaily').addEventListener('click',()=>{audioInit();lockLandscape();openIntro(-1)});
+scr('goBook').addEventListener('click',()=>openBook());
 scr('menuBtn').addEventListener('click',()=>openMenu());
 scr('serve').addEventListener('click',()=>serve(false));
 function serve(auto){
@@ -2419,10 +2702,13 @@ function serve(auto){
   const loose=items.filter(b=>isDrink(b)&&where(b)==='plate').length;
   if(!items.length&&!auto&&bodies.some(b=>where(b)==='glass')){toast('Bring das Glas zum Gast: Glas greifen und auf den Tab „Teller“ ziehen.',3500);return}
   if(!items.length&&!auto){toast('Leg zuerst etwas auf den Teller (Station „Teller“).');return}
-  const c=game.mode==='story'?level(game.level):game.mode==='tutorial'?CRITICS[0]:CRITICS[game.taster];
-  const r=judge(c,items,{loose});if(auto)r.quote=items.length?'Die Zeit ist um! '+r.quote:'Die Zeit ist um und der Teller ist leer.';
+  const c=timed()?curLevel():game.mode==='tutorial'?CRITICS[0]:CRITICS[game.taster];
+  closePlating(true);const P=game.plating,ps=P&&P.done&&items.some(b=>!b.m.drink)?platingScore():null;
+  const r=judge(c,items,{loose,plating:ps});if(auto)r.quote=items.length?'Die Zeit ist um! '+r.quote:'Die Zeit ist um und der Teller ist leer.';
+  for(const b of items)discover(dishName(b));
   for(const b of items){for(let i=0;i<4;i++)puff(b.cx+rnd(-b.R,b.R),b.cy,'steam');remove(b)}
   if(gs&&!glassAtHome()){glass.load=[];glass.fly=true}
+  game.lastSnap=ps&&P.snap||null;game.plating=null;
   game.running=false;game.time=0;game.ev.served=1;goStation(4);
   const mood=clamp((r.score-50)/45,-1,1);game.react={c,emo:r.emo,mood,t:0,text:r.emoText};setBust(c,mood,r.emo,0);
   sfx.chew();if(r.emo==='spicy'||r.emo==='hot')setTimeout(()=>sfx.splat&&sfx.squish(.4),500);setTimeout(()=>showResult(c,r),auto?1600:2300);
@@ -2431,6 +2717,7 @@ function showResult(c,r){
   show('scrResult');const story=game.mode==='story';
   drawFace(scr('resFace').getContext('2d'),c,clamp((r.score-50)/45,-1,1),232,true,r.emo,36);
   scr('resName').textContent=c.name;scr('resQuote').textContent='„'+r.quote+'“';
+  {const im=scr('resPlate');im.hidden=!game.lastSnap;if(game.lastSnap)im.src=game.lastSnap}
   scr('resDish').textContent='Serviert: '+(r.dish||'nichts');
   const sc=scr('resScore');let v=0;const tgt=r.score;const tick=()=>{v=Math.min(tgt,v+Math.max(1,Math.round(tgt/30)));sc.innerHTML=`${v}<small> / 100</small>`;if(v<tgt)requestAnimationFrame(tick)};tick();
   scr('resStars').innerHTML=`${'★'.repeat(r.stars)}<span class="off">${'★'.repeat(3-r.stars)}</span>`;
@@ -2443,12 +2730,16 @@ function showResult(c,r){
     if(r.stars>0&&game.level===99)mk('Alle 100 geschafft!','green',()=>openLevels(9));
     mk('Nochmal','ghost',()=>startLevel(game.level));mk('Gästeliste','ghost',()=>openLevels(Math.floor(game.level/10)));
   }else if(game.mode==='tutorial'){game.save.tut=true;saveGame();scr('coach').hidden=true;game.mark=null;mk('Zur Story','',()=>{game.mode='menu';openLevels(0)});mk('Menü','ghost',()=>openMenu())}
+  else if(game.mode==='daily'){const k=dayKey(),old=game.save.daily[k];if(old===undefined||r.score>old){game.save.daily[k]=r.score;saveGame()}
+    scr('resDish').textContent+=` · Woche: ${dailyHistory().map(([d,v])=>d+' '+(v??'–')).join(' · ')} · Serie ${streak()}`;
+    mk('Nochmal','',()=>startLevel(-1));mk('Menü','ghost',()=>openMenu())}
   else{mk('Weiter kochen','',()=>show(null));mk('Menü','ghost',()=>openMenu())}
   r.stars>=2?sfx.win():sfx.meh();
 }
 function lockLandscape(){try{if(matchMedia('(pointer:coarse)').matches&&!document.fullscreenElement&&document.documentElement.requestFullscreen){document.documentElement.requestFullscreen().then(()=>screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})).catch(()=>{})}}catch(e){}}
 function resetKitchen(){
-  game.react=null;glass.held=glass.fly=false;glass.load=[];if(glass.hx){setGlassGeo(glass.hx,glass.hy);buildSegs()}
+  game.react=null;game.plating=null;if(PL.open){PL.open=false;scr('plating').hidden=true}glass.held=glass.fly=false;glass.load=[];if(glass.hx){setGlassGeo(glass.hx,glass.hy);buildSegs()}
+  Object.assign(toaster,{on:false,t:0,down:false});Object.assign(waffle,{on:false,t:0,lid:0});if(toaster.top)buildSegs();
   bodies=[];drops=[];drips=[];puffs=[];fx=[];ptr.grab=null;mixT=0;juiceT=0;stx.clearRect(0,0,WW,H);mess=0;game.ev={};
   pan.lvl=pot.lvl=grill.lvl=fryer.lvl=0;pan.T=pot.T=grill.T=fryer.T=ROOM;Object.assign(oven,{lvl:0,open:false,T:ROOM});Object.assign(micro,{lvl:0,open:false,T:ROOM,timer:0});freezer.open=false;
 }
@@ -2521,12 +2812,12 @@ function loop(t){
   while(acc>=1000/60&&n<3){sndBudget=0;step();acc-=1000/60;n++}
   if(game.running){game.time-=dt/1000;if(++tick%6===0)updTimer();if(game.time<=0){game.time=0;game.running=false;updTimer();serve(true)}}
   if(game.mode==='tutorial')tutTick();
-  sizeCheck(t);render();if(tick++%10===0)updMess();
+  sizeCheck(t);render();renderPlating();if(tick++%10===0)updMess();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 document.addEventListener('visibilitychange',()=>{if(AC){document.hidden?AC.suspend():AC.resume()}last=performance.now()});
-window.__df=drawFace;window.__kitchen={grabGlass,releaseGlass,glassServed,serve,emotionOf,analyse,juicerX:()=>0,juicer,glass,startJuice,juiceMaterial,ladle,setTool:t=>{tool=t},makeBody,mixMaterial,dishName,analyse,add,remove,ptr,bodies:()=>bodies,fx:()=>fx,pan,pot,grill,fryer,freezer,oven,micro,bowl,plate,spawn,step,controls,where,LY,game,startLevel,startSandbox,startTutorial,judge,CRITICS,startMix,level,goStation,M,FOODS,cam:()=>[camX,camT]};
+window.__df=drawFace;window.__kitchen={openPlating,closePlating,platingScore,plState,PL,dailyLevel,openBook,RECIPES,discover,dishName,toaster,waffle,startToast,startWaffle,SHAKERS,shakeOut,openIntro,grabGlass,releaseGlass,glassServed,serve,emotionOf,analyse,juicerX:()=>0,juicer,glass,startJuice,juiceMaterial,ladle,setTool:t=>{tool=t},makeBody,mixMaterial,dishName,analyse,add,remove,ptr,bodies:()=>bodies,fx:()=>fx,pan,pot,grill,fryer,freezer,oven,micro,bowl,plate,spawn,step,controls,where,LY,game,startLevel,startSandbox,startTutorial,judge,CRITICS,startMix,level,goStation,M,FOODS,cam:()=>[camX,camT]};
 })();
 </script>
 </body>
