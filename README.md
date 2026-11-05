@@ -14,13 +14,17 @@ Die Küche hat 5 Stationen. Wisch auf einer freien Stelle nach links oder rechts
 
 | Station | Was es dort gibt |
 |---|---|
-| Brett | Schneidebrett und Glasschüssel mit Mixer |
+| Brett | Schneidebrett, Entsafter mit Glas und Glasschüssel mit Mixer |
 | Herd | Pfanne, Glastopf und Grill, jeweils mit Drehknopf |
 | Ofen | Backofen (180 °C oder 250 °C) und Mikrowelle |
 | Fritte | Fritteuse, Gefrierfach und Panierstraße |
 | Teller | Teller und der Gast am Tisch |
 
-**Werkzeuge:** Greifen, Messer und Fleischklopfer.
+**Werkzeuge:** Greifen, Messer, Fleischklopfer und Kelle.
+
+**Kelle:** Tippe mit der Kelle auf Teig, Saft, Soße oder etwas Gemixtes. Sie schöpft eine kleine Portion ab, die du vorsichtig woanders hinträgst, zum Beispiel einen Klecks Pfannkuchenteig in die Pfanne.
+
+**Entsafter:** Obst oder Gemüse oben hineinlegen und auf PRESSEN tippen. Der Saft läuft ins Glas daneben, der Trester bleibt im Entsafter. Aus einer Orange wird Orangensaft, aus Orange, Apfel und Karotte ein Orangen-Apfel-Karotten-Saft, aus viel Obst ein Multivitaminsaft. Was im Glas ist, wird beim Servieren mitgegeben.
 
 **Mehrere Sachen auf einmal:** Finger kurz auf eine freie Stelle halten und einen Rahmen ziehen. Alles darin ist ausgewählt (gelb gestrichelt). Ziehst du eins davon, kommen alle mit. Antippen fügt einzelne Stücke hinzu oder nimmt sie weg.
 

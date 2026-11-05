@@ -44,8 +44,8 @@ button,select{font-family:var(--ui)}
 .side{position:absolute;left:0;top:0;bottom:0;width:calc(var(--side) + env(safe-area-inset-left,0px));z-index:2;display:flex;flex-direction:column;gap:6px;
   padding:calc(8px + env(safe-area-inset-top,0px)) 6px calc(6px + env(safe-area-inset-bottom,0px)) calc(6px + env(safe-area-inset-left,0px));
   background:var(--rail);border-right:2px solid #120d09}
-.tools{display:flex;gap:2px;background:#16110d;border-radius:10px;padding:2px;flex:none}
-.tool{appearance:none;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;flex:1;height:30px;border-radius:8px;cursor:pointer;padding:0}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:#16110d;border-radius:10px;padding:2px;flex:none}
+.tool{appearance:none;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;height:28px;border-radius:8px;cursor:pointer;padding:0}
 .tool svg{width:18px;height:18px}
 .tool[aria-pressed="true"]{background:var(--mustard);color:var(--ink)}
 .catsel{appearance:none;-webkit-appearance:none;width:100%;border:1px solid var(--line);border-radius:8px;background:#16110d;color:var(--fg);font:700 10px var(--ui);padding:6px 4px;text-align:center;text-align-last:center;flex:none}
@@ -162,6 +162,7 @@ button,select{font-family:var(--ui)}
       <button class="tool" data-tool="hand" aria-pressed="true" aria-label="Greifen und werfen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11m0-1.5V4a1.5 1.5 0 0 1 3 0v7m0-5.5a1.5 1.5 0 0 1 3 0V12m0-3.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.5a6 6 0 0 1-4.6-2.2L4.4 15.6a1.6 1.6 0 0 1 2.4-2.1L8 14.8"/></svg></button>
       <button class="tool" data-tool="knife" aria-pressed="false" aria-label="Messer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l7.5-7.5"/><path d="M10.5 13.5L20 4c1 3-1 9-7 11.5z"/></svg></button>
       <button class="tool" data-tool="mallet" aria-pressed="false" aria-label="Fleischklopfer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="12" height="7" rx="1.5" transform="rotate(45 15 6)"/><path d="M11.5 12.5L3.5 20.5"/></svg></button>
+      <button class="tool" data-tool="ladle" aria-pressed="false" aria-label="Kelle: kleine Portion schöpfen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 3.5L11.5 12"/><path d="M3.5 12.5h9a4.5 4.5 0 0 1-9 0z"/></svg></button>
     </div>
     <select class="catsel" id="catSel" aria-label="Kategorie"></select>
     <div class="tray" id="tray" aria-label="Zutaten holen"></div>
@@ -642,7 +643,7 @@ const micro={kind:'micro',open:false,lvl:0,T:ROOM,timer:0};
 const freezer={kind:'freezer',open:false,T:-18};
 const grill={lvl:0,T:ROOM},fryer={lvl:0,T:ROOM};
 const BOXES=[oven,micro,freezer];
-const bowl={},plate={};let mixT=0;
+const bowl={},plate={},juicer={},glass={};let mixT=0,juiceT=0;
 const BREAD=[{k:0,name:'Mehl',col:'#fbf6ec'},{k:1,name:'Ei',col:'#ffc83a'},{k:2,name:'Brösel',col:'#d8a050'}];
 
 function P(x,y,vx=0,vy=0){return{x,y,px:x-vx,py:y-vy,cut:false,stem:false,s1:Math.random(),s2:Math.random()}}
@@ -683,8 +684,11 @@ function layout(){
   const sx=(i,f)=>side+i*vw+f*vw,top=48;LY.sx=sx;
   LY.ky=(counterFront+H-(LY.saB||0))/2+2;
   // 0: prep
-  LY.board={x0:sx(0,.04),x1:sx(0,.52),y:floorY-5};
-  bowl.w=clamp(vw*.22,110,190);bowl.cx=sx(0,.76);bowl.x0=bowl.cx-bowl.w/2;bowl.x1=bowl.cx+bowl.w/2;bowl.h=bowl.w*.42;bowl.y=floorY-4;bowl.rim=bowl.y-bowl.h;
+  LY.board={x0:sx(0,.03),x1:sx(0,.4),y:floorY-5};
+  juicer.w=clamp(vw*.13,74,112);juicer.cx=sx(0,.5);juicer.x0=juicer.cx-juicer.w/2;juicer.x1=juicer.cx+juicer.w/2;
+  juicer.hb=floorY-44;juicer.hh=Math.min(juicer.w*.8,H*.2);juicer.top=juicer.hb-juicer.hh;juicer.kx=juicer.cx;
+  glass.w=clamp(vw*.075,46,62);glass.h=glass.w*1.35;glass.cx=juicer.x1+glass.w/2+10;glass.x0=glass.cx-glass.w/2;glass.x1=glass.cx+glass.w/2;glass.y=floorY-4;glass.top=glass.y-glass.h;
+  bowl.w=clamp(vw*.2,100,175);bowl.cx=Math.max(sx(0,.82),glass.x1+bowl.w/2+12);bowl.x0=bowl.cx-bowl.w/2;bowl.x1=bowl.cx+bowl.w/2;bowl.h=bowl.w*.42;bowl.y=floorY-4;bowl.rim=bowl.y-bowl.h;
   // 1: stove
   pan.w=clamp(vw*.22,100,170);pan.cx=sx(1,.2);pan.x0=pan.cx-pan.w/2;pan.x1=pan.cx+pan.w/2;pan.y=floorY-22;pan.ry=7;
   pot.w=clamp(vw*.17,90,150);pot.cx=sx(1,.49);pot.x0=pot.cx-pot.w/2;pot.x1=pot.cx+pot.w/2;pot.y=floorY-14;pot.h=Math.min(pot.w*.7,H*.22);
@@ -713,6 +717,8 @@ function seg(ax,ay,bx,by,r=3,on=null,box=false){segs.push({ax,ay,bx,by,r,on,box}
 function buildSegs(){
   segs=[];
   const B=LY.board;seg(B.x0,B.y,B.x1,B.y,2);
+  {const j=juicer;seg(j.x0+4,j.hb,j.x1-4,j.hb,3);seg(j.x0-4,j.top,j.x0+4,j.hb,3);seg(j.x1-4,j.hb,j.x1+4,j.top,3);
+   const g=glass;seg(g.x0+3,g.y,g.x1-3,g.y,3);seg(g.x0,g.top,g.x0+3,g.y,3);seg(g.x1-3,g.y,g.x1,g.top,3)}
   const pb=pan.y;seg(pan.x0+8,pb,pan.x1-8,pb,3);seg(pan.x0-2,pb-14,pan.x0+8,pb,3);seg(pan.x1-8,pb,pan.x1+2,pb-14,3);
   const tb=pot.y;seg(pot.x0+3,tb,pot.x1-3,tb,3);seg(pot.x0,tb-pot.h,pot.x0+3,tb,3);seg(pot.x1-3,tb,pot.x1,tb-pot.h,3);
   seg(grill.x0,grill.y,grill.x1,grill.y,3);seg(grill.x0-3,grill.y-8,grill.x0+2,grill.y,3);seg(grill.x1-2,grill.y,grill.x1+3,grill.y-8,3);
@@ -732,11 +738,13 @@ function boxOf(b){for(const o of BOXES)if(inBox(o,b.cx,b.cy))return o;return nul
 function inPan(b){return b.cx>pan.x0&&b.cx<pan.x1&&b.cy>pan.y-60&&b.cy<pan.y+4}
 function inPot(b){return b.cx>pot.x0&&b.cx<pot.x1&&b.cy>pot.y-pot.h-4&&b.cy<pot.y+4}
 function inBowl(b){return b.cx>bowl.x0-4&&b.cx<bowl.x1+4&&b.cy>bowl.rim-130&&b.cy<bowl.y+2}
+function inJuicer(b){return b.cx>juicer.x0-2&&b.cx<juicer.x1+2&&b.cy>juicer.top-60&&b.cy<juicer.hb+3}
+function inGlass(b){return b.cx>glass.x0-2&&b.cx<glass.x1+2&&b.cy>glass.top-50&&b.cy<glass.y+3}
 function inPlate(b){return b.cx>plate.x0&&b.cx<plate.x1&&b.cy>plate.y-170&&b.cy<plate.y+4}
 function where(b){const o=boxOf(b);if(o)return o.kind;if(inPot(b))return'pot';if(inPan(b))return'pan';
   if(b.cx>grill.x0&&b.cx<grill.x1&&b.cy>grill.y-70&&b.cy<grill.y+2)return'grill';
   if(b.cx>fryer.x0&&b.cx<fryer.x1&&b.cy>fryer.y-fryer.h-10&&b.cy<fryer.y+2)return'fryer';
-  if(dishOf(b))return'dish';if(inBowl(b))return'bowl';if(inPlate(b))return'plate';return null}
+  if(dishOf(b))return'dish';if(inJuicer(b))return'juicer';if(inGlass(b))return'glass';if(inBowl(b))return'bowl';if(inPlate(b))return'plate';return null}
 function dishOf(b){for(const d of BREAD)if(b.cx>d.x0&&b.cx<d.x1&&b.cy>d.y-60&&b.cy<d.y+3)return d;return null}
 /* ================= physics ================= */
 function shapeMatch(b,k,first){
@@ -870,6 +878,7 @@ function local(e){const r=cv.getBoundingClientRect(),sx=e.clientX-r.left;return[
 function inR(x,y,a,b,c,d){return x>=a&&x<=c&&y>=b&&y<=d}
 function controls(x,y){
   if(Math.abs(x-bowl.kx)<38&&Math.abs(y-LY.ky)<20){startMix();return true}
+  if(Math.abs(x-juicer.kx)<38&&Math.abs(y-LY.ky)<20){startJuice();return true}
   for(const[o,name,n]of KNOBS()){if(Math.hypot(x-o.kx,y-LY.ky)<26){o.lvl=(o.lvl+1)%n;sfx.click();
     toast(o.lvl?(n===2?`${name} an (180 °C)`:`${name}: ${o.lvl===1?'mittlere':'volle'} Hitze`):`${name} aus`);return true}}
   const o=oven;
@@ -903,7 +912,7 @@ cv.addEventListener('pointerdown',e=>{
   const[x,y,sx]=local(e);
   if(controls(x,y))return;
   cv.setPointerCapture(e.pointerId);clearTimeout(ptr.lp);
-  Object.assign(ptr,{down:true,x,y,lx:x,ly:y,sx,sx0:sx,t0:performance.now(),cam0:camT,pan:false,canPan:false,lasso:null,tapBody:null,trail:[{x,y,t:performance.now()}],combo:0});
+  Object.assign(ptr,{ladle:false,down:true,x,y,lx:x,ly:y,sx,sx0:sx,t0:performance.now(),cam0:camT,pan:false,canPan:false,lasso:null,tapBody:null,trail:[{x,y,t:performance.now()}],combo:0});
   for(const b of bodies)b.hits=[];
   if(tool==='hand'){
     let pick=null;
@@ -915,6 +924,7 @@ cv.addEventListener('pointerdown',e=>{
       if(!game.tabHint&&game.mode!=='tutorial'){game.tabHint=1;setTimeout(()=>{if(ptr.grab)toast('Tipp: Zieh das Essen oben auf einen Tab, dann springst du direkt dorthin.',3500)},600)}}
     else{ptr.canPan=true;ptr.lp=setTimeout(()=>{if(ptr.down&&!ptr.pan&&!ptr.grab&&Math.abs(ptr.sx-ptr.sx0)<10){ptr.canPan=false;ptr.lasso={x0:ptr.x,y0:ptr.y};buzz(15);sfx.click()}},380)}
   }else if(tool==='mallet')smash(x,y);
+  else if(tool==='ladle'){if(!ladle(x,y)){ptr.canPan=true}}
 });
 cv.addEventListener('pointermove',e=>{
   if(!ptr.down)return;
@@ -934,9 +944,9 @@ function up(){
     for(const b of bodies)if(!blocked(b)&&b.cx>x0&&b.cx<x1&&b.cy>y0&&b.cy<y1)sel.add(b);
     toast(sel.size?`${sel.size} ausgewählt. Zieh eins davon, alle kommen mit.`:'Nichts ausgewählt. Zieh den Rahmen um das Essen.');ptr.lasso=null}
   else if(ptr.pan){const dx=ptr.sx-ptr.sx0;let i=Math.round(ptr.cam0/LY.vw);if(dx<-45)i++;else if(dx>45)i--;goStation(i)}
-  else if(ptr.grab){goStation(camT/LY.vw);for(const b of carried()){const[vx,vy]=bodyVel(b),v=Math.hypot(vx,vy),cap=14;if(v>cap){const k=cap/v;for(const p of b.pts){p.px=p.x-(p.x-p.px)*k;p.py=p.y-(p.y-p.py)*k}}}}
+  else if(ptr.grab){goStation(camT/LY.vw);for(const b of carried()){const[vx,vy]=bodyVel(b),v=Math.hypot(vx,vy),cap=ptr.ladle?3:14;if(v>cap){const k=cap/v;for(const p of b.pts){p.px=p.x-(p.x-p.px)*k;p.py=p.y-(p.y-p.py)*k}}}}
   if(tool==='hand'&&quick){if(ptr.tapBody){sel.has(ptr.tapBody)?sel.delete(ptr.tapBody):sel.add(ptr.tapBody)}else sel.clear()}
-  for(const b of bodies)b.carried=false;
+  for(const b of bodies){b.carried=false;b.ke=b.m.k;b.ee=b.m.edge}
   ptr.combo=0;ptr.down=false;ptr.grab=null;ptr.pan=false;ptr.canPan=false;for(const b of bodies)b.hits=[]}
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
 
@@ -1105,6 +1115,92 @@ function mergeBowl(){
   sfx.splat(.4);toast(m.label+' fertig gemixt!');
 }
 
+/* ================= juicer ================= */
+const JUICE_LEN=70;let juiceCol=null;
+Object.assign(NAME_PART,{apple:'Apfel',greenapple:'Apfel',pear:'Birnen',peach:'Pfirsich',nectarine:'Nektarinen',plum:'Pflaumen',apricot:'Aprikosen',cherry:'Kirsch',mango:'Mango',pineapple:'Ananas',kiwi:'Kiwi',papaya:'Papaya',
+  cantaloupe:'Melonen',watermelon:'Wassermelonen',grapefruit:'Grapefruit',lime:'Limetten',mandarin:'Mandarinen',pomegranate:'Granatapfel',grape:'Trauben',coconut:'Kokos',raspberry:'Himbeer',blackberry:'Brombeer',blueberry:'Heidelbeer',
+  currant:'Johannisbeer',cranberry:'Cranberry',passion:'Maracuja',guava:'Guaven',lychee:'Litschi',acerola:'Acerola',elderberry:'Holunder',carrot:'Karotten',cucumber:'Gurken',beet:'Rote-Bete',celery:'Sellerie',ginger:'Ingwer',
+  spinach:'Spinat',cherrytom:'Tomaten',paprika:'Paprika',fennel:'Fenchel'});
+const JUICY={tomato:.85,cherrytom:.85,cucumber:.85,melon:.9,watermelon:.9,cantaloupe:.85,orange:.8,mandarin:.8,grapefruit:.8,lemon:.75,lime:.75,grape:.8,pineapple:.75,
+  banana:0,avocado:0,coconut:.4,date:0,potato:0,sweetpotato:0,pumpkin:.2,corn:0,olive:0,blackolive:0,garlic:.2,onion:.3,redonion:.3,chestnut:0};
+function juiceYield(b){const m=b.m;if(m.mix||m.drink||m.powder||m.liquid||b.cook>.4||b.T<-2)return 0;
+  const k=Object.keys(m.ingr||{})[0]||b.type;if(k in JUICY)return JUICY[k];
+  return m.cat==='beeren'?.8:m.cat==='obst'?.7:m.cat==='gemuese'?.5:0}
+function plungerY(){const t=clamp(juiceT/(JUICE_LEN*.75),0,1);return juicer.top-28+(juicer.hh+14)*t*t*(3-2*t)}
+function startJuice(){
+  if(juiceT>0)return;const items=bodies.filter(b=>where(b)==='juicer');
+  if(!items.length){toast('Leg Obst oder Gemüse oben in den Entsafter.');sfx.click();return}
+  const ok=items.filter(b=>juiceYield(b)>0);
+  if(!ok.length){toast('Daraus kommt kein Saft. Nimm Obst oder Gemüse.');sfx.click();return}
+  let c=[0,0,0],w=0;for(const b of ok){const a=Math.abs(polyArea(b.pts)),q=rgb(hexOr(b.m.juice,'#f0a030'));for(let j=0;j<3;j++)c[j]+=q[j]*a;w+=a}
+  juiceCol='#'+c.map(v=>Math.round(v/w).toString(16).padStart(2,'0')).join('');
+  juiceT=1;sfx.click();
+}
+function juiceName(keys){
+  const P=k=>NAME_PART[k]||(M[k]&&M[k].label)||k,cat=k=>M[k]?M[k].cat:'';
+  const fruit=keys.filter(k=>cat(k)==='obst'||cat(k)==='beeren'),veg=keys.filter(k=>cat(k)==='gemuese');
+  const green=keys.filter(k=>['spinach','cucumber','celery','kiwi','lime','greenapple','lettuce','paprikag'].includes(k));
+  if(keys.length===1)return P(keys[0])+'saft';
+  if(green.length>=2&&green.length>=keys.length/2)return'Grüner Saft';
+  if(keys.length===2)return`${P(keys[0])}-${P(keys[1])}-Saft`;
+  if(fruit.length>=3&&!veg.length)return'Multivitaminsaft';
+  if(veg.length>fruit.length)return'Gemüsesaft';
+  if(keys.length===3)return`${P(keys[0])}-${P(keys[1])}-${P(keys[2])}-Saft`;
+  return'Multivitaminsaft'}
+function juiceMaterial(parts,A){
+  const m=mixMaterial(parts,A);
+  const keys=Object.keys(m.ingr).filter(k=>m.ingr[k]>.03).sort((x,y)=>m.ingr[y]-m.ingr[x]);
+  const jc=hexOr(m.juice,'#f0a030');
+  Object.assign(m,{k:.015,edge:.1,press:.9,plastic:.08,spec:.95,liquid:true,drink:true,fric:.4,thresh:999,frag:0,squeeze:0,chunks:0,needsCook:false,rise:null,batter:null,melt:null,
+    skin:[mix(jc,'#ffffff',.3),jc,mix(jc,'#000000',.3)],flesh:jc,fleshHi:mix(jc,'#ffffff',.3),fleshDk:mix(jc,'#000000',.2),juice:jc,speck:null,tex:null});
+  m.cooked=[mix(jc,'#8a5a20',.4),mix(jc,'#6a3a10',.4),mix(jc,'#2a1408',.5)];m.cookT=90;
+  m.label=juiceName(keys.length?keys:Object.keys(m.ingr));return m}
+function finishJuice(){
+  const items=bodies.filter(b=>where(b)==='juicer');const jp=[],pulp=[];let JA=0,PA=0;
+  for(const b of items){const y=juiceYield(b);if(!y)continue;const a=Math.abs(polyArea(b.pts));jp.push({b,a:a*y});JA+=a*y;pulp.push({b,a:a*(1-y)});PA+=a*(1-y)}
+  if(!jp.length)return;
+  const old=bodies.filter(b=>where(b)==='glass'&&b.m.drink);for(const b of old){const a=Math.abs(polyArea(b.pts));jp.push({b,a});JA+=a}
+  const cap=glass.w*glass.h*.62;let spill=0;if(JA>cap){spill=JA-cap;for(const q of jp)q.a*=cap/JA;JA=cap}
+  const m=juiceMaterial(jp,JA);let T=0;for(const{b,a}of jp)T+=b.T*a;T/=JA;
+  let pm=null;if(PA>60){pm=mixMaterial(pulp,PA);pm.taste=pm.taste.map(v=>v*.3);pm.label='Trester';Object.assign(pm,{k:.08,edge:.25,needsCook:false,rise:null,batter:null,cooked:null})}
+  for(const b of items)if(juiceYield(b))remove(b);for(const b of old)remove(b);
+  const r=Math.sqrt(JA/Math.PI);
+  const jb=add(makeBody('juice',glass.cx,glass.y-r-2,{r:Math.min(r,glass.w*.45),n:22,blob:rnd(.5,9),mat:m,state:{T,cook:0,melt:0,grow:1,health:100}}));jb.inv=20;
+  {const s=Math.sqrt(JA/Math.abs(polyArea(jb.pts)));if(Math.abs(s-1)>.02)scaleBody(jb,s)}
+  if(pm){const pr=Math.sqrt(PA*.7/Math.PI);const pb=add(makeBody('pulp',juicer.cx,juicer.hb-pr-2,{r:clamp(pr,6,juicer.w*.4),n:16,blob:rnd(.5,9),mat:pm}));pb.inv=20}
+  for(let i=0;i<10;i++)drop(glass.cx+rnd(-glass.w*.3,glass.w*.3),glass.top+rnd(0,10),rnd(-1,1),rnd(-3,-1),m.juice,rnd(1.2,2.4));
+  if(spill>0){for(let i=0;i<Math.min(40,spill/12);i++)drop(rnd(glass.x0,glass.x1),glass.top,rnd(-3,3),rnd(-2,0),m.juice,rnd(1.5,3));mess=Math.min(100,mess+3);toast(m.label+' fertig! Das Glas ist übergelaufen.')}
+  else toast(m.label+' fertig gepresst!');
+  sfx.splat(.35);juiceCol=null;game.ev.juice=1;
+}
+function scaleBody(b,f){const c=ctr(b);for(const p of b.pts){p.x=c.x+(p.x-c.x)*f;p.y=c.y+(p.y-c.y)*f;p.px=c.x+(p.px-c.x)*f;p.py=c.y+(p.py-c.y)*f}
+  for(const q of b.rest){q.x*=f;q.y*=f}b.L=b.L.map(l=>l*f);b.restArea*=f*f;b.R*=f}
+
+/* ================= ladle ================= */
+const LADLE_A=Math.PI*11*11;
+function scoopable(b){const m=b.m;return m.liquid||m.powder||m.mix||m.drink||(b.ke<.12&&!m.shards)||b.melt>.5}
+function ladle(x,y){
+  let pick=null;for(let i=bodies.length-1;i>=0;i--){const b=bodies[i];if(!blocked(b)&&inside(x,y,b.pts)){pick=b;break}}
+  if(!pick){let bd=24*24;for(const b of bodies){if(blocked(b))continue;for(const p of b.pts){const d=(p.x-x)**2+(p.y-y)**2;if(d<bd){bd=d;pick=b}}}}
+  if(!pick)return false;
+  if(!scoopable(pick)){toast('Mit der Kelle schöpfst du Flüssiges, Teig, Saft und Gemixtes.');sfx.click();return true}
+  const A=Math.abs(polyArea(pick.pts));let por=pick;
+  if(A>LADLE_A*1.7){
+    scaleBody(pick,Math.sqrt((A-LADLE_A)/A));
+    por=add(makeBody(pick.type,x,y-4,{r:11,n:14,blob:rnd(.5,9),mat:pick.m,state:stateOf(pick)}));
+    por.bread=pick.bread;por.fried=pick.fried;por.grill=pick.grill;por.inv=15;
+    {const s=Math.sqrt(LADLE_A/Math.abs(polyArea(por.pts)));if(Math.abs(s-1)>.02)scaleBody(por,s)}
+    for(let i=0;i<4;i++)drop(x+rnd(-6,6),y,rnd(-1,1),rnd(-2,0),hexOr(pick.m.juice,'#c08040'),rnd(1,2));
+  }
+  let bi=0,bd=1e18;por.pts.forEach((p,i)=>{const d=(p.x-x)**2+(p.y-y)**2;if(d<bd){bd=d;bi=i}});
+  ptr.grab=por;ptr.gi=bi;ptr.tapBody=null;ptr.ladle=true;por.ke=Math.max(por.ke,.55);por.ee=Math.max(por.ee,.5);bodies.splice(bodies.indexOf(por),1);bodies.push(por);por.carried=true;por._lc=ctr(por);
+  tabRects=[...tabsEl.children].map(t=>t.getBoundingClientRect());sfx.squish(.2);game.ev.ladle=1;
+  return true}
+function drawLadle(){if(!(ptr.down&&ptr.grab&&ptr.ladle))return;const b=ptr.grab;aabb(b);const x=(b.minX+b.maxX)/2,y=b.maxY+3,w=Math.max(16,(b.maxX-b.minX)/2+5);
+  X.save();X.lineCap='round';X.strokeStyle=steel(X,x,y-60,x+40,y);X.lineWidth=4;X.beginPath();X.moveTo(x+w-2,y-4);X.lineTo(x+w+26,y-58);X.stroke();
+  X.fillStyle=steel(X,x-w,y-8,x+w,y+10);X.beginPath();X.moveTo(x-w,y-6);X.quadraticCurveTo(x,y+16,x+w,y-6);X.closePath();X.fill();
+  X.strokeStyle='rgba(255,255,255,.55)';X.lineWidth=1.2;X.beginPath();X.moveTo(x-w,y-6);X.lineTo(x+w,y-6);X.stroke();X.restore()}
+
 /* ================= mallet ================= */
 function smash(x,y){
   const R=78;let hit=false;
@@ -1130,6 +1226,10 @@ function step(){
   if(mixT>0){mixT++;const cx=bowl.cx,cy=bowl.rim+bowl.h*.55;
     for(const b of bodies){if(where(b)!=='bowl')continue;for(const p of b.pts){const dx=p.x-cx,dy=p.y-cy;p.x+=-dy*.012+rnd(-.35,.35)-dx*.004;p.y+=dx*.004+rnd(-.35,.35)+.15;p.px+=(p.x-p.px)*.25}b.imp=0;b.health=Math.max(b.health,60)}
     if(mixT>80){mixT=0;mergeBowl()}}
+  if(juiceT>0){juiceT++;const py=plungerY();
+    for(const b of bodies){if(where(b)!=='juicer')continue;for(const p of b.pts){if(p.y<py){p.y=py;p.py=py}p.x+=rnd(-.3,.3)}b.imp=0;b.health=Math.max(b.health,60)}
+    if(juiceT%6===0)drop(juicer.cx,juicer.hb+8,rnd(-.4,.4),1,juiceCol||'#f0a030',rnd(1.2,2.2));
+    if(juiceT>JUICE_LEN){juiceT=0;finishJuice()}}
   for(const b of bodies.slice())cookStep(b);
   for(const b of bodies){const d=dishOf(b);if(!d){b.coatT=0;b.coatD=-1;continue}if(b.coatD!==d.k){b.coatD=d.k;b.coatT=0}b.coatT++;
     if(b.coatT===14){const lv=b.bread||0;if(lv===d.k){b.bread=lv+1;sfx.squish(.2);puff(b.cx,b.minY,'steam');if(b.bread===3)toast('Paniert! Jetzt ab in die Fritteuse.')}
@@ -1140,7 +1240,8 @@ function step(){
   for(let it=0;it<4;it++){
     const first=it===0;
     for(const b of bodies){shapeMatch(b,b.ke*.5,first&&b!==ptr.grab);edges(b);pressure(b)}
-    if(ptr.grab&&ptr.down){const b=ptr.grab,n=b.pts.length,g=b.pts[ptr.gi],dx=(ptr.x-g.x)*.22,dy=(ptr.y-g.y)*.22;for(const p of b.pts){p.x+=dx;p.y+=dy}for(let k=-2;k<=2;k++){const p=b.pts[(ptr.gi+k+n)%n],w=k?.15:.4;p.x+=(ptr.x-p.x)*w;p.y+=(ptr.y-p.y)*w}}
+    if(ptr.grab&&ptr.down&&ptr.ladle){const b=ptr.grab,c=ctr(b),dx=(ptr.x-c.x)*.3,dy=(ptr.y-8-c.y)*.3;for(const p of b.pts){p.x+=dx;p.y+=dy;p.px+=(p.x-p.px)*.3;p.py+=(p.y-p.py)*.3}}
+    else if(ptr.grab&&ptr.down){const b=ptr.grab,n=b.pts.length,g=b.pts[ptr.gi],dx=(ptr.x-g.x)*.22,dy=(ptr.y-g.y)*.22;for(const p of b.pts){p.x+=dx;p.y+=dy}for(let k=-2;k<=2;k++){const p=b.pts[(ptr.gi+k+n)%n],w=k?.15:.4;p.x+=(ptr.x-p.x)*w;p.y+=(ptr.y-p.y)*w}}
     for(const b of bodies)aabb(b);
     for(let i=0;i<bodies.length;i++)for(let j=i+1;j<bodies.length;j++){const a=bodies[i],c=bodies[j];
       if(a.maxX<c.minX||c.maxX<a.minX||a.maxY<c.minY||c.maxY<a.minY)continue;pushPoints(a,c,first);pushPoints(c,a,first)}
@@ -1292,7 +1393,7 @@ function drawBg(){
   for(let x=rnd(-30,0);x<WW;x+=rnd(28,46)){g.fillStyle='rgba(0,0,0,.25)';g.fillRect(x,cf+2,1,H-cf)}
   const plateK=(a,b)=>{lg=g.createLinearGradient(0,LY.ky-20,0,LY.ky+20);lg.addColorStop(0,'#2a2b2f');lg.addColorStop(1,'#141518');
     g.fillStyle=lg;rr(g,a,LY.ky-21,b-a,44,10);g.fill();g.strokeStyle='rgba(255,255,255,.1)';rr(g,a+.5,LY.ky-20.5,b-a-1,43,10);g.stroke()};
-  plateK(pan.kx-32,grill.kx+40);plateK(bowl.kx-46,bowl.kx+46);plateK(fryer.kx-40,fryer.kx+44);
+  plateK(pan.kx-32,grill.kx+40);plateK(juicer.kx-46,bowl.kx+46);plateK(fryer.kx-40,fryer.kx+44);
 }
 /* ================= food rendering ================= */
 function trace(p){const n=p.length,a=p[n-1],b=p[0];X.moveTo((a.x+b.x)/2,(a.y+b.y)/2);
@@ -1638,6 +1739,11 @@ function drawKnobs(){
   if(on){X.fillStyle='rgba(255,255,255,.35)';rr(X,x-w/2,y-h/2,Math.max(26,w*mixT/80),h,13);X.fill()}
   X.font=`700 11px ${UIFONT}`;X.fillStyle=on?'#fff':'#1a1b1e';X.textAlign='center';X.textBaseline='middle';X.fillText('MIXEN',x,y+1);
   X.font=`700 8px ${UIFONT}`;X.fillStyle='rgba(246,234,216,.6)';X.fillText('SCHÜSSEL',x,y+h/2+9);
+  {const x=juicer.kx,on=juiceT>0;X.fillStyle='rgba(0,0,0,.4)';rr(X,x-w/2+1,y-h/2+2,w,h,13);X.fill();
+   X.fillStyle=on?'#ff7a1a':steel(X,0,y-h/2,0,y+h/2);rr(X,x-w/2,y-h/2,w,h,13);X.fill();
+   if(on){X.fillStyle='rgba(255,255,255,.35)';rr(X,x-w/2,y-h/2,Math.max(26,w*juiceT/JUICE_LEN),h,13);X.fill()}
+   X.font=`700 10px ${UIFONT}`;X.fillStyle=on?'#fff':'#1a1b1e';X.fillText('PRESSEN',x,y+1);
+   X.font=`700 8px ${UIFONT}`;X.fillStyle='rgba(246,234,216,.6)';X.fillText('ENTSAFTER',x,y+h/2+9)}
 }
 function drawGrill(){const o=grill,y=o.y,hot=clamp((o.T-60)/200,0,1);
   X.fillStyle='#1a1a1c';X.fillRect(o.x0+8,y+6,6,floorY-y-6);X.fillRect(o.x1-14,y+6,6,floorY-y-6);
@@ -1736,6 +1842,46 @@ function drawBowlFront(){const o=bowl;
   X.strokeStyle='rgba(255,255,255,.5)';X.lineWidth=3;X.lineCap='round';X.beginPath();X.ellipse(o.cx,o.rim,o.w/2-7,o.h-7,0,Math.PI*.62,Math.PI*.86);X.stroke();
   X.strokeStyle='rgba(235,245,255,.85)';X.lineWidth=2.2;X.beginPath();X.ellipse(o.cx,o.rim,o.w/2,6,0,0,Math.PI);X.stroke();
   X.fillStyle='rgba(220,235,245,.4)';X.beginPath();X.ellipse(o.cx,o.y+1,o.w*.18,3,0,0,TAU);X.fill()}
+function drawJuicerBack(){const j=juicer,bw=j.w*.86;
+  X.fillStyle='rgba(60,30,10,.25)';X.beginPath();X.ellipse(j.cx,floorY+1,j.w*.5,5,0,0,TAU);X.fill();
+  // base
+  let g=X.createLinearGradient(j.x0,0,j.x1,0);g.addColorStop(0,'#c8ccd2');g.addColorStop(.35,'#f4f6f8');g.addColorStop(1,'#9aa0a8');
+  X.fillStyle=g;rr(X,j.cx-bw/2,j.hb-2,bw,floorY-j.hb+2,8);X.fill();
+  X.fillStyle='#2a2c30';rr(X,j.cx-bw/2+6,j.hb+8,bw*.34,9,3);X.fill();X.fillStyle=juiceT?'#5adf6a':'#3a4a3a';X.beginPath();X.arc(j.cx-bw/2+12,j.hb+12.5,2,0,TAU);X.fill();
+  // spout towards the glass
+  X.fillStyle='#8a9098';X.beginPath();X.moveTo(j.x1-10,j.hb+6);X.lineTo(glass.cx+4,glass.top-8);X.lineTo(glass.cx+4,glass.top-2);X.lineTo(j.x1-10,j.hb+14);X.closePath();X.fill();
+  if(juiceT>8&&juiceCol){X.strokeStyle=juiceCol;X.lineWidth=2.5+Math.sin(frame*.5);X.beginPath();X.moveTo(glass.cx+2,glass.top-2);X.lineTo(glass.cx+1,glass.y-6);X.stroke()}
+  // hopper back
+  X.fillStyle='rgba(210,230,240,.10)';X.beginPath();X.moveTo(j.x0-4,j.top);X.lineTo(j.x1+4,j.top);X.lineTo(j.x1-4,j.hb);X.lineTo(j.x0+4,j.hb);X.closePath();X.fill();
+  X.fillStyle='#6a7078';X.fillRect(j.x0+4,j.hb-3,j.w-8,4);
+  for(let x=j.x0+8;x<j.x1-6;x+=5){X.fillStyle='#3a3e44';X.fillRect(x,j.hb-2,2,2)}}
+function drawJuicerFront(){const j=juicer;
+  if(juiceT>0){const py=plungerY();X.fillStyle=steel(X,j.x0,0,j.x1,0);rr(X,j.x0+6,py-8,j.w-12,10,3);X.fill();X.fillStyle='#d8dce2';X.fillRect(j.cx-4,py-60,8,52);
+    X.fillStyle='#2a2c30';rr(X,j.cx-12,py-66,24,10,4);X.fill()}
+  const g=X.createLinearGradient(j.x0,0,j.x1,0);g.addColorStop(0,'rgba(220,235,245,.3)');g.addColorStop(.25,'rgba(220,235,245,.05)');g.addColorStop(.8,'rgba(220,235,245,.05)');g.addColorStop(1,'rgba(220,235,245,.3)');
+  X.fillStyle=g;X.beginPath();X.moveTo(j.x0-4,j.top);X.lineTo(j.x1+4,j.top);X.lineTo(j.x1-4,j.hb);X.lineTo(j.x0+4,j.hb);X.closePath();X.fill();
+  X.strokeStyle='rgba(235,245,255,.75)';X.lineWidth=1.6;X.stroke();
+  X.strokeStyle='rgba(255,255,255,.5)';X.lineWidth=2.5;X.lineCap='round';X.beginPath();X.moveTo(j.x0+3,j.top+8);X.lineTo(j.x0+8,j.hb-10);X.stroke();
+  X.font=`700 8px ${UIFONT}`;X.textAlign='center';X.fillStyle='rgba(40,44,50,.75)';X.fillText('SAFT',j.cx,floorY-14)}
+function drawGlassBack(){const o=glass;
+  X.fillStyle='rgba(60,30,10,.2)';X.beginPath();X.ellipse(o.cx,floorY+1,o.w*.45,3.5,0,0,TAU);X.fill();
+  X.fillStyle='rgba(210,230,240,.08)';X.fillRect(o.x0,o.top,o.w,o.h)}
+function drawJuiceLevel(js){if(!js.length)return;const o=glass;let A=0;for(const b of js)A+=Math.abs(polyArea(b.pts));
+  const c=hexOr(js[js.length-1].m.juice,'#f0a030'),iw=o.w-6,h=Math.min(o.h-4,A/iw),top=o.y-h,wob=Math.sin(frame*.12)*.8;
+  X.save();X.beginPath();X.rect(o.x0+2,o.top-4,o.w-4,o.h+4);X.clip();
+  const g=X.createLinearGradient(o.x0,0,o.x1,0);g.addColorStop(0,mix(c,'#000000',.18));g.addColorStop(.4,mix(c,'#ffffff',.12));g.addColorStop(1,mix(c,'#000000',.25));
+  X.fillStyle=g;X.globalAlpha=.92;X.fillRect(o.x0+3,top,iw,h);
+  X.globalAlpha=1;X.fillStyle=mix(c,'#ffffff',.35);X.beginPath();X.ellipse(o.cx,top+wob*.3,iw/2,2.6,0,0,TAU);X.fill();
+  X.fillStyle='rgba(255,255,255,.35)';for(let i=0;i<4;i++){const bx=o.x0+8+((i*37+frame*.3)%(iw-10)),by=o.y-4-((frame*.6+i*23)%Math.max(4,h-6));X.beginPath();X.arc(bx,by,1.1,0,TAU);X.fill()}
+  X.restore()}
+function drawGlassFront(){const o=glass;
+  const g=X.createLinearGradient(o.x0,0,o.x1,0);g.addColorStop(0,'rgba(220,235,245,.32)');g.addColorStop(.2,'rgba(220,235,245,.06)');g.addColorStop(.8,'rgba(220,235,245,.05)');g.addColorStop(1,'rgba(220,235,245,.32)');
+  X.fillStyle=g;X.beginPath();X.moveTo(o.x0,o.top);X.lineTo(o.x0+3,o.y);X.lineTo(o.x1-3,o.y);X.lineTo(o.x1,o.top);X.closePath();X.fill();
+  X.strokeStyle='rgba(235,245,255,.8)';X.lineWidth=1.5;X.stroke();
+  X.fillStyle='rgba(235,245,255,.5)';X.fillRect(o.x0+3,o.y-4,o.w-6,4);
+  X.strokeStyle='rgba(255,255,255,.55)';X.lineWidth=2.5;X.lineCap='round';X.beginPath();X.moveTo(o.x0+6,o.top+8);X.lineTo(o.x0+8,o.y-12);X.stroke();
+  X.strokeStyle='rgba(235,245,255,.85)';X.lineWidth=1.8;X.beginPath();X.ellipse(o.cx,o.top,o.w/2,3,0,0,TAU);X.stroke();
+  X.font=`700 8px ${UIFONT}`;X.textAlign='center';X.fillStyle='rgba(90,60,30,.55)';X.fillText('GLAS',o.cx,floorY+16)}
 function drawPlate(){const o=plate,y=o.y;
   X.fillStyle='rgba(60,30,10,.25)';X.beginPath();X.ellipse(o.cx,floorY+2,o.w*.48,6,0,0,TAU);X.fill();
   X.fillStyle='#cfc8bc';X.beginPath();X.ellipse(o.cx,y+5,o.w*.3,4,0,0,TAU);X.fill();
@@ -1757,7 +1903,7 @@ function render(){
   ctx.restore();
   ctx.drawImage(st,camX*BD,0,W*BD,H*BD,0,0,W,H);
   ctx.save();ctx.translate(-camX,0);
-  const v0=camX-80,v1=camX+W+80,groups={dish:[],oven:[],micro:[],freezer:[],pot:[],pan:[],grill:[],fryer:[],bowl:[],plate:[],out:[]};
+  const v0=camX-80,v1=camX+W+80,groups={dish:[],oven:[],micro:[],freezer:[],pot:[],pan:[],grill:[],fryer:[],bowl:[],plate:[],juicer:[],glass:[],out:[]};
   for(const b of bodies){aabb(b);if(b.maxX<v0||b.minX>v1)continue;groups[where(b)||'out'].push(b)}
   for(const b of groups.oven)drawBody(b);drawOvenFront();
   for(const b of groups.micro)drawBody(b);drawMicroFront();
@@ -1768,12 +1914,14 @@ function render(){
   drawGrill();for(const b of groups.grill)drawBody(b);flames(grill,floorY-4,0);
   drawFryerBack();for(const b of groups.fryer)drawBody(b);drawFryerFront();
   drawBowlBack();for(const b of groups.bowl)drawBody(b);drawBowlFront();
+  drawJuicerBack();for(const b of groups.juicer)drawBody(b);drawJuicerFront();
+  drawGlassBack();for(const b of groups.glass)if(!b.m.drink)drawBody(b);drawJuiceLevel(groups.glass.filter(b=>b.m.drink));drawGlassFront();
   drawPlate();for(const b of groups.plate)drawBody(b);
   drawBreading();for(const b of groups.dish)drawBody(b);
   for(const b of groups.out)drawBody(b);
   if(sel.size){X.save();X.setLineDash([5,4]);X.strokeStyle='#ffcf3a';X.lineWidth=2.5;for(const b of[...sel]){if(!bodies.includes(b)){sel.delete(b);continue}X.beginPath();trace(b.pts);X.stroke()}X.restore()}
   if(ptr.lasso){const l=ptr.lasso,x=Math.min(l.x0,ptr.x),y=Math.min(l.y0,ptr.y),w=Math.abs(ptr.x-l.x0),h=Math.abs(ptr.y-l.y0);X.save();X.setLineDash([6,5]);X.fillStyle='rgba(255,207,58,.14)';X.fillRect(x,y,w,h);X.strokeStyle='#ffcf3a';X.lineWidth=2;X.strokeRect(x,y,w,h);X.restore()}
-  drawDrops();drawPuffs();drawKnobs();drawFx();if(tool==='knife')drawTrail();
+  drawLadle();drawDrops();drawPuffs();drawKnobs();drawFx();if(tool==='knife')drawTrail();
   if(game.mark){const t=performance.now()/300;X.strokeStyle=`rgba(255,210,60,${.55+.35*Math.sin(t)})`;X.lineWidth=3;X.setLineDash([6,5]);X.beginPath();X.arc(game.mark.x,game.mark.y,game.mark.r+3*Math.sin(t),0,TAU);X.stroke();X.setLineDash([])}
   ctx.restore();
   const rg=ctx.createRadialGradient(W/2,H*.45,Math.min(W,H)*.45,W/2,H*.45,Math.max(W,H)*.8);rg.addColorStop(0,'rgba(0,0,0,0)');rg.addColorStop(1,'rgba(30,18,8,.35)');ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);
@@ -2167,7 +2315,7 @@ scr('goTut').addEventListener('click',()=>{audioInit();startTutorial()});
 scr('menuBtn').addEventListener('click',()=>openMenu());
 scr('serve').addEventListener('click',()=>serve(false));
 function serve(auto){
-  const items=bodies.filter(b=>where(b)==='plate');
+  const items=bodies.filter(b=>{const w=where(b);return w==='plate'||w==='glass'});
   if(!items.length&&!auto){toast('Leg zuerst etwas auf den Teller (Station „Teller“).');return}
   const c=game.mode==='story'?level(game.level):game.mode==='tutorial'?CRITICS[0]:CRITICS[game.taster];
   const r=judge(c,items);if(auto)r.quote=items.length?'Die Zeit ist um! '+r.quote:'Die Zeit ist um und der Teller ist leer.';
@@ -2196,7 +2344,7 @@ function showResult(c,r){
 }
 function lockLandscape(){try{if(matchMedia('(pointer:coarse)').matches&&!document.fullscreenElement&&document.documentElement.requestFullscreen){document.documentElement.requestFullscreen().then(()=>screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})).catch(()=>{})}}catch(e){}}
 function resetKitchen(){
-  bodies=[];drops=[];drips=[];puffs=[];fx=[];ptr.grab=null;mixT=0;stx.clearRect(0,0,WW,H);mess=0;game.ev={};
+  bodies=[];drops=[];drips=[];puffs=[];fx=[];ptr.grab=null;mixT=0;juiceT=0;stx.clearRect(0,0,WW,H);mess=0;game.ev={};
   pan.lvl=pot.lvl=grill.lvl=fryer.lvl=0;pan.T=pot.T=grill.T=fryer.T=ROOM;Object.assign(oven,{lvl:0,open:false,T:ROOM});Object.assign(micro,{lvl:0,open:false,T:ROOM,timer:0});freezer.open=false;
 }
 function demoScene(){
@@ -2273,7 +2421,7 @@ function loop(t){
 }
 requestAnimationFrame(loop);
 document.addEventListener('visibilitychange',()=>{if(AC){document.hidden?AC.suspend():AC.resume()}last=performance.now()});
-window.__kitchen={makeBody,mixMaterial,dishName,analyse,add,remove,ptr,bodies:()=>bodies,fx:()=>fx,pan,pot,grill,fryer,freezer,oven,micro,bowl,plate,spawn,step,controls,where,LY,game,startLevel,startSandbox,startTutorial,judge,CRITICS,startMix,level,goStation,M,FOODS,cam:()=>[camX,camT]};
+window.__kitchen={juicer,glass,startJuice,juiceMaterial,ladle,setTool:t=>{tool=t},makeBody,mixMaterial,dishName,analyse,add,remove,ptr,bodies:()=>bodies,fx:()=>fx,pan,pot,grill,fryer,freezer,oven,micro,bowl,plate,spawn,step,controls,where,LY,game,startLevel,startSandbox,startTutorial,judge,CRITICS,startMix,level,goStation,M,FOODS,cam:()=>[camX,camT]};
 })();
 </script>
 </body>
