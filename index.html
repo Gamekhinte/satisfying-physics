@@ -368,9 +368,11 @@ Object.assign(SH,{
   star:r=>{const o=[];for(let i=0;i<10;i++){const a=i/10*TAU-Math.PI/2,rr2=i%2?r*.55:r;o.push([Math.cos(a)*rr2,Math.sin(a)*rr2*.9])}return o},
   curve:r=>SH.banana(r*.8),
   wedge:r=>SH.cheese(r),
+  heap:r=>param(t=>{const c=Math.cos(t),s=Math.sin(t);return s<0?[r*1.35*c,r*.78*s*(1+.25*(1-Math.abs(c)))]:[r*1.35*c,r*.14*s]}),
+  puddle:r=>param(t=>{const c=Math.cos(t),s=Math.sin(t),k=1+.07*Math.sin(4*t+1);return[r*1.6*c*k,(s>0?r*.16:r*.34)*s]}),
 });
-const CATS=[['obst','Obst'],['beeren','Beeren & Exoten'],['gemuese','Gemüse'],['pilze','Pilze & Kräuter'],['fleisch','Fleisch'],['fisch','Fisch & Meer'],
-  ['milch','Milch, Käse & Ei'],['backen','Brot & Teig'],['suess','Süßes'],['nuesse','Nüsse & Körner']];
+const CATS=[['obst','Obst'],['beeren','Exoten'],['gemuese','Gemüse'],['pilze','Kräuter'],['fleisch','Fleisch'],['fisch','Fisch'],
+  ['milch','Käse & Ei'],['vorrat','Vorrat'],['backen','Brot & Teig'],['suess','Süßes'],['nuesse','Nüsse']];
 const CATNAME=Object.fromEntries(CATS);
 const PRE={
   obst:{k:.3,edge:.55,press:.65,thresh:12,frag:4.5,squeeze:2.5,plastic:.01,hammer:1.2,heat:.006,spec:.7,chunks:3,cookT:80,cookSec:10},
@@ -382,6 +384,7 @@ const PRE={
   milch:{k:.55,edge:.7,press:.5,thresh:16,frag:3,squeeze:1,plastic:.01,hammer:1,heat:.01,spec:.4,chunks:3,cookT:120,cookSec:9},
   backen:{k:.4,edge:.6,press:.6,thresh:999,frag:0,squeeze:0,plastic:.02,hammer:.5,heat:.008,spec:.2,chunks:3,cookT:110,cookSec:10,cookTo:'#a86a2a'},
   suess:{k:.6,edge:.7,press:.5,thresh:14,frag:3,squeeze:1,plastic:.01,hammer:1,heat:.012,spec:.6,chunks:3,cookT:140,cookSec:7},
+  vorrat:{k:.3,edge:.4,press:.7,thresh:999,frag:0,squeeze:0,plastic:.03,hammer:1.5,heat:.01,spec:.3,chunks:0,cookT:140,cookSec:8},
   nuesse:{k:.92,edge:1,press:.3,thresh:999,frag:0,squeeze:0,bounce:.35,hammer:1.6,heat:.02,dens:1.2,spec:.4,chunks:0,cookT:150,cookSec:8},
 };
 // key, label, cat, shape, r, skin, flesh, taste [süß,herzhaft,sauer,scharf,cremig], flags
@@ -580,7 +583,24 @@ pumpkinseed|Kürbiskern|nuesse|oval|5|#4a6a2a|#7a9a4a|0,.4,0,0,.2|shards
 oats|Haferflocken|nuesse|blob|12|#e8d8b0|#f4e8c8|.2,.2,0,0,.3|soft
 cornflakes|Cornflakes|nuesse|disc|8|#f0b040|#f8d070|.4,.2,0,0,0|
 macadamia|Macadamia|nuesse|round|8|#f0e0c0|#fff4dc|.3,.1,0,0,.8|shards
-brazilnut|Paranuss|nuesse|oval|9|#6a4a2a|#f4e8d0|.1,.2,0,0,.6|shards`;
+brazilnut|Paranuss|nuesse|oval|9|#6a4a2a|#f4e8d0|.1,.2,0,0,.6|shards
+flour|Mehl|vorrat|heap|20|#f6f2ea|#ffffff|0,.1,0,0,.1|powder
+milk|Milch|vorrat|puddle|18|#fbfbf6|#ffffff|.15,0,0,0,.7|liquid
+sugar|Zucker|vorrat|heap|13|#ffffff|#ffffff|1,0,0,0,0|powder str:4
+salt|Salz|vorrat|heap|8|#eef2f6|#ffffff|0,1,0,0,0|powder str:6
+pepper|Pfeffer|vorrat|heap|6|#3a3330|#4a4038|0,.4,0,.8,0|powder str:6
+cocoa|Kakao|vorrat|heap|12|#5a3220|#6a3a24|.2,0,0,0,.3|powder str:3
+rice|Reis|vorrat|heap|14|#fbf8f0|#ffffff|0,.2,0,0,.1|powder need
+oil|Olivenöl|vorrat|puddle|14|#c8b832|#e8d850|0,.3,0,0,.6|liquid
+water|Wasser|vorrat|puddle|16|#cfe8f4|#e8f6ff|0,0,0,0,0|liquid
+honey|Honig|vorrat|puddle|13|#e8a020|#f0b030|1,0,0,0,.2|liquid str:2
+vinegar|Essig|vorrat|puddle|12|#e8d8b0|#f0e4c4|0,0,1,0,0|liquid str:3
+soy|Sojasoße|vorrat|puddle|12|#3a1a0a|#4a2410|0,1,0,0,0|liquid str:3
+ketchup|Ketchup|vorrat|puddle|13|#c8201a|#d8302a|.5,.4,.3,0,0|liquid
+mayo|Mayonnaise|vorrat|puddle|13|#fff4d0|#fffae8|0,.3,.1,0,1|liquid
+mustard|Senf|vorrat|puddle|10|#e8b020|#f0c030|0,.4,.3,.3,0|liquid str:2
+yeast|Hefe|vorrat|cube|9|#e8d4a0|#f0e0b0|0,.3,0,0,0|
+vanilla|Vanille|vorrat|long|4|#3a2418|#4a3020|.6,0,0,0,.3|str:4`;
 const LEGACY_CAT={chocolate:'suess',mallow:'suess',jelly:'suess',strawberry:'beeren',banana:'obst',melon:'obst',orange:'obst',lemon:'obst',kernel:'nuesse',
   tomato:'gemuese',chili:'gemuese',egg:'milch',steak:'fleisch',sausage:'fleisch',cheese:'milch',butter:'milch',dough:'backen'};
 for(const k in LEGACY_CAT)M[k].cat=LEGACY_CAT[k];
@@ -601,6 +621,9 @@ for(const line of ITEMS.split('\n')){
     else if(a==='shards')Object.assign(m,{shards:true,thresh:999,frag:0,chunks:0});
     else if(a==='jelly'){m.jelly=true;m.skin=shade3(skin).map(c=>rgba(c,.85));m.flesh=m.fleshHi=m.fleshDk=rgba(flesh,.85);m.juice=flesh;m.k=.08;m.edge=.25;m.lineCol=mix(skin,'#000000',.5)}
     else if(a==='frozen'){m.startT=-12;m.melt={T:0};m.heat=.01}
+    else if(a==='powder')Object.assign(m,{k:.05,edge:.2,press:.6,plastic:.06,thresh:999,frag:0,squeeze:0,chunks:0,tex:'powder',powder:true,juice:skin});
+    else if(a==='liquid')Object.assign(m,{k:.015,edge:.1,press:.9,plastic:.08,thresh:999,frag:0,squeeze:0,chunks:0,spec:.95,liquid:true,fric:.4,juice:flesh});
+    else if(a==='str')m.str=+b;
     else if(a==='light')m.dens=.3;else if(a==='fat')m.fat=true;else if(a==='k')m.k=+b;else if(a==='thresh')m.thresh=+b}
   if(shape==='leaf')Object.assign(m,{k:.15,edge:.35,thresh:999,frag:0,heat:.03,chunks:0,cookT:90,cookSec:4});
   if(m.seed==='#000'&&m.cutStyle==='seeds')m.seed='#f0e0b0';
@@ -692,7 +715,7 @@ function buildSegs(){
   const B=LY.board;seg(B.x0,B.y,B.x1,B.y,2);
   const pb=pan.y;seg(pan.x0+8,pb,pan.x1-8,pb,3);seg(pan.x0-2,pb-14,pan.x0+8,pb,3);seg(pan.x1-8,pb,pan.x1+2,pb-14,3);
   const tb=pot.y;seg(pot.x0+3,tb,pot.x1-3,tb,3);seg(pot.x0,tb-pot.h,pot.x0+3,tb,3);seg(pot.x1-3,tb,pot.x1,tb-pot.h,3);
-  seg(grill.x0,grill.y,grill.x1,grill.y,3);
+  seg(grill.x0,grill.y,grill.x1,grill.y,3);seg(grill.x0-3,grill.y-8,grill.x0+2,grill.y,3);seg(grill.x1-2,grill.y,grill.x1+3,grill.y-8,3);
   const fb=fryer.y;seg(fryer.x0+4,fb,fryer.x1-4,fb,3);seg(fryer.x0,fb-fryer.h,fryer.x0+4,fb,3);seg(fryer.x1-4,fb,fryer.x1,fb-fryer.h,3);
   for(const b of BOXES){
     seg(b.x,b.y,b.x+b.w,b.y,3,null,true);seg(b.x,b.y+b.h,b.x+b.w,b.y+b.h,3,null,true);
@@ -802,7 +825,7 @@ function heatSource(b){
   if(w==='pan')return[pan.T,1];
   if(w==='pot')return[pot.T,.9];
   if(w==='grill')return[grill.T,1.1];
-  if(w==='fryer')return b.maxY>fryer.oil+b.R*.5?[fryer.T,1.7]:[lerp(ROOM,fryer.T,.3),.4];
+  if(w==='fryer')return(b.subFrac||0)>.3?[fryer.T,1.7]:[lerp(ROOM,fryer.T,.3),.4];
   if(w==='oven')return oven.open?[lerp(ROOM,oven.T,.4),.3]:[oven.T,.65];
   if(w==='micro')return(!micro.open&&micro.lvl)?[b.m.pop?215:130,1.8]:[micro.T,.3];
   if(w==='freezer')return freezer.open?[lerp(ROOM,-20,.4),.3]:[-20,1.4];
@@ -816,7 +839,7 @@ function cookStep(b){
   if(m.melt){if(b.T>m.melt.T)b.melt=Math.min(1,b.melt+(b.T-m.melt.T)*.00035);else if(b.T<m.melt.T-6)b.melt=Math.max(0,b.melt-.0015)}
   if(m.rise&&b.T>m.rise.T&&b.grow<m.rise.max){const f=1.0012;b.grow*=f;for(const r of b.rest){r.x*=f;r.y*=f}for(let i=0;i<b.L.length;i++)b.L[i]*=f;b.restArea*=f*f;b.R*=f}
   const wz=where(b);
-  if(wz==='fryer'&&fryer.T>140&&b.maxY>fryer.oil+b.R*.5)b.fried=Math.min(1.5,(b.fried||0)+.0024);
+  if(wz==='fryer'&&fryer.T>140&&(b.subFrac||0)>.3)b.fried=Math.min(1.5,(b.fried||0)+.0024);
   if(wz==='grill'&&grill.T>140)b.grill=Math.min(1,(b.grill||0)+.005);
   let k=lerp(m.k,.008,b.melt),e=lerp(m.edge,.05,b.melt),pl=b.melt>.15?lerp(m.plastic,.06,b.melt):m.plastic;
   if(b.T<-3){k=Math.max(k,.85);e=Math.max(e,.9);pl=0}
@@ -824,7 +847,8 @@ function cookStep(b){
   if(b.type==='eggwhite'){k=lerp(.06,.35,clamp(b.cook,0,1));pl=b.cook>.6?0:m.plastic}
   b.ke=k;b.ee=e;b.pl=pl;
   if(b.T>92&&Math.random()<.05+(b.T-92)*.001)puff(b.cx+rnd(-b.R*.5,b.R*.5),b.minY,'steam');
-  if(b.cook>1.45&&Math.random()<(b.cook-1.45)*.25)puff(b.cx+rnd(-b.R*.4,b.R*.4),b.minY,'smoke');
+  if(b.cook>1.2&&Math.random()<.04+(b.cook-1.2)*.2)puff(b.cx+rnd(-b.R*.4,b.R*.4),b.minY,'smoke');
+  if(b.cook>1.2&&!b.burnWarn){b.burnWarn=1;noise(.25,'highpass',2500,6000,.08,1)}
   if(b.melt>.55&&Math.random()<.01*b.melt){let lo=b.pts[0];for(const p of b.pts)if(p.y>lo.y)lo=p;drop(lo.x,lo.y+1,rnd(-.3,.3),.5,m.juice,rnd(1.5,3),.9)}
   if(m.pop&&b.T>m.pop+b.popAt*.6){popKernel(b);return true}
   if(m.boom&&b.cook<.5&&where(b)==='micro'&&b.T>m.boom){burst(b,false,true);return true}
@@ -987,6 +1011,7 @@ function burst(b,quiet,boom){
     buzz(25);return;
   }
   const big=b.R/40;
+  if(m.powder){for(let i=0;i<14;i++)puff(b.cx+rnd(-b.R,b.R),b.cy-rnd(0,b.R),'steam');spray(b.pts,m,20,b.type,.5);sfx.squish(.3);return}
   sfx.splat(clamp(.3+big*.3,.25,1));wetSplat(b,Math.max(9,b.R*.9));
   if(m.shards)for(let i=0;i<14;i++)drops.push({k:'crumb',x:b.cx+rnd(-b.R*.5,b.R*.5),y:b.cy+rnd(-6,6),vx:vx+rnd(-4,4),vy:rnd(-5,-1),c:b.melt>.3?m.juice:m.skin[1],s:rnd(1,2.2),fy:landY(b.cx)});
   if(!m.shards||b.melt>.3)spray(b.pts,m,Math.min(90,b.restArea/(m.rise||m.fat||b.type==='popcorn'||b.type==='mallow'?60:22)),b.type);
@@ -1015,7 +1040,7 @@ function landY(x){
 function puff(x,y,kind){if(puffs.length>220)return;puffs.push({x,y,vx:rnd(-.25,.25),vy:rnd(-1.1,-.5),r:rnd(4,8),life:0,max:rnd(50,90),kind})}
 
 /* ================= mixing ================= */
-const NAME_PART={strawberry:'Erdbeer',banana:'Bananen',melon:'Melonen',orange:'Orangen',lemon:'Zitronen',chocolate:'Schoko',mallow:'Marshmallow',jelly:'Wackelpudding',popcorn:'Popcorn',
+const NAME_PART={flour:'Mehl',milk:'Milch',cocoa:'Kakao',sugar:'Zucker',strawberry:'Erdbeer',banana:'Bananen',melon:'Melonen',orange:'Orangen',lemon:'Zitronen',chocolate:'Schoko',mallow:'Marshmallow',jelly:'Wackelpudding',popcorn:'Popcorn',
   tomato:'Tomaten',chili:'Chili',egg:'Ei',steak:'Steak',sausage:'Wurst',cheese:'Käse',butter:'Butter',dough:'Teig'};
 function hexOr(c,f){return typeof c==='string'&&c[0]==='#'?c:f}
 function baseCol(k){const m=M[k];if(!m)return'#c08040';if(k==='egg')return'#ffc020';if(k==='popcorn')return'#fff1c8';return hexOr(m.flesh,hexOr(m.juice,'#c08040'))}
@@ -1027,29 +1052,36 @@ function startMix(){
 }
 function mixMaterial(parts,A){
   const ingr={},taste=[0,0,0,0,0],acc=[[0,0,0],[0,0,0],[0,0,0]],jc=[0,0,0];let heat=0,dough=0,melt=0,need=0;
+  let tw=0;for(const{b,a}of parts)tw+=a*(b.m.str||1);
   for(const{b,a}of parts){const w=a/A,pm=b.m;
     for(const k in pm.ingr)ingr[k]=(ingr[k]||0)+pm.ingr[k]*w;
-    for(let i=0;i<5;i++)taste[i]+=pm.taste[i]*w;
+    for(let i=0;i<5;i++)taste[i]+=pm.taste[i]*a*(pm.str||1)/tw;
     const jf=hexOr(pm.juice,'#c08040');let cs=pm.mix?pm.skin.slice():[hexOr(pm.fleshHi,jf),hexOr(pm.flesh,jf),hexOr(pm.fleshDk,jf)];
     if(b.cook>.4){const ck=pm.cooked||cs;cs=cs.map((c,i)=>mix(c,hexOr(ck[i],c),Math.min(1,b.cook)*.6))}
     cs.forEach((c,i)=>{const q=rgb(c);for(let j=0;j<3;j++)acc[i][j]+=q[j]*w});
     const q=rgb(jf);for(let j=0;j<3;j++)jc[j]+=q[j]*w;
-    heat+=pm.heat*w;dough+=(pm.ingr.dough||0)*w;if(pm.melt)melt+=w;if(pm.needsCook&&b.cook<.45)need+=w}
+    heat+=pm.heat*w;dough+=((pm.ingr.dough||0)+(pm.ingr.cakedough||0)+(pm.ingr.pizzadough||0))*w;if(pm.melt)melt+=w;if(pm.needsCook&&b.cook<.45)need+=w}
+  const fl=ingr.flour||0,wet=['milk','egg','water','oil','butter','cream','yogurt','quail'].reduce((a,k)=>a+(ingr[k]||0),0);
+  let batter=null;if(fl>.15&&wet>.1){dough=Math.max(dough,.3);batter=(ingr.milk||0)>.08&&((ingr.egg||0)+(ingr.quail||0))>.05&&taste[0]<.35&&!(ingr.sugar||ingr.cocoa||ingr.chocolate)?'pancake':taste[0]>=Math.max(.2,taste[1]*.6)?'cake':'bread'}
   const hx=v=>'#'+v.map(x=>Math.round(clamp(x,0,255)).toString(16).padStart(2,'0')).join('');
   const hi=hx(acc[0]),mid=hx(acc[1]),dk=hx(acc[2]),juice=hx(jc);
   const m=Object.assign({},D,{label:'',cat:'none',shape:'blob',r:20,n:26,k:.1,edge:.3,press:.85,thresh:999,frag:0,squeeze:0,plastic:.025,bounce:.05,fric:.6,hammer:.7,
     heat:Math.max(.01,heat),dens:1,spec:.5,chunks:3,skin:[mix(hi,'#ffffff',.15),mid,mix(dk,'#000000',.15)],flesh:mid,fleshHi:hi,fleshDk:dk,juice,taste,ingr,mix:true,needsCook:need>.12,seed:'#000'});
   const keys=Object.keys(ingr).filter(k=>ingr[k]>.04).sort((x,y)=>ingr[y]-ingr[x]);
   m.speck=keys.map(baseCol);
-  if(dough>.2){m.rise={T:55,max:1.3};m.cooked=[mix('#f6c070',mid,.25),mix('#c87a30',mid,.25),'#6a3a12'];m.fleshCooked=mix(mid,'#fff3da',.4);m.cookT=70;m.cookSec=9}
+  if(batter==='pancake')Object.assign(m,{k:.02,edge:.08,plastic:.07,press:.75});
+  if(dough>.2){m.rise={T:55,max:batter==='pancake'?1.06:(ingr.yeast?1.45:1.3)};m.batter=batter;m.cooked=[mix('#f6c070',mid,.25),mix('#c87a30',mid,.25),'#6a3a12'];m.fleshCooked=mix(mid,'#fff3da',.4);m.cookT=70;m.cookSec=9}
   else{m.cooked=[mix(m.skin[0],'#c08040',.45),mix(mid,'#8a4a20',.45),mix(dk,'#3a1a08',.45)];m.cookT=80;m.cookSec=9}
   if(melt>.3)m.melt={T:45};
-  m.label=mixName(ingr,taste,dough,keys);
+  m.label=batter==='pancake'?'Pfannkuchenteig':mixName(ingr,taste,dough,keys);
   return m}
 function mixName(ingr,taste,dough,keys){
   const has=k=>(ingr[k]||0)>.06,P=k=>NAME_PART[k]||(M[k]&&M[k].label)||k,cat=k=>M[k]?M[k].cat:'';
   const fruit=keys.filter(k=>cat(k)==='obst'||cat(k)==='beeren'),meat=keys.filter(k=>cat(k)==='fleisch'),fish=keys.filter(k=>cat(k)==='fisch'),veg=keys.filter(k=>cat(k)==='gemuese'||cat(k)==='pilze'),dairy=keys.filter(k=>cat(k)==='milch'&&k!=='egg'&&k!=='quail');
   const sweet=taste[0]>=taste[1]*.6||keys.some(k=>cat(k)==='suess');
+  const dairyDrink=(has('milk')||has('yogurt')||has('cream'));
+  if(dairyDrink&&fruit.length&&dough<=.2)return`${P(fruit[0])}-Milchshake`;
+  if(has('cocoa')&&has('milk')&&dough<=.2)return'Kakao';
   if(dough>.2)return sweet?'Kuchenteig':(has('cheese')||has('tomato')||has('mozzarella')?'Pizzateig':'Brotteig');
   if((has('egg')||has('quail'))&&!sweet)return'Rührei-Mix';
   if(keys.some(k=>M[k]&&M[k].melt&&cat(k)==='suess')&&fruit.length)return`Schoko-${P(fruit[0])}-Creme`;
@@ -1103,8 +1135,8 @@ function step(){
     if(b.coatT===14){const lv=b.bread||0;if(lv===d.k){b.bread=lv+1;sfx.squish(.2);puff(b.cx,b.minY,'steam');if(b.bread===3)toast('Paniert! Jetzt ab in die Fritteuse.')}
       else if(lv<3&&d.k>lv&&!game.breadHint){game.breadHint=1;toast('Erst Mehl, dann Ei, dann Brösel.')}}}
   for(const b of bodies)for(const p of b.pts){const vx=(p.x-p.px)*.993,vy=(p.y-p.py)*.993;p.px=p.x;p.py=p.y;p.x+=vx;p.y+=vy+G}
-  for(const b of bodies){if(where(b)!=='fryer')continue;let sub=0;for(const p of b.pts)if(p.y>fryer.oil){sub++;p.y-=G*(b.m.dens<.6?1.3:1.1);p.px+=(p.x-p.px)*.12;p.py+=(p.y-p.py)*.12}
-    if(sub&&fryer.T>140&&Math.random()<.06)drop(rnd(fryer.x0+8,fryer.x1-8),fryer.oil-2,rnd(-2,2),rnd(-5,-2),'#f0c050',rnd(1,2),.6)}
+  for(const b of bodies){if(where(b)!=='fryer')continue;let sub=0;for(const p of b.pts)if(p.y>fryer.oil){sub++;p.y-=G*(b.m.dens<.6?1.25:1.02);p.px+=(p.x-p.px)*.12;p.py+=(p.y-p.py)*.12}
+    b.subFrac=sub/b.pts.length;if(sub&&fryer.T>140&&Math.random()<.06)drop(rnd(fryer.x0+8,fryer.x1-8),fryer.oil-2,rnd(-2,2),rnd(-5,-2),'#f0c050',rnd(1,2),.6)}
   for(let it=0;it<4;it++){
     const first=it===0;
     for(const b of bodies){shapeMatch(b,b.ke*.5,first&&b!==ptr.grab);edges(b);pressure(b)}
@@ -1271,7 +1303,7 @@ function skinOf(b){
   if(b.chunk&&m.fleshCooked)s=s.map(c=>mix(c,m.fleshCooked,b.cook*.9));
   const c=b.cook;if(c<=0)return s;
   const ck=m.cooked||s.map(x=>mix(x,'#5a3a20',.45));
-  return c<=1?s.map((x,i)=>mix(x,ck[i],c)):ck.map((x,i)=>mix(x,BURNT[i],(c-1)/1.2));
+  return c<=1?s.map((x,i)=>mix(x,ck[i],c)):ck.map((x,i)=>mix(x,BURNT[i],clamp((c-1)/1.4,0,1)*.62));
 }
 function drawShadow(b){
   const h=floorY-b.maxY,a=clamp(1-h/260,0,1);if(a<=0)return;
@@ -1300,6 +1332,10 @@ function drawBody(b){
       for(let i=0;i<d.length;i++){const q=d[i];X.globalAlpha=.7;X.fillStyle=i%3?'#a8682a':'#fff0c0';X.fillRect(cx+q.x*.9,cy+q.y*.9,1.6+q.s*1.4,1.6+q.s)}}
     else{if(b.bread>=2){X.globalAlpha=.28;X.fillStyle='#ffc83a';X.fillRect(bx0,by0,bw,bh)}X.globalAlpha=.55;X.fillStyle='#ffffff';for(let i=0;i<d.length;i+=2){const q=d[i];X.fillRect(cx+q.x*.85,cy+q.y*.85,1.4,1.4)}}
     X.globalAlpha=baseA}
+  {const bk=Math.max(b.cook-1.15,(b.fried||0)-1.3);if(bk>0){const k=clamp(bk/.9,0,1),d=b.tex.dots,n=Math.round(d.length*k*.35);
+    for(let i=0;i<n;i++){const q=d[(i*7)%d.length],rr2=1.5+q.s*(2+k*4);X.globalAlpha=.55+k*.25;X.fillStyle='#1a0e08';X.beginPath();X.ellipse(cx+q.x*.85,cy+q.y*.85,rr2,rr2*.75,q.s*5,0,TAU);X.fill();
+      X.globalAlpha=.35*k;X.fillStyle='#8a8580';X.beginPath();X.arc(cx+q.x*.85-rr2*.3,cy+q.y*.85-rr2*.3,rr2*.35,0,TAU);X.fill()}
+    X.globalAlpha=.35+k*.35;X.strokeStyle='#1a0e08';X.lineWidth=2+k*3;X.beginPath();trace(b.pts);X.stroke();X.globalAlpha=baseA}}
   if(b.grill>.1){X.save();X.translate(cx,cy);X.rotate(.55);X.globalAlpha=Math.min(.75,b.grill);X.strokeStyle='#2a1004';X.lineWidth=Math.max(2,R*.12);for(let k=-4;k<=4;k++){X.beginPath();X.moveTo(k*R*.38,-R*2);X.lineTo(k*R*.38,R*2);X.stroke()}X.restore();X.globalAlpha=baseA}
   if(b.T<-1){X.globalAlpha=clamp(-b.T/25,0,.45);X.fillStyle='#e6f4ff';X.fillRect(b.minX-3,b.minY-3,b.maxX-b.minX+6,b.maxY-b.minY+6);X.globalAlpha=clamp(-b.T/15,0,.9);X.fillStyle='#ffffff';
     for(let i=0;i<b.tex.dots.length;i+=4){const d=b.tex.dots[i];X.fillRect(cx+d.x*.8,cy+d.y*.8,1.5,1.5)}X.globalAlpha=baseA}
@@ -1681,6 +1717,7 @@ function genTex(b,tr,kind){
   else if(kind==='sprinkles'){const c=['#ff4a8a','#4ac0ff','#ffe04a','#7ae070','#fff'];X.globalAlpha=.95;X.lineWidth=1.6;for(let i=0;i<d.length;i+=3){const q=d[i];X.strokeStyle=c[i%5];X.beginPath();X.moveTo(q.x*.8,q.y*.3);X.lineTo(q.x*.8+2.5,q.y*.3+1);X.stroke()}}
   else if(kind==='wrinkles'){X.globalAlpha=.4;X.strokeStyle=dk;X.lineWidth=1;for(let i=0;i<7;i++){const q=d[i*7];X.beginPath();X.moveTo(q.x*.6,q.y*.6);X.quadraticCurveTo(q.x*.6+3,q.y*.6-4,q.x*.6+6,q.y*.6);X.stroke()}}
   else if(kind==='spikes'){X.globalAlpha=.55;X.strokeStyle=dk;X.lineWidth=1.2;for(let i=0;i<d.length;i+=3){const q=d[i];X.beginPath();X.moveTo(q.x*.9,q.y*.9);X.lineTo(q.x*.9+2,q.y*.9-3);X.stroke()}}
+  else if(kind==='powder'){X.globalAlpha=.35;X.fillStyle=mix(m.skin[1],'#000000',.25);for(let i=0;i<d.length;i++){const q=d[i];X.fillRect(q.x*.9,q.y*.5,1,1)}X.globalAlpha=.5;X.fillStyle='#ffffff';for(let i=0;i<d.length;i+=3){const q=d[i];X.fillRect(q.x*.8,q.y*.45-2,1.2,1.2)}}
   else if(kind==='salt'){X.globalAlpha=.85;X.fillStyle='#ffffff';for(let i=0;i<d.length;i+=7){const q=d[i];X.fillRect(q.x*.7,q.y*.6-tr*.2,2,2)}}
   else if(kind==='dimples'){for(const q of d){X.globalAlpha=.16;X.fillStyle=dk;X.beginPath();X.arc(q.x,q.y,.9+q.s*.9,0,TAU);X.fill()}}
   X.globalAlpha=1;
@@ -1794,9 +1831,14 @@ const tray=scr('tray'),catSel=scr('catSel'),trayBtns={};
 function iconFor(type){
   const c=document.createElement('canvas');c.width=c.height=76;const g=c.getContext('2d');
   const b=type==='kernel'?makeBody('popcorn',0,0,{r:20,seed:2}):makeBody(type,0,0);
-  aabb(b);const s=30/Math.max(b.maxX-b.minX,b.maxY-b.minY);
+  aabb(b);const bowlIcon=b.m.liquid||b.m.powder,s=(bowlIcon?28:30)/Math.max(b.maxX-b.minX,b.maxY-b.minY);
   for(const p of b.pts){p.x*=s;p.y*=s}b.R*=s;b.tex=makeTex(b.tex.R*s);b.cx=0;b.cy=0;aabb(b);
-  g.scale(2,2);g.translate(19,19+(b.m.stem==='top'||b.m.stem==='navel'?3:0));X=g;drawBody(b);X=ctx;return c;
+  g.scale(2,2);g.translate(19,19+(b.m.stem==='top'||b.m.stem==='navel'?3:0));
+  if(bowlIcon){g.translate(0,1);g.fillStyle='#d8d2c6';g.beginPath();g.ellipse(0,10,17,9,0,0,Math.PI);g.fill();g.fillStyle='#f4f0e8';g.beginPath();g.ellipse(0,3,17,5,0,0,TAU);g.fill();
+    g.save();g.beginPath();g.ellipse(0,3,15.5,4.2,0,0,TAU);g.clip();g.translate(0,b.m.liquid?4:1);X=g;drawBody(b);g.restore();
+    if(b.m.powder){g.save();g.beginPath();g.rect(-19,-19,38,23);g.clip();g.translate(0,1);X=g;drawBody(b);g.restore()}
+    g.strokeStyle='#bdb5a6';g.lineWidth=1;g.beginPath();g.ellipse(0,3,17,5,0,0,TAU);g.stroke();X=ctx;return c}
+  X=g;drawBody(b);X=ctx;return c;
 }
 function trayButton(type){
   if(trayBtns[type])return trayBtns[type];
@@ -1897,9 +1939,9 @@ const CHAPTERS=[
  {name:'Grillabend',cats:['fleisch','gemuese','milch'],want:['herzhaft'],hate:['süß'],extra:['grilled','done','warm','portion'],boss:2,quotes:['Wo ist der Rost?','Riecht nach Sommer!','Bitte mit Streifen.']},
  {name:'Gartenfrisch',cats:['obst','beeren','gemuese','pilze'],want:['süß','sauer'],hate:['scharf'],extra:['fine','variety','clean','cold'],boss:3,quotes:['Frisch aus dem Beet, bitte.','Leicht und bunt.','Ich esse mit den Augen.']},
  {name:'Feuer & Säure',cats:['gemuese','fleisch','obst','fisch'],want:['scharf','sauer'],hate:['süß'],extra:['warm','variety','done','mixed'],boss:4,quotes:['Mach mir Feuer!','Sauer macht lustig.','Ohne Chili ess ich nicht.']},
- {name:'Backstube',cats:['backen','suess','milch','obst','nuesse'],want:['süß','cremig'],hate:['scharf'],extra:['baked','mixed','warm','portion'],boss:5,quotes:['Riecht hier nach Kuchen?','Bitte frisch aus dem Ofen.','Ein Stück vom Glück.']},
+ {name:'Backstube',cats:['backen','suess','milch','obst','nuesse','vorrat'],want:['süß','cremig'],hate:['scharf'],extra:['baked','mixed','warm','portion'],boss:5,quotes:['Riecht hier nach Kuchen?','Bitte frisch aus dem Ofen.','Ein Stück vom Glück.']},
  {name:'Am Meer',cats:['fisch','gemuese','pilze','obst'],want:['herzhaft','sauer'],hate:['süß'],extra:['done','grilled','fine','variety'],boss:7,quotes:['Was schwimmt, schmeckt.','Frisch vom Kutter!','Ein Hauch Meer, bitte.']},
- {name:'Imbissbude',cats:['gemuese','fleisch','fisch','backen','milch'],want:['herzhaft'],hate:[],extra:['fried','breaded','warm','portion','done'],boss:8,quotes:['Einmal mit alles!','Knusprig, bitte.','Schnell und heiß.']},
+ {name:'Imbissbude',cats:['gemuese','fleisch','fisch','backen','milch','vorrat'],want:['herzhaft'],hate:[],extra:['fried','breaded','warm','portion','done'],boss:8,quotes:['Einmal mit alles!','Knusprig, bitte.','Schnell und heiß.']},
  {name:'Eiszeit',cats:['suess','beeren','obst','milch','nuesse'],want:['süß','cremig'],hate:['herzhaft'],extra:['cold','mixed','variety','fine'],boss:9,quotes:['Mir ist zu warm.','Eis, Eis, Baby.','Kalt wie mein Herz.']},
  {name:'Die große Gala',cats:null,want:['süß','herzhaft','cremig'],hate:[],extra:['done','warm','variety','portion','clean','fine','mixed'],boss:6,quotes:['Ich erwarte Großes.','Beeindrucken Sie mich.','Heute nur das Beste.']},
 ];
@@ -1957,8 +1999,8 @@ function wishText(w){if(w.t==='taste')return'Geschmack: '+Object.keys(w.want).jo
 /* --- judging --- */
 function dishName(b){
   const m=b.m;let n=m.label;
-  if(m.mix){if(b.cook>.45&&b.cook<1.5)n=n.replace('Kuchenteig','Kuchen').replace('Brotteig','Brot').replace('Pizzateig','Pizza').replace('Rührei-Mix','Rührei').replace('Hackmasse','Frikadelle').replace('Fischfrikadellen-Masse','Fischfrikadelle').replace('Tomatensoße','Tomatensuppe').replace('Gemüsepüree','Gemüseeintopf');
-    if(b.T<-2&&m.taste[0]>.3)n=n.replace('Obst-Smoothie','Fruchteis').replace('-Creme','-Eis').replace(/mus$/,'eis').replace('Süße Creme','Sahneeis')}
+  if(m.mix){if(b.cook>.45)n=n.replace('Pfannkuchenteig','Pfannkuchen').replace('Kuchenteig','Kuchen').replace('Brotteig','Brot').replace('Pizzateig','Pizza').replace('Rührei-Mix','Rührei').replace('Hackmasse','Frikadelle').replace('Fischfrikadellen-Masse','Fischfrikadelle').replace('Tomatensoße','Tomatensuppe').replace('Gemüsepüree','Gemüseeintopf');
+    if(b.T<-2&&m.taste[0]>.3)n=n.replace('Obst-Smoothie','Fruchteis').replace('-Creme','-Eis').replace('-Milchshake','-Eis').replace(/mus$/,'eis').replace('Süße Creme','Sahneeis')}
   else if(b.type==='eggwhite'||b.type==='yolk')n=b.cook>.45?'Spiegelei':'rohes Ei';
   else if(b.type==='dough'&&b.cook>.45)n='Brot';
   else if(b.type==='kernel')n='Maiskorn';
@@ -1969,9 +2011,9 @@ function dishName(b){
   if(b.fried>.4)n+=' (frittiert)';else if(b.grill>.4)n+=' (gegrillt)';
   return n}
 function analyse(items){
-  let tot=0,T=0,raw=0,burnt=0,pieces=0,mixedMax=0,baked=0,fried=0,grilled=0,breaded=0;const prof=[0,0,0,0,0],ingr={},names={};
+  let tot=0,tw=0,T=0,raw=0,burnt=0,pieces=0,mixedMax=0,baked=0,fried=0,grilled=0,breaded=0;const prof=[0,0,0,0,0],ingr={},names={};
   for(const b of items){const w=Math.abs(polyArea(b.pts));tot+=w;const m=b.m;
-    const q=b.cook>1.5?.35:1;for(let i=0;i<5;i++)prof[i]+=m.taste[i]*w*q;
+    const q=(b.cook>1.5?.35:1)*(m.str||1);tw+=w*(m.str||1);for(let i=0;i<5;i++)prof[i]+=m.taste[i]*w*q;
     if(b.cook>.45&&b.cook<1.5&&(m.needsCook||m.mix))prof[1]+=.12*w;
     if(b.fried>.4){prof[1]+=.2*w;fried+=w}if(b.bread>=3){breaded+=w*(b.fried>.4?1:.5);if(b.fried>.4)prof[1]+=.1*w}if(b.grill>.4){prof[1]+=.15*w;grilled+=w}
     T+=b.T*w;
@@ -1980,7 +2022,7 @@ function analyse(items){
     if(m.mix)mixedMax=Math.max(mixedMax,Object.keys(m.ingr).filter(k=>m.ingr[k]>.04).length);
     if(m.rise&&b.cook>.45&&b.cook<1.5&&b.grow>1.08)baked=1;else if(m.rise&&b.cook>.2)baked=Math.max(baked,.4);
     pieces++;const nm=dishName(b);names[nm]=(names[nm]||0)+1}
-  if(tot)for(let i=0;i<5;i++)prof[i]/=tot;
+  if(tw)for(let i=0;i<5;i++)prof[i]/=tw;
   return{tot,T:tot?T/tot:ROOM,raw:tot?raw/tot:0,burnt:tot?burnt/tot:0,fried:tot?fried/tot:0,grilled:tot?grilled/tot:0,breaded:tot?breaded/tot:0,pieces,mixedMax,baked,prof,
     variety:Object.keys(ingr).filter(k=>ingr[k]/tot>.03).length,bites:tot/900,names}}
 function judge(c,items){
@@ -2231,7 +2273,7 @@ function loop(t){
 }
 requestAnimationFrame(loop);
 document.addEventListener('visibilitychange',()=>{if(AC){document.hidden?AC.suspend():AC.resume()}last=performance.now()});
-window.__kitchen={ptr,bodies:()=>bodies,fx:()=>fx,pan,pot,grill,fryer,freezer,oven,micro,bowl,plate,spawn,step,controls,where,LY,game,startLevel,startSandbox,startTutorial,judge,CRITICS,startMix,level,goStation,M,FOODS,cam:()=>[camX,camT]};
+window.__kitchen={makeBody,mixMaterial,dishName,analyse,add,remove,ptr,bodies:()=>bodies,fx:()=>fx,pan,pot,grill,fryer,freezer,oven,micro,bowl,plate,spawn,step,controls,where,LY,game,startLevel,startSandbox,startTutorial,judge,CRITICS,startMix,level,goStation,M,FOODS,cam:()=>[camX,camT]};
 })();
 </script>
 </body>

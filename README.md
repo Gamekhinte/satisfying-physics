@@ -6,7 +6,7 @@ Ein Koch- und Physikspiel fürs Handy im Querformat. Alles ist weich und wabbeli
 
 - **Tutorial:** zeigt in 9 Schritten alles Wichtige.
 - **Story:** 100 Gäste in 10 Kapiteln (Omas Küche, Zuckerbäckerei, Grillabend, Gartenfrisch, Feuer & Säure, Backstube, Am Meer, Imbissbude, Eiszeit, Die große Gala). Jeder Gast hat eigene Wünsche, gibt dir nur bestimmte Zutaten und lässt dir begrenzt Zeit. Am Ende jedes Kapitels wartet ein Boss-Kritiker. Bewertet wird nach Geschmack, Garzustand, Temperatur, Portion, Vielfalt, Feinheit, Sauberkeit und mehr, mit bis zu 3 Sternen. 1 Stern schaltet den nächsten Gast frei.
-- **Sandkasten:** 213 Zutaten in 10 Kategorien, alles unbegrenzt. Du kannst jeden Kritiker probieren lassen.
+- **Sandkasten:** 230 Zutaten in 11 Kategorien (inklusive Vorrat wie Mehl, Milch, Zucker, Salz, Öl und Soßen), alles unbegrenzt. Du kannst jeden Kritiker probieren lassen.
 
 ## Die Küche
 
@@ -28,7 +28,9 @@ Die Küche hat 5 Stationen. Wisch auf einer freien Stelle nach links oder rechts
 
 **Panieren:** Bei der Fritteuse stehen drei Schalen. Erst Mehl, dann Ei, dann Brösel, danach ab in die Fritteuse. Aus Fleisch wird ein Schnitzel, aus Fisch ein Backfisch, aus Käse Backkäse.
 
-**Mixen:** Zutaten in die Schüssel legen und auf MIXEN tippen. Daraus wird zum Beispiel ein Obst-Smoothie, eine Schoko-Creme, Scharfe Salsa, ein Rührei-Mix oder Kuchenteig. Kuchenteig wird im Ofen zu Kuchen, eine Frucht-Creme im Gefrierfach zu Eis.
+**Mixen:** Zutaten in die Schüssel legen und auf MIXEN tippen. Daraus wird zum Beispiel ein Obst-Smoothie, eine Schoko-Creme, Scharfe Salsa, ein Rührei-Mix oder Kuchenteig. Kuchenteig wird im Ofen zu Kuchen, eine Frucht-Creme im Gefrierfach zu Eis. Mehl, Milch und Ei ergeben Pfannkuchenteig für die Pfanne, Obst mit Milch einen Milchshake.
+
+**Verbrannt:** Wird etwas zu lange erhitzt, bekommt es dunkle Brandflecken, einen dunklen Rand und raucht.
 
 ## Online stellen (GitHub Pages)
 
