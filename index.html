@@ -12,20 +12,24 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Familjen+Grotesk:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Courier+Prime:wght@400;700&family=Familjen+Grotesk:wght@500;700&display=swap">
 <style>
-/* Layout: landscape kitchen canvas; left sidebar (tools + pantry), slim top bar, critic card top-right, cream arcade cards for menus. */
+/* Layout: landscape kitchen of 5 stations (canvas, swipe between them); left pantry rail; top bar with station tabs; order ticket for the guest. Diner signage look: Bungee + Courier Prime, flat ink colors. */
 :root{
-  --bg:#141917;
-  --panel:rgba(18,22,20,.82);
-  --line:rgba(255,236,210,.14);
+  --bg:#1c1712;
+  --rail:#221b15;
+  --line:rgba(255,236,210,.13);
   --fg:#f6ead8;
-  --muted:#b9a993;
-  --accent:#ff5a3c;
-  --cream:#fbf3e4;
-  --ink:#2a1a10;
+  --muted:#b6a48c;
+  --tomato:#d8341f;
+  --tomato-dk:#8a1e0e;
+  --mustard:#ffcf3a;
+  --leaf:#3f8f3a;
+  --paper:#fbf3e4;
+  --ink:#2a1208;
   --side:84px;
-  --display:"Shrikhand","Georgia",serif;
+  --sign:"Bungee",Impact,"Arial Black",sans-serif;
+  --mono:"Courier Prime","Courier New",monospace;
   --ui:"Familjen Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
   color-scheme:dark;
 }
@@ -36,96 +40,116 @@ body{background:var(--bg);color:var(--fg);font-family:var(--ui);overflow:hidden;
 #app{position:fixed;inset:0;overflow:hidden}
 canvas#c{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
 #sa{position:fixed;left:0;top:0;width:0;height:0;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);visibility:hidden;pointer-events:none}
-button{font-family:var(--ui)}
+button,select{font-family:var(--ui)}
 .side{position:absolute;left:0;top:0;bottom:0;width:calc(var(--side) + env(safe-area-inset-left,0px));z-index:2;display:flex;flex-direction:column;gap:6px;
   padding:calc(8px + env(safe-area-inset-top,0px)) 6px calc(6px + env(safe-area-inset-bottom,0px)) calc(6px + env(safe-area-inset-left,0px));
-  background:var(--panel);border-right:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.tools{display:flex;gap:2px;background:rgba(255,255,255,.05);border-radius:12px;padding:2px;flex:none}
-.tool{appearance:none;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;flex:1;height:30px;border-radius:10px;cursor:pointer;padding:0}
+  background:var(--rail);border-right:2px solid #120d09}
+.tools{display:flex;gap:2px;background:#16110d;border-radius:10px;padding:2px;flex:none}
+.tool{appearance:none;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;flex:1;height:30px;border-radius:8px;cursor:pointer;padding:0}
 .tool svg{width:18px;height:18px}
-.tool[aria-pressed="true"]{background:var(--fg);color:#1a1512}
+.tool[aria-pressed="true"]{background:var(--mustard);color:var(--ink)}
+.catsel{appearance:none;-webkit-appearance:none;width:100%;border:1px solid var(--line);border-radius:8px;background:#16110d;color:var(--fg);font:700 10px var(--ui);padding:6px 4px;text-align:center;text-align-last:center;flex:none}
 .tray{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:1px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .tray::-webkit-scrollbar{display:none}
-.cat{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);opacity:.75;text-align:center;padding:6px 0 1px}
-.food{position:relative;appearance:none;border:0;background:transparent;color:var(--muted);font:500 10px var(--ui);display:flex;flex-direction:column;align-items:center;gap:0;padding:3px 2px;border-radius:12px;cursor:pointer;flex:none}
-.food:active{background:rgba(255,255,255,.1)}
+.food{position:relative;appearance:none;border:0;background:transparent;color:var(--muted);font:500 10px/1.15 var(--ui);display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 2px;border-radius:10px;cursor:pointer;flex:none;text-align:center}
+.food:active{background:rgba(255,255,255,.08)}
 .food canvas{width:38px;height:38px}
-.food .n{position:absolute;top:2px;right:6px;min-width:18px;background:var(--accent);color:#fff;font:700 10px var(--ui);border-radius:9px;padding:1px 5px;font-variant-numeric:tabular-nums}
+.food .n{position:absolute;top:2px;right:6px;min-width:18px;background:var(--tomato);color:#fff;font:700 10px var(--ui);border-radius:9px;padding:1px 5px;font-variant-numeric:tabular-nums}
 .food[disabled]{opacity:.28;cursor:default}
-.top{position:absolute;right:0;top:0;left:calc(var(--side) + env(safe-area-inset-left,0px));display:flex;align-items:center;gap:8px;z-index:2;
-  padding:calc(6px + env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) 0 10px;pointer-events:none}
+.food.pulse,.tab.pulse,.cta.pulse{animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 3px var(--mustard)}}
+.top{position:absolute;right:0;top:0;left:calc(var(--side) + env(safe-area-inset-left,0px));display:flex;align-items:center;gap:6px;z-index:2;
+  padding:calc(6px + env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) 0 8px;pointer-events:none}
 .top>*{pointer-events:auto}
-.logo{font-family:var(--display);font-size:18px;line-height:.95;color:#ffcf3a;text-shadow:0 2px 0 #7a1e06,2px 3px 0 #3a1206,0 0 2px #3a1206;transform:rotate(-4deg);pointer-events:none;margin-right:auto}
-.meter{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;gap:7px;align-items:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.tabs{display:flex;gap:2px;background:rgba(28,23,18,.92);border:1px solid var(--line);border-radius:10px;padding:2px;margin-right:auto}
+.tab{appearance:none;border:0;background:transparent;color:var(--muted);font:700 11px var(--ui);padding:6px 9px;border-radius:8px;cursor:pointer;letter-spacing:.02em}
+.tab[aria-current="true"]{background:var(--fg);color:var(--ink)}
+.meter{background:rgba(28,23,18,.92);border:1px solid var(--line);border-radius:10px;padding:5px 9px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;gap:6px;align-items:center}
 .meter b{color:var(--fg);font-variant-numeric:tabular-nums;font-size:12px;letter-spacing:0;min-width:3.2ch;text-align:right}
-.bar{width:30px;height:5px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}
-.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffb000,var(--accent))}
-.btn{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--fg);font:700 12px var(--ui);border-radius:999px;padding:6px 11px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer}
+.bar{width:26px;height:5px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--tomato)}
+.btn{appearance:none;border:1px solid var(--line);background:rgba(28,23,18,.92);color:var(--fg);font:700 12px var(--ui);border-radius:10px;padding:6px 10px;cursor:pointer}
 .btn.icon{padding:5px 7px;display:grid;place-items:center}
 .btn svg{width:17px;height:17px;display:block}
-.btn:focus-visible,.tool:focus-visible,.food:focus-visible,.cta:focus-visible,.lv:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.hud{position:absolute;z-index:2;top:calc(46px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));width:214px;
-  background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;display:grid;grid-template-columns:46px 1fr;gap:6px 8px;align-items:center;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.hud canvas{width:46px;height:46px;border-radius:12px;background:#f3e6d0;cursor:pointer}
-.hud b{font-size:13px;display:block;line-height:1.15}
-.hud small{font-size:10px;color:var(--muted)}
-.chips{display:flex;flex-wrap:wrap;gap:3px}
-.chip{font-size:10px;line-height:1.2;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.1);color:var(--fg)}
-.chip.no{background:rgba(255,90,60,.2);color:#ffc4b4}
-.hud .chips{grid-column:1/-1}
-.cta{appearance:none;border:0;border-radius:14px;background:linear-gradient(#ff8a3a,#e8401a);color:#fff;font:700 15px var(--ui);padding:9px 16px;box-shadow:0 4px 0 #8a2208;cursor:pointer;text-shadow:0 1px 0 rgba(0,0,0,.25)}
-.cta:active{transform:translateY(2px);box-shadow:0 2px 0 #8a2208}
-.cta.ghost{background:#efe2cc;color:#3a2410;box-shadow:0 4px 0 #c8b496;text-shadow:none}
-.cta.green{background:linear-gradient(#5fd068,#2e9a3a);box-shadow:0 4px 0 #17561e}
-.hud .cta{grid-column:1/-1;padding:8px 10px;font-size:14px}
-.toast{position:absolute;z-index:3;left:calc(var(--side) + env(safe-area-inset-left,0px) + (100% - var(--side) - env(safe-area-inset-left,0px) - 236px)/2);top:calc(48px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:7px 12px;font-size:13px;line-height:1.35;color:var(--fg);pointer-events:none;transition:opacity .5s;text-align:center;max-width:min(440px,calc(100% - var(--side) - 270px));width:max-content;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.screen{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;overflow:auto;background:rgba(20,12,6,.55);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+.btn:focus-visible,.tool:focus-visible,.food:focus-visible,.cta:focus-visible,.lv:focus-visible,.tab:focus-visible,.chap:focus-visible{outline:2px solid var(--mustard);outline-offset:2px}
+.hud{position:absolute;z-index:2;top:calc(44px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));width:206px;
+  background:var(--paper);color:var(--ink);border-radius:4px;padding:8px 9px 9px;display:grid;grid-template-columns:38px 1fr auto;gap:6px 8px;align-items:center;font-family:var(--mono);
+  box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.hud:before{content:"";position:absolute;left:0;right:0;top:-5px;height:6px;background:radial-gradient(circle at 4px 0,transparent 4px,var(--paper) 4.5px) -4px 0/8px 6px repeat-x}
+.hud canvas{width:38px;height:38px;border-radius:4px;background:#f0e2c8;cursor:pointer}
+.hud b{font:700 12px var(--mono);display:block;line-height:1.1}
+.hud small{font-size:10px;color:#7a5a3a}
+.timer{font:15px var(--sign);color:var(--ink);font-variant-numeric:tabular-nums}
+.timer.low{color:var(--tomato)}
+.wl{grid-column:1/-1;margin:0;padding:6px 0 0;border-top:1px dashed #b8a080;list-style:none;font-size:11px;line-height:1.35;display:grid;gap:1px}
+.wl li:before{content:"– "}
+.wl li.no{color:var(--tomato)}
+.cta{appearance:none;border:2px solid var(--ink);border-radius:8px;background:var(--tomato);color:#fff;font:15px var(--sign);padding:8px 14px;cursor:pointer;letter-spacing:.02em}
+.cta:active{transform:translateY(1px)}
+.cta.ghost{background:var(--paper);color:var(--ink)}
+.cta.green{background:var(--leaf)}
+.cta.yellow{background:var(--mustard);color:var(--ink)}
+.hud .cta{grid-column:1/-1;padding:7px 8px;font-size:13px}
+.toast{position:absolute;z-index:3;left:calc(var(--side) + env(safe-area-inset-left,0px) + (100% - var(--side) - env(safe-area-inset-left,0px) - 226px)/2);top:calc(48px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:#16110d;border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:13px;line-height:1.35;color:var(--fg);pointer-events:none;transition:opacity .4s;text-align:center;max-width:min(420px,calc(100% - var(--side) - 260px));width:max-content}
+.coach{position:absolute;z-index:4;top:calc(44px + env(safe-area-inset-top,0px));right:calc(max(10px,env(safe-area-inset-right,0px)) + 216px);width:min(250px,calc(100% - var(--side) - 250px));background:var(--mustard);color:var(--ink);border:2px solid var(--ink);border-radius:8px;padding:9px 11px;font-size:13px;line-height:1.35;display:grid;gap:7px}
+.coach b{font:12px var(--sign)}
+.coach .row{justify-content:space-between}
+.coach button{appearance:none;border:0;background:none;color:var(--ink);font:700 11px var(--ui);text-decoration:underline;cursor:pointer;padding:0}
+.screen{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;overflow:auto;background:rgba(18,12,8,.72);
   padding:max(10px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(10px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-.card{background:var(--cream);color:var(--ink);border-radius:22px;box-shadow:0 18px 50px rgba(0,0,0,.45),inset 0 -4px 0 rgba(120,80,40,.15);width:min(760px,100%);max-height:100%;overflow:auto;padding:16px 18px}
-.card h2{font-family:var(--display);font-weight:400;font-size:24px;margin:0;line-height:1.05;color:#c8301a;text-wrap:balance}
-.card h3{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8a6a4a;margin:0 0 6px}
+.card{background:var(--paper);color:var(--ink);border-radius:6px;border:2px solid var(--ink);width:min(780px,100%);max-height:100%;overflow:auto;padding:14px 16px}
+.card h2{font:22px var(--sign);margin:0;line-height:1.05;color:var(--tomato-dk)}
+.card h3{font:11px var(--sign);letter-spacing:.06em;color:#7a5a3a;margin:0 0 6px}
 .card p{margin:0;line-height:1.4}
-.big{font-family:var(--display);font-size:clamp(40px,9vh,72px);line-height:.9;color:#ffcf3a;text-shadow:0 4px 0 #7a1e06,3px 6px 0 #3a1206;transform:rotate(-4deg);margin:0 0 10px}
-.menu{display:grid;grid-template-columns:1.1fr 1fr;gap:20px;align-items:center;width:min(760px,100%)}
-.menu .sub{color:#f6ead8;font-size:15px;max-width:34ch;line-height:1.4}
-.menu .btns{display:grid;gap:12px}
-.menu .cta{font-size:18px;padding:14px 18px;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:10px}
-.menu .cta small{font-weight:500;font-size:12px;opacity:.9}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.levels{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x proximity}
-.lv{appearance:none;border:0;flex:none;width:118px;background:#fff8ec;border-radius:16px;padding:8px;color:var(--ink);text-align:center;box-shadow:0 3px 0 #e0cfb4;cursor:pointer;position:relative;scroll-snap-align:start;display:grid;gap:3px;justify-items:center}
-.lv canvas{width:76px;height:76px;border-radius:14px;background:#f3e6d0}
-.lv b{font-size:12px;line-height:1.1}
-.lv small{font-size:10px;color:#8a6a4a;line-height:1.1}
-.lv .stars{font-size:15px;letter-spacing:1px;color:#e0a000}
-.lv[disabled]{opacity:.45;cursor:default}
-.lv .lock{position:absolute;top:6px;right:8px;font:700 10px var(--ui);color:#8a6a4a}
-.stars .off{color:#dccdb4}
-.two{display:grid;grid-template-columns:minmax(150px,.8fr) 1.3fr;gap:16px;align-items:start}
-.who{display:grid;justify-items:center;text-align:center;gap:6px}
-.who canvas{width:120px;height:120px;border-radius:22px;background:#f3e6d0}
-.who small{color:#8a6a4a}
-.bubble{background:#fff;border-radius:14px;padding:8px 10px;font-size:13px;line-height:1.35;position:relative;box-shadow:0 2px 0 #e6d6bc}
-.bubble:before{content:"";position:absolute;top:-6px;left:50%;margin-left:-6px;border:6px solid transparent;border-top:0;border-bottom-color:#fff}
-.wish{display:grid;gap:4px;margin:0;padding:0;list-style:none;font-size:13px}
-.wish li{display:flex;gap:8px;align-items:baseline}
-.wish li:before{content:"";width:7px;height:7px;border-radius:50%;background:#e8401a;flex:none;transform:translateY(-1px)}
+.menu{display:grid;grid-template-columns:1.15fr 1fr;gap:22px;align-items:center;width:min(760px,100%)}
+.menu .logo-big svg{width:100%;max-width:380px;height:auto;display:block}
+.menu .btns{display:grid;gap:10px}
+.menu .cta{font-size:20px;padding:12px 16px;text-align:left;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.menu .cta small{font:700 12px var(--ui);opacity:.9}
+.menu .note{color:var(--muted);font-size:12px}
+.chaps{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:thin}
+.chap{appearance:none;flex:none;border:2px solid var(--ink);background:#fff8ec;color:var(--ink);border-radius:6px;padding:6px 10px;font:700 12px var(--ui);cursor:pointer;text-align:left;display:grid;gap:1px}
+.chap small{font:400 10px var(--mono);color:#7a5a3a}
+.chap[aria-current="true"]{background:var(--ink);color:var(--paper)}
+.chap[aria-current="true"] small{color:#d8c4a4}
+.chap[disabled]{opacity:.4;cursor:default}
+.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.lv{appearance:none;border:2px solid var(--ink);background:#fff8ec;border-radius:6px;padding:6px 4px;color:var(--ink);cursor:pointer;position:relative;display:grid;justify-items:center;gap:2px;min-width:0}
+.lv canvas{width:52px;height:52px;border-radius:4px;background:#f0e2c8}
+.lv b{font:13px var(--sign)}
+.lv small{font:400 10px var(--mono);color:#6a4a2a;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lv .st{font-size:12px;letter-spacing:1px;color:#c88a00;line-height:1}
+.lv.boss{background:var(--mustard)}
+.lv[disabled]{opacity:.35;cursor:default}
+.off{color:#d8c8ac}
+.two{display:grid;grid-template-columns:minmax(140px,.75fr) 1.3fr;gap:16px;align-items:start}
+.who{display:grid;justify-items:center;text-align:center;gap:5px}
+.who canvas{width:116px;height:116px;border-radius:4px;background:#f0e2c8}
+.who small{color:#7a5a3a;font-family:var(--mono)}
+.quote{font-family:var(--mono);font-size:13px;line-height:1.35;border-left:3px solid var(--tomato);padding:2px 0 2px 8px;text-align:left}
+.ticket{font-family:var(--mono);background:#fffdf6;border:1px solid #e0cfae;padding:10px 12px;position:relative}
+.ticket ul{margin:0;padding:0;list-style:none;display:grid;gap:2px;font-size:13px}
+.ticket li:before{content:"[ ] "}
+.ticket .meta{display:flex;justify-content:space-between;font-size:11px;color:#7a5a3a;border-bottom:1px dashed #c8b08a;padding-bottom:5px;margin-bottom:6px}
 .pantry{display:flex;flex-wrap:wrap;gap:4px}
-.pantry span{background:#f3e3c8;border-radius:999px;padding:3px 9px;font-size:12px}
-.score{font-family:var(--display);font-size:46px;line-height:1;color:#c8301a}
-.score small{font-family:var(--ui);font-size:14px;color:#8a6a4a}
-.bigstars{font-size:30px;letter-spacing:3px;color:#e0a000;line-height:1}
-.crit{display:grid;gap:5px;margin:8px 0}
-.crit div{display:grid;grid-template-columns:96px 1fr 54px;gap:8px;align-items:center;font-size:12px}
-.crit i{display:block;height:8px;border-radius:4px;background:#ead9bd;overflow:hidden}
-.crit i u{display:block;height:100%;text-decoration:none;border-radius:4px}
-.crit em{font-style:normal;color:#8a6a4a;font-size:11px;text-align:right}
-.dish{font-size:13px;color:#5a3a20}
-.rotate{position:absolute;inset:0;z-index:9;background:#141917;display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;text-align:center;padding:24px}
+.pantry span{background:#f0e2c8;border-radius:4px;padding:3px 7px;font:12px var(--mono)}
+.score{font:46px var(--sign);line-height:1;color:var(--tomato-dk)}
+.score small{font:14px var(--ui);color:#7a5a3a}
+.bigstars{font-size:28px;letter-spacing:3px;color:#c88a00;line-height:1}
+.crit{display:grid;gap:4px;margin:8px 0;font-family:var(--mono)}
+.crit div{display:grid;grid-template-columns:92px 1fr 64px;gap:8px;align-items:center;font-size:12px}
+.crit i{display:block;height:8px;background:#ead9bd;overflow:hidden;border-radius:2px}
+.crit i u{display:block;height:100%;text-decoration:none}
+.crit em{font-style:normal;color:#7a5a3a;font-size:11px;text-align:right}
+.dish{font:12px var(--mono);color:#5a3a20}
+.rotate{position:absolute;inset:0;z-index:9;background:var(--bg);display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;text-align:center;padding:24px}
 .rotate svg{width:72px;height:72px;animation:rot 2.4s ease-in-out infinite}
+.rotate h2{font:26px var(--sign);color:var(--mustard);margin:0}
 @keyframes rot{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
-@media (prefers-reduced-motion:reduce){.rotate svg{animation:none}}
-@media (max-height:420px){.card{padding:12px 14px}.card h2{font-size:20px}.who canvas{width:92px;height:92px}.score{font-size:38px}}
+@media (prefers-reduced-motion:reduce){.rotate svg,.pulse{animation:none!important}}
+@media (max-height:420px){.card{padding:10px 12px}.card h2{font-size:18px}.who canvas{width:86px;height:86px}.score{font-size:36px}.grid{gap:6px}.lv canvas{width:40px;height:40px}}
+@media (max-width:760px){.tab{padding:6px 6px;font-size:10px}.hud{width:190px}.meter .bar{display:none}}
 </style>
 </head>
 <body>
@@ -138,59 +162,61 @@ button{font-family:var(--ui)}
       <button class="tool" data-tool="knife" aria-pressed="false" aria-label="Messer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l7.5-7.5"/><path d="M10.5 13.5L20 4c1 3-1 9-7 11.5z"/></svg></button>
       <button class="tool" data-tool="mallet" aria-pressed="false" aria-label="Fleischklopfer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="12" height="7" rx="1.5" transform="rotate(45 15 6)"/><path d="M11.5 12.5L3.5 20.5"/></svg></button>
     </div>
+    <select class="catsel" id="catSel" aria-label="Kategorie"></select>
     <div class="tray" id="tray" aria-label="Zutaten holen"></div>
   </aside>
   <div class="top">
     <button class="btn icon" id="menuBtn" aria-label="Menü"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-    <div class="logo">Squish<br>Kitchen</div>
+    <nav class="tabs" id="tabs" aria-label="Stationen"></nav>
     <div class="meter" title="Wie dreckig die Küche ist">Sauerei <span class="bar"><i id="mbar"></i></span><b id="mess">0%</b></div>
     <button class="btn icon" id="snd" aria-label="Ton ausschalten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5v14l-4.5-4.5H4z"/><path id="wave" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path id="xmark" d="M16 10l5 5M21 10l-5 5" hidden/></svg></button>
     <button class="btn" id="clean">Putzen</button>
   </div>
   <div class="hud" id="hud" hidden>
-    <canvas id="hudFace" width="92" height="92" aria-label="Kritiker-Infos anzeigen"></canvas>
-    <div><b id="hudName"></b><small id="hudTitle"></small></div>
-    <div class="chips" id="hudWish"></div>
+    <canvas id="hudFace" width="76" height="76" aria-label="Bestellung ansehen"></canvas>
+    <div style="min-width:0"><b id="hudName"></b><small id="hudTitle"></small></div>
+    <div class="timer" id="hudTimer"></div>
+    <ul class="wl" id="hudWish"></ul>
     <button class="cta" id="serve">Servieren</button>
   </div>
+  <div class="coach" id="coach" hidden><b id="coachStep"></b><span id="coachText"></span><div class="row"><span></span><button id="coachSkip">Tutorial beenden</button></div></div>
   <div class="toast" id="toast" style="opacity:0"></div>
 
   <div class="screen" id="scrMenu">
     <div class="menu">
-      <div>
-        <h1 class="big">Squish<br>Kitchen</h1>
-        <p class="sub">Schneiden, matschen, mixen, kochen. Und dann vor den strengsten Kritikern der Stadt bestehen.</p>
-      </div>
+      <div class="logo-big" id="logoBig"></div>
       <div class="btns">
         <button class="cta" id="goStory">Story <small id="storyProg"></small></button>
-        <button class="cta green" id="goSandbox">Sandkasten <small>alles unbegrenzt</small></button>
+        <button class="cta green" id="goSandbox">Sandkasten <small id="sandCount"></small></button>
+        <button class="cta yellow" id="goTut">Tutorial <small>3 Minuten</small></button>
+        <p class="note" id="menuNote"></p>
       </div>
     </div>
   </div>
 
   <div class="screen" id="scrLevels" hidden>
     <div class="card">
-      <div class="row" style="justify-content:space-between;margin-bottom:8px"><h2>Wer kommt heute essen?</h2><button class="cta ghost" data-back="menu">Zurück</button></div>
-      <div class="levels" id="levelList"></div>
-      <p style="font-size:12px;color:#8a6a4a">Mindestens 1 Stern schaltet den nächsten Gast frei.</p>
+      <div class="row" style="justify-content:space-between;margin-bottom:8px"><h2 id="chapTitle">Gästeliste</h2><button class="cta ghost" data-back="menu">Zurück</button></div>
+      <div class="chaps" id="chapList"></div>
+      <div class="grid" id="levelGrid"></div>
     </div>
   </div>
 
   <div class="screen" id="scrIntro" hidden>
     <div class="card two">
-      <div class="who"><canvas id="introFace" width="240" height="240"></canvas><h2 id="introName"></h2><small id="introTitle"></small><div class="bubble" id="introQuote"></div></div>
+      <div class="who"><canvas id="introFace" width="232" height="232"></canvas><h2 id="introName"></h2><small id="introTitle"></small><p class="quote" id="introQuote"></p></div>
       <div style="display:grid;gap:10px">
-        <div><h3>Wünsche</h3><ul class="wish" id="introWish"></ul></div>
+        <div class="ticket"><div class="meta"><span id="introNo"></span><span id="introTime"></span></div><ul id="introWish"></ul></div>
         <div><h3>Deine Zutaten</h3><div class="pantry" id="introPantry"></div></div>
         <p id="introHint" style="font-size:12px;color:#6a4a2a"></p>
-        <div class="row"><button class="cta" id="introGo">Los geht's</button><button class="cta ghost" id="introBack">Zurück</button></div>
+        <div class="row"><button class="cta" id="introGo">Kochen</button><button class="cta ghost" id="introBack">Zurück</button></div>
       </div>
     </div>
   </div>
 
   <div class="screen" id="scrResult" hidden>
     <div class="card two">
-      <div class="who"><canvas id="resFace" width="240" height="240"></canvas><h2 id="resName"></h2><div class="bubble" id="resQuote"></div></div>
+      <div class="who"><canvas id="resFace" width="232" height="232"></canvas><h2 id="resName"></h2><p class="quote" id="resQuote"></p></div>
       <div>
         <div class="row" style="justify-content:space-between"><div class="score" id="resScore">0<small> / 100</small></div><div class="bigstars" id="resStars"></div></div>
         <p class="dish" id="resDish"></p>
@@ -202,7 +228,7 @@ button{font-family:var(--ui)}
 
   <div class="rotate" id="rotate" hidden>
     <svg viewBox="0 0 24 24" fill="none" stroke="#ffcf3a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg>
-    <div class="big" style="font-size:30px">Dreh dein Handy</div>
+    <h2>Dreh dein Handy</h2>
     <p style="color:var(--muted);max-width:30ch;line-height:1.4">Squish Kitchen wird im Querformat gespielt.</p>
   </div>
 </div>
@@ -213,7 +239,8 @@ button{font-family:var(--ui)}
 const cv=document.getElementById('c'), ctx=cv.getContext('2d');
 const bg=document.createElement('canvas'), bgx=bg.getContext('2d');
 const st=document.createElement('canvas'), stx=st.getContext('2d');
-let W=0,H=0,DPR=1,floorY=0,counterTop=0,counterFront=0;
+let W=0,H=0,DPR=1,floorY=0,counterTop=0,counterFront=0,WW=0,BD=1,camX=0,camT=0;
+const STN=['Brett','Herd','Ofen','Fritte','Teller'];
 let X=ctx;
 const G=0.42, TAU=Math.PI*2, ROOM=20;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -321,7 +348,265 @@ const TASTE={chocolate:[1,0,0,0,.6],mallow:[1,0,0,0,.3],strawberry:[.7,0,.4,0,0]
 const NEEDCOOK=['egg','eggwhite','yolk','steak','sausage','dough','kernel'],INGR={eggwhite:'egg',yolk:'egg',kernel:'popcorn'};
 for(const k in M){M[k].taste=TASTE[k]||[0,0,0,0,0];M[k].needsCook=NEEDCOOK.includes(k);M[k].ingr={[INGR[k]||k]:1}}
 M.popcorn.label='Popcorn';M.eggwhite.label='Spiegelei';M.yolk.label='Eigelb';
-const FOODS=['chocolate','mallow','strawberry','banana','jelly','melon','orange','lemon','kernel','tomato','chili','egg','steak','sausage','cheese','butter','dough'];
+/* ================= ingredient catalogue ================= */
+Object.assign(SH,{
+  round:r=>param(t=>[r*Math.cos(t),r*.94*Math.sin(t)]),
+  oval:r=>param(t=>[r*1.3*Math.cos(t),r*.82*Math.sin(t)]),
+  long:r=>rrect(r*3.4,r*.95,r*.47),
+  taper:r=>{const o=[];for(let i=0;i<=20;i++){const u=i/20,w=r*.55*(1-u*.85);o.push([-r*1.8+u*r*3.6,-w])}for(let i=20;i>=0;i--){const u=i/20,w=r*.55*(1-u*.85);o.push([-r*1.8+u*r*3.6,w])}return o},
+  cube:r=>rrect(r*1.8,r*1.55,r*.18),
+  disc:r=>param(t=>{const k=1+.03*Math.sin(5*t);return[r*1.3*Math.cos(t)*k,r*.38*Math.sin(t)*k]}),
+  leaf:r=>param(t=>{const k=1+.12*Math.sin(9*t);return[r*1.7*Math.cos(t)*k,r*.42*Math.sin(t)*k]}),
+  pear:r=>param(t=>{const s=Math.sin(t),c=Math.cos(t),w=s>0?1:.62+.38*(1+s);return[r*.95*c*w,r*1.15*s]}),
+  mushroom:r=>{const o=[];for(let i=0;i<=16;i++){const a=Math.PI+i/16*Math.PI;o.push([Math.cos(a)*r*1.2,Math.sin(a)*r*.85])}
+    o.push([r*.42,0],[r*.38,r*.9],[-r*.38,r*.9],[-r*.42,0]);return o},
+  fish:r=>{const o=[];for(let i=0;i<=24;i++){const a=i/24*TAU;o.push([Math.cos(a)*r*1.35-r*.25,Math.sin(a)*r*.55])}
+    const i0=o.findIndex(q=>q[0]>r*1.0&&q[1]>0);o.splice(Math.max(1,i0),0,[r*1.25,r*.12],[r*1.75,r*.5],[r*1.6,0],[r*1.75,-r*.5],[r*1.25,-r*.12]);return o},
+  drum:r=>{const o=[];for(let i=0;i<=20;i++){const a=Math.PI*.35+i/20*Math.PI*1.3;o.push([Math.cos(a)*r-r*.4,Math.sin(a)*r*.85])}
+    o.push([r*1.1,-r*.2],[r*1.5,-r*.32],[r*1.62,0],[r*1.5,r*.32],[r*1.1,r*.2]);return o},
+  star:r=>{const o=[];for(let i=0;i<10;i++){const a=i/10*TAU-Math.PI/2,rr2=i%2?r*.55:r;o.push([Math.cos(a)*rr2,Math.sin(a)*rr2*.9])}return o},
+  curve:r=>SH.banana(r*.8),
+  wedge:r=>SH.cheese(r),
+});
+const CATS=[['obst','Obst'],['beeren','Beeren & Exoten'],['gemuese','Gemüse'],['pilze','Pilze & Kräuter'],['fleisch','Fleisch'],['fisch','Fisch & Meer'],
+  ['milch','Milch, Käse & Ei'],['backen','Brot & Teig'],['suess','Süßes'],['nuesse','Nüsse & Körner']];
+const CATNAME=Object.fromEntries(CATS);
+const PRE={
+  obst:{k:.3,edge:.55,press:.65,thresh:12,frag:4.5,squeeze:2.5,plastic:.01,hammer:1.2,heat:.006,spec:.7,chunks:3,cookT:80,cookSec:10},
+  beeren:{k:.28,edge:.5,press:.7,thresh:10,frag:6,squeeze:3,plastic:.01,hammer:1.5,heat:.008,spec:.85,chunks:2,cookT:80,cookSec:9},
+  gemuese:{k:.5,edge:.7,press:.5,thresh:18,frag:3,squeeze:1.5,plastic:.005,hammer:.9,heat:.006,spec:.55,chunks:3,cookT:75,cookSec:10},
+  pilze:{k:.35,edge:.6,press:.5,thresh:14,frag:3,squeeze:1.5,plastic:.01,hammer:1,heat:.008,spec:.3,chunks:2,cookT:70,cookSec:8},
+  fleisch:{k:.3,edge:.6,press:.6,thresh:30,frag:1,squeeze:0,plastic:.03,bounce:.05,hammer:.3,heat:.006,spec:.55,chunks:3,cookT:55,cookSec:11,need:1,cookTo:'#9a5a34',fleshCooked:'#b0806a'},
+  fisch:{k:.22,edge:.5,press:.6,thresh:25,frag:1.5,squeeze:0,plastic:.02,hammer:.6,heat:.008,spec:.65,chunks:3,cookT:50,cookSec:8,need:1,cookTo:'#e8d0b8',fleshCooked:'#fff4ea'},
+  milch:{k:.55,edge:.7,press:.5,thresh:16,frag:3,squeeze:1,plastic:.01,hammer:1,heat:.01,spec:.4,chunks:3,cookT:120,cookSec:9},
+  backen:{k:.4,edge:.6,press:.6,thresh:999,frag:0,squeeze:0,plastic:.02,hammer:.5,heat:.008,spec:.2,chunks:3,cookT:110,cookSec:10,cookTo:'#a86a2a'},
+  suess:{k:.6,edge:.7,press:.5,thresh:14,frag:3,squeeze:1,plastic:.01,hammer:1,heat:.012,spec:.6,chunks:3,cookT:140,cookSec:7},
+  nuesse:{k:.92,edge:1,press:.3,thresh:999,frag:0,squeeze:0,bounce:.35,hammer:1.6,heat:.02,dens:1.2,spec:.4,chunks:0,cookT:150,cookSec:8},
+};
+// key, label, cat, shape, r, skin, flesh, taste [süß,herzhaft,sauer,scharf,cremig], flags
+const ITEMS=`apple|Apfel|obst|round|24|#d8262a|#fff1c4|.7,0,.3,0,0|tex:speckle cut:core stem:top
+apple2|Grüner Apfel|obst|round|24|#8cc63e|#f4f7c8|.5,0,.6,0,0|tex:speckle cut:core stem:top
+pear|Birne|obst|pear|24|#c8c83a|#fbf5d0|.7,0,.1,0,.1|cut:core stem:top tex:speckle
+peach|Pfirsich|obst|round|23|#ff9a5a|#ffc070|.8,0,.2,0,.2|tex:fuzz cut:pit
+nectarine|Nektarine|obst|round|22|#e8443a|#ffb050|.8,0,.3,0,.1|cut:pit
+plum|Pflaume|obst|oval|15|#5a2a6a|#f0c040|.7,0,.3,0,0|tex:bloom cut:pit
+apricot|Aprikose|obst|round|16|#ffa030|#ffb840|.7,0,.2,0,.1|tex:fuzz cut:pit
+cherry|Kirsche|obst|round|10|#b0101e|#c01828|.8,0,.2,0,0|cut:pit stem:top
+mango|Mango|obst|oval|27|#f8b030|#ffb020|.9,0,.2,0,.2|cut:pit tex:speckle
+pineapple|Ananas|obst|oval|30|#d89a2a|#fff07a|.7,0,.5,0,0|tex:scales stem:top
+kiwi|Kiwi|obst|oval|17|#8a6a3a|#8ccc3a|.5,0,.6,0,0|tex:fuzz cut:kiwi
+papaya|Papaya|obst|pear|26|#f8a830|#ff8a4a|.7,0,.1,0,.2|cut:seeds seed:#202020
+cantaloupe|Honigmelone|obst|round|38|#e8d080|#ffb070|.8,0,0,0,.1|tex:netting cut:seeds seed:#f0e0b0
+grapefruit|Grapefruit|obst|round|29|#ffb060|#ff6a5a|.3,0,.8,0,0|tex:dimples cut:segments
+lime|Limette|obst|lemon|16|#6ab030|#c8f080|0,0,1,0,0|tex:dimples cut:segments
+mandarin|Mandarine|obst|round|18|#ff9a1a|#ffa830|.7,0,.4,0,0|tex:dimples cut:segments stem:navel
+pomegranate|Granatapfel|obst|round|26|#b8202a|#e8203a|.6,0,.4,0,0|cut:seeds seed:#ff3050 stem:top
+fig|Feige|obst|pear|16|#5a3060|#d84a5a|.8,0,0,0,.2|cut:seeds seed:#f0d080
+coconut|Kokosnuss|obst|round|28|#7a4a2a|#fffaf0|.5,0,0,0,.8|tex:fuzz cut:hollow k:.9 thresh:30
+avocado|Avocado|obst|pear|22|#3a5a20|#d8e890|0,.4,0,0,1|tex:speckle cut:pit
+date|Dattel|obst|oval|10|#6a3818|#8a5020|1,0,0,0,.3|
+grape|Weintraube|obst|round|8|#7a3a8a|#c8e0a0|.8,0,.2,0,0|tex:bloom
+grape2|Grüne Traube|obst|round|8|#a8d060|#e0f0a0|.7,0,.3,0,0|
+persimmon|Kaki|obst|round|22|#ff8a20|#ffa040|.8,0,0,0,.2|stem:top
+quince|Quitte|obst|pear|24|#e8d040|#fff0b0|.3,0,.5,0,0|cut:core
+raspberry|Himbeere|beeren|round|9|#e8204a|#ff3a5a|.7,0,.4,0,0|tex:drupes
+blackberry|Brombeere|beeren|oval|9|#2a1030|#5a1040|.6,0,.4,0,0|tex:drupes
+blueberry|Heidelbeere|beeren|round|6|#3a4a9a|#6a3a8a|.7,0,.3,0,0|tex:bloom
+currant|Johannisbeere|beeren|round|5|#e0102a|#ff4050|.3,0,.8,0,0|
+gooseberry|Stachelbeere|beeren|oval|8|#a8c860|#e0f0a0|.3,0,.8,0,0|tex:stripes
+cranberry|Cranberry|beeren|round|7|#c0102a|#ff7080|.2,0,.9,0,0|
+dragonfruit|Drachenfrucht|beeren|oval|26|#ff2a8a|#fafafa|.5,0,.1,0,0|tex:scales cut:seeds seed:#101010
+passion|Passionsfrucht|beeren|round|15|#5a2050|#ffd020|.5,0,.8,0,0|cut:seeds seed:#202010
+lychee|Litschi|beeren|round|10|#d83a4a|#fffaf0|.8,0,.1,0,0|tex:scales cut:pit
+starfruit|Sternfrucht|beeren|star|18|#f0d030|#fff080|.5,0,.5,0,0|
+guava|Guave|beeren|pear|18|#90c050|#ff8a8a|.7,0,.2,0,0|cut:seeds seed:#f0e0c0
+physalis|Physalis|beeren|round|7|#ffb020|#ffc040|.6,0,.5,0,0|
+kumquat|Kumquat|beeren|oval|8|#ff9010|#ffa830|.4,0,.7,0,0|tex:dimples
+rambutan|Rambutan|beeren|round|11|#e0203a|#fffaf0|.8,0,0,0,0|tex:spikes cut:pit
+jackfruit|Jackfrucht|beeren|oval|34|#a8b040|#ffd060|.8,0,0,0,.2|tex:scales
+durian|Durian|beeren|oval|32|#9a9a40|#fff0a0|.6,.3,0,0,.8|tex:spikes
+mangosteen|Mangostane|beeren|round|14|#5a1a3a|#fffaf0|.8,0,.2,0,0|stem:top cut:segments
+acerola|Acerola|beeren|round|7|#e8102a|#ff6050|.3,0,.9,0,0|
+elderberry|Holunderbeeren|beeren|round|5|#2a1a3a|#4a1a3a|.3,0,.5,0,0|
+cucumber|Gurke|gemuese|long|16|#2a7a2a|#e8f8c0|0,.1,.1,0,0|tex:stripes cut:seeds seed:#f8f8d0
+carrot|Karotte|gemuese|taper|14|#ff7a10|#ff9020|.4,.2,0,0,0|stem:left
+potato|Kartoffel|gemuese|blob|20|#c8a060|#fff0b0|0,.5,0,0,.4|tex:speckle need
+sweetpotato|Süßkartoffel|gemuese|oval|20|#a8502a|#ff9a40|.5,.3,0,0,.4|need
+onion|Zwiebel|gemuese|round|20|#c8803a|#fffaf0|.2,.6,.2,.3,0|cut:rings stem:top
+redonion|Rote Zwiebel|gemuese|round|19|#8a2a5a|#f8e8f0|.2,.5,.2,.3,0|cut:rings stem:top
+garlic|Knoblauch|gemuese|round|12|#f4ece0|#fffaf0|0,.7,0,.4,0|tex:ridges
+paprika|Paprika|gemuese|round|22|#e8201a|#ff4a3a|.4,.2,.1,0,0|cut:hollow stem:top
+paprikag|Grüne Paprika|gemuese|round|22|#3a9a2a|#7ad050|.1,.3,.2,0,0|cut:hollow stem:top
+paprikay|Gelbe Paprika|gemuese|round|22|#ffc810|#ffe060|.4,.2,.1,0,0|cut:hollow stem:top
+zucchini|Zucchini|gemuese|long|14|#2a6a2a|#f0f8c0|0,.3,0,0,.1|tex:speckle
+eggplant|Aubergine|gemuese|pear|20|#3a1a4a|#f0f0c8|0,.4,0,0,.2|stem:top
+broccoli|Brokkoli|gemuese|blob|20|#2a7a2a|#7ab050|0,.5,0,0,0|tex:bumps
+cauliflower|Blumenkohl|gemuese|blob|22|#f4ecd8|#fffaf0|0,.4,0,0,.1|tex:bumps
+pumpkin|Kürbis|gemuese|round|34|#ff7a1a|#ffa030|.4,.3,0,0,.4|tex:ridges cut:seeds seed:#fff0c0 stem:top
+corn|Maiskolben|gemuese|long|16|#ffd030|#ffe070|.5,.3,0,0,.2|tex:kernels
+pea|Erbse|gemuese|round|5|#7ac040|#a8e070|.4,.2,0,0,0|
+radish|Radieschen|gemuese|round|10|#e8204a|#fffaf0|0,.2,.1,.3,0|stem:top
+beet|Rote Bete|gemuese|round|18|#8a1030|#b8103a|.4,.3,0,0,0|cut:rings
+celery|Sellerie|gemuese|long|10|#9ad070|#d0f0b0|0,.3,0,0,0|tex:stripes
+leek|Lauch|gemuese|long|12|#c8e8a0|#f0f8e0|0,.5,0,.1,0|cut:rings
+asparagus|Spargel|gemuese|long|7|#7aa840|#e0f0b0|0,.4,0,0,.1|
+artichoke|Artischocke|gemuese|round|20|#6a9a4a|#d8e8a0|0,.4,.1,0,.2|tex:scales
+brussels|Rosenkohl|gemuese|round|9|#6aa040|#c8e090|0,.5,0,0,0|tex:leafveins
+cabbage|Weißkohl|gemuese|round|30|#c8e8a0|#f0f8d8|0,.4,0,0,0|tex:leafveins cut:rings
+redcabbage|Rotkohl|gemuese|round|30|#6a2a6a|#c890c8|.1,.4,.1,0,0|tex:leafveins cut:rings
+lettuce|Salat|gemuese|leaf|28|#7ac850|#c8f0a0|0,.2,0,0,0|tex:leafveins
+spinach|Spinat|gemuese|leaf|16|#2a6a2a|#5a9a3a|0,.4,0,0,0|tex:leafveins
+olive|Olive|gemuese|oval|6|#5a6a2a|#8a9a4a|0,.6,.3,0,.2|
+blackolive|Schwarze Olive|gemuese|oval|6|#1a1a1a|#3a2a2a|0,.7,.2,0,.2|
+ginger|Ingwer|gemuese|blob|14|#d8b070|#ffe8a0|.1,.2,.2,.8,0|
+jalapeno|Jalapeño|gemuese|chili|12|#3a8a2a|#a8e080|0,.3,0,.8,0|stem:left
+habanero|Habanero|gemuese|round|10|#ff6a10|#ff8a3a|.1,.1,0,1,0|stem:top
+fennel|Fenchel|gemuese|round|20|#e8f0c8|#f8fbe8|.2,.3,0,0,0|cut:rings
+turnip|Steckrübe|gemuese|round|22|#d8b0d0|#fff0c0|.2,.3,0,0,0|
+okra|Okra|gemuese|taper|8|#5a9a3a|#c8e8a0|0,.3,0,0,0|
+cherrytom|Kirschtomate|gemuese|round|10|#ff2a1a|#ff5040|.4,.3,.4,0,0|stem:top cut:seeds seed:#f8e090
+champignon|Champignon|pilze|mushroom|14|#f0e6d8|#fffaf0|0,.6,0,0,.2|
+brownmush|Brauner Champignon|pilze|mushroom|14|#8a6040|#f0e0c8|0,.7,0,0,.2|
+shiitake|Shiitake|pilze|mushroom|15|#6a3a1a|#f0e0c0|0,.8,0,0,.1|
+chanterelle|Pfifferling|pilze|mushroom|10|#ffb020|#ffe080|0,.6,0,.1,0|
+porcini|Steinpilz|pilze|mushroom|18|#7a4a20|#fff4d8|0,.8,0,0,.2|
+truffle|Trüffel|pilze|blob|10|#2a2018|#5a4a3a|0,1,0,0,.5|tex:bumps
+basil|Basilikum|pilze|leaf|10|#3a9a2a|#5ab040|.1,.4,0,.1,0|tex:leafveins
+parsley|Petersilie|pilze|leaf|9|#2a8a2a|#4aa03a|0,.4,.1,0,0|tex:leafveins
+mint|Minze|pilze|leaf|9|#4ab04a|#6ad06a|.3,0,.2,0,0|tex:leafveins
+rosemary|Rosmarin|pilze|long|4|#3a6a3a|#5a8a4a|0,.6,0,.1,0|
+chive|Schnittlauch|pilze|long|3|#3aa03a|#6ac05a|0,.4,0,.2,0|
+dill|Dill|pilze|leaf|8|#5aa04a|#7ac06a|0,.3,.2,0,0|
+thyme|Thymian|pilze|leaf|6|#5a7a4a|#7a9a6a|0,.5,0,.1,0|
+coriander|Koriander|pilze|leaf|9|#3a9a3a|#5ab05a|0,.3,.3,.1,0|tex:leafveins
+bayleaf|Lorbeerblatt|pilze|leaf|8|#5a7a3a|#8a9a5a|0,.5,0,0,0|tex:leafveins
+chickenleg|Hähnchenkeule|fleisch|drum|20|#f0c0a0|#f4d0c0|0,.9,0,0,.2|
+chickenbreast|Hähnchenbrust|fleisch|oval|22|#f6c8b8|#fbe0d8|0,.8,0,0,.1|
+bacon|Speck|fleisch|bar|10|#e86a6a|#f8d0c0|0,1,0,0,.3|tex:marble
+ham|Schinken|fleisch|disc|22|#f08a8a|#f8b0b0|0,.8,0,0,.1|nocook
+salami|Salami|fleisch|disc|16|#b8203a|#c84050|0,.9,0,.2,.1|tex:fatdots nocook
+mince|Hackfleisch|fleisch|blob|20|#c8404a|#d8606a|0,.9,0,0,.2|soft
+porkchop|Kotelett|fleisch|oval|24|#f0a0a0|#f8c0c0|0,.9,0,0,.2|tex:marble fat
+lambchop|Lammkotelett|fleisch|drum|18|#c8505a|#e07a80|0,.9,0,0,.2|
+meatball|Frikadelle|fleisch|round|13|#a85a3a|#b86a4a|0,.9,0,0,.2|
+chorizo|Chorizo|fleisch|long|12|#c83a1a|#d85a3a|0,.8,0,.6,.1|nocook
+weisswurst|Weißwurst|fleisch|long|12|#f8f0e8|#fffaf0|0,.8,0,0,.3|
+hotdog|Wiener|fleisch|long|9|#e8805a|#f0a080|0,.8,0,0,.1|nocook
+duck|Entenbrust|fleisch|oval|22|#e8a080|#c84a4a|0,.9,0,0,.4|fat
+turkey|Pute|fleisch|drum|24|#f4c8a8|#f8d8c8|0,.8,0,0,.1|
+ribs|Spareribs|fleisch|bar|18|#c86a5a|#d88070|.2,.9,0,0,.2|
+liver|Leber|fleisch|blob|16|#6a1a1a|#8a2a2a|0,.8,0,0,.1|
+patty|Burger-Patty|fleisch|disc|20|#c84a4a|#d86a6a|0,1,0,0,.2|
+kebab|Dönerfleisch|fleisch|blob|18|#b8704a|#c88a6a|0,.9,0,.2,.1|nocook
+salmon|Lachs|fisch|bar|18|#ff8a5a|#ffa070|0,.7,0,0,.5|tex:stripes
+tuna|Thunfisch|fisch|bar|18|#c8303a|#d8505a|0,.8,0,0,.3|
+trout|Forelle|fisch|fish|22|#8a9aa0|#f0c0b0|0,.7,0,0,.2|tex:scales
+cod|Kabeljau|fisch|bar|18|#f4f0e8|#fffaf4|0,.6,0,0,.2|
+mackerel|Makrele|fisch|fish|18|#4a6a8a|#e8d0c0|0,.8,0,0,.3|tex:stripes
+sardine|Sardine|fisch|fish|10|#8aa0b8|#e0d0c8|0,.8,.1,0,.2|
+shrimp|Garnele|fisch|curve|10|#f8b0a0|#fff0e8|0,.7,0,0,.2|
+prawn|Riesengarnele|fisch|curve|14|#a8a0a0|#fff0e8|0,.8,0,0,.2|
+squid|Tintenfischring|fisch|disc|12|#f8f4ec|#fffaf4|0,.6,0,0,.1|
+octopus|Oktopus|fisch|blob|20|#c86a8a|#f0c0c8|0,.7,0,0,.1|
+mussel|Miesmuschel|fisch|oval|10|#2a2a3a|#ffb060|0,.7,.1,0,.2|
+scallop|Jakobsmuschel|fisch|disc|12|#f8f0e0|#fffaf0|.2,.6,0,0,.4|
+crab|Krebs|fisch|round|18|#e84a2a|#fff0e0|0,.7,0,0,.3|tex:bumps k:.8
+lobster|Hummer|fisch|long|20|#c8201a|#fffaf0|.1,.8,0,0,.4|
+eel|Aal|fisch|long|10|#3a3a2a|#f0e0c0|0,.8,0,0,.5|
+caviar|Kaviar|fisch|round|4|#1a1a1a|#2a2a2a|0,.9,0,0,.3|nocook
+fishstick|Fischstäbchen|fisch|bar|10|#e8a040|#fffaf0|0,.7,0,0,.2|
+oyster|Auster|fisch|oval|13|#9a9a8a|#e8e0d0|0,.6,.2,0,.4|nocook
+mozzarella|Mozzarella|milch|round|16|#fffbf4|#fffefa|0,.3,0,0,.9|melt:50
+gouda|Gouda|milch|wedge|22|#ffd040|#ffe070|0,.7,0,0,.7|melt:60 cut:holes
+brie|Brie|milch|wedge|20|#fff4e0|#fff0c0|0,.5,0,0,1|melt:45 tex:speckle
+feta|Feta|milch|cube|14|#fbfaf2|#fffffa|0,.8,.3,0,.4|
+parmesan|Parmesan|milch|wedge|18|#f0d080|#f8e0a0|0,1,0,0,.4|tex:speckle
+bluecheese|Blauschimmelkäse|milch|wedge|18|#f4f0e0|#f8f4e8|0,.8,.2,.1,.6|tex:marble melt:55
+cream|Sahne|milch|blob|16|#fffdf8|#ffffff|.2,0,0,0,1|soft
+yogurt|Joghurt|milch|blob|15|#fbf8f0|#ffffff|.1,0,.4,0,.8|soft
+quark|Quark|milch|blob|16|#fffaf0|#ffffff|0,.1,.2,0,.9|soft
+quail|Wachtelei|milch|egg|9|#e8dcc0|#ffffff|0,.6,0,0,.3|need tex:speckle
+halloumi|Halloumi|milch|cube|16|#f8f2e0|#fffaf0|0,.8,0,0,.4|
+creamcheese|Frischkäse|milch|blob|14|#fffcf6|#ffffff|.1,.3,.1,0,1|soft
+cheddar|Cheddar|milch|cube|16|#ffa020|#ffb840|0,.8,0,0,.6|melt:60
+raclette|Raclette|milch|wedge|20|#ffe8a0|#fff0c0|0,.7,0,0,.9|melt:50
+tofu|Tofu|milch|cube|15|#f8f4e8|#fffaf0|0,.3,0,0,.4|
+bread|Brot|backen|oval|28|#c88a40|#f4e0b8|0,.5,0,0,.2|tex:grain cut:holes
+baguette|Baguette|backen|long|14|#d89a40|#f8e8c0|0,.5,0,0,.1|tex:grain cut:holes
+roll|Brötchen|backen|round|15|#d8983a|#f8e8c8|0,.5,0,0,.2|tex:grain cut:holes
+croissant|Croissant|backen|curve|16|#e8a040|#fff0c8|.2,.3,0,0,.6|tex:ridges
+pretzelroll|Laugenbrötchen|backen|round|15|#8a4a1a|#f8e8c8|0,.7,0,0,.2|tex:salt
+toast|Toastbrot|backen|cube|18|#e8c080|#fff4dc|0,.3,0,0,.2|
+pancake|Pfannkuchen|backen|disc|20|#f0c070|#fff0c0|.4,.1,0,0,.4|
+waffle|Waffel|backen|cube|18|#e0a040|#f8d890|.6,0,0,0,.3|tex:grid
+tortilla|Tortilla|backen|disc|24|#f0d8a0|#fff4dc|0,.3,0,0,.1|
+pizzadough|Pizzateig|backen|disc|24|#f8ecd0|#fbf2e0|.1,.2,0,0,.1|rise need soft
+cakedough|Rührteig|backen|blob|22|#ffe4a0|#fff0c0|.6,0,0,0,.4|rise need soft
+puffpastry|Blätterteig|backen|bar|20|#fff0d0|#fff8e8|0,.2,0,0,.5|rise need
+noodles|Nudeln|backen|long|5|#f8e080|#fff0a0|0,.3,0,0,.1|need
+riceball|Reisball|backen|round|12|#fffaf0|#ffffff|0,.2,0,0,.2|
+dumpling|Knödel|backen|round|16|#f4ecd8|#fffaf0|0,.5,0,0,.3|
+whitechoc|Weiße Schokolade|suess|bar|24|#fff4dc|#fff8e8|1,0,0,0,.8|melt:36 shards
+darkchoc|Zartbitter|suess|bar|24|#3a2014|#4a2a1a|.6,0,0,0,.4|melt:40 shards
+gummybear|Gummibärchen|suess|round|7|#ff3a3a|#ff6a6a|.9,0,.2,0,0|jelly
+gummybear2|Grünes Gummibärchen|suess|round|7|#3ad040|#6ae070|.9,0,.3,0,0|jelly
+licorice|Lakritz|suess|long|6|#1a1a1a|#2a2a2a|.4,.4,0,0,0|
+cookie|Keks|suess|disc|14|#d8a050|#e8c080|.8,0,0,0,.3|tex:chips
+donut|Donut|suess|disc|18|#e8a050|#f8e0b0|.9,0,0,0,.4|tex:sprinkles
+cupcake|Cupcake|suess|mushroom|16|#ff8ab0|#f8d090|.9,0,0,0,.6|
+macaron|Macaron|suess|disc|11|#ffa0c0|#fff0f4|.9,0,0,0,.5|
+candy|Bonbon|suess|oval|8|#ff4a8a|#ff8ab0|1,0,.2,0,0|
+caramel|Karamell|suess|cube|9|#d88a2a|#e8a040|1,0,0,0,.6|melt:60
+honeycomb|Honigwabe|suess|cube|16|#ffb020|#ffd050|1,0,0,0,.3|melt:45 tex:grid
+sugarcube|Zuckerwürfel|suess|cube|7|#ffffff|#ffffff|1,0,0,0,0|
+meringue|Baiser|suess|blob|13|#fffaf4|#ffffff|1,0,0,0,.1|k:.8
+praline|Praline|suess|round|9|#4a2818|#8a5a3a|.9,0,0,0,.7|melt:38
+brownie|Brownie|suess|cube|16|#4a2a18|#5a3a22|.9,0,0,0,.6|
+icecream|Eiskugel|suess|round|16|#ffe0ea|#fff0f4|.9,0,0,0,.9|frozen
+jam|Marmelade|suess|blob|12|#c8102a|#e0203a|1,0,.3,0,0|soft
+nutcream|Nuss-Nougat-Creme|suess|blob|12|#5a3018|#6a3a22|1,0,0,0,.8|soft
+cotton|Zuckerwatte|suess|blob|18|#ffc0e0|#ffe0f0|1,0,0,0,0|soft light
+walnut|Walnuss|nuesse|round|11|#a8783a|#c89a5a|.2,.3,0,0,.5|tex:wrinkles shards
+hazelnut|Haselnuss|nuesse|round|7|#8a5a2a|#e8d0a0|.3,.2,0,0,.5|shards
+almond|Mandel|nuesse|oval|7|#a86a3a|#f8ecd0|.4,.1,0,0,.4|shards
+peanut|Erdnuss|nuesse|long|6|#d8b070|#e8c890|.2,.5,0,0,.5|shards
+cashew|Cashew|nuesse|curve|6|#f0dcb0|#f8ecc8|.3,.3,0,0,.6|shards
+pistachio|Pistazie|nuesse|oval|6|#d8c8a0|#8ac050|.2,.4,0,0,.4|shards
+chestnut|Esskastanie|nuesse|round|12|#6a3a1a|#f0dca0|.4,.3,0,0,.5|shards need
+pecan|Pekannuss|nuesse|oval|8|#8a4a20|#a86a3a|.5,.2,0,0,.5|shards
+sunflower|Sonnenblumenkern|nuesse|oval|4|#3a3a3a|#e8e0c0|0,.4,0,0,.2|shards
+pumpkinseed|Kürbiskern|nuesse|oval|5|#4a6a2a|#7a9a4a|0,.4,0,0,.2|shards
+oats|Haferflocken|nuesse|blob|12|#e8d8b0|#f4e8c8|.2,.2,0,0,.3|soft
+cornflakes|Cornflakes|nuesse|disc|8|#f0b040|#f8d070|.4,.2,0,0,0|
+macadamia|Macadamia|nuesse|round|8|#f0e0c0|#fff4dc|.3,.1,0,0,.8|shards
+brazilnut|Paranuss|nuesse|oval|9|#6a4a2a|#f4e8d0|.1,.2,0,0,.6|shards`;
+const LEGACY_CAT={chocolate:'suess',mallow:'suess',jelly:'suess',strawberry:'beeren',banana:'obst',melon:'obst',orange:'obst',lemon:'obst',kernel:'nuesse',
+  tomato:'gemuese',chili:'gemuese',egg:'milch',steak:'fleisch',sausage:'fleisch',cheese:'milch',butter:'milch',dough:'backen'};
+for(const k in LEGACY_CAT)M[k].cat=LEGACY_CAT[k];
+function shade3(h){return[mix(h,'#ffffff',.35),h,mix(h,'#000000',.55)]}
+function rgba(h,a){const c=rgb(h);return`rgba(${c[0]},${c[1]},${c[2]},${a})`}
+for(const line of ITEMS.split('\n')){
+  const[key,label,cat,shape,r,skin,flesh,tasteS,flagS='']=line.split('|');
+  const p=PRE[cat],m=Object.assign({},D,p,{label,cat,shape,r:+r,n:Math.max(10,Math.min(26,Math.round(+r*.9+8))),gen:true});
+  m.skin=shade3(skin);m.flesh=flesh;m.fleshHi=mix(flesh,'#ffffff',.45);m.fleshDk=mix(flesh,'#000000',.22);
+  m.juice=mix(flesh,'#000000',.12);m.taste=tasteS.split(',').map(Number);m.ingr={[key]:1};m.needsCook=!!p.need;
+  if(p.cookTo)m.cooked=[mix(m.skin[0],p.cookTo,.65),mix(m.skin[1],p.cookTo,.75),mix(m.skin[2],'#2a1408',.5)];
+  if(p.fleshCooked)m.fleshCooked=p.fleshCooked;
+  for(const f of flagS.split(' ').filter(Boolean)){const[a,b]=f.split(':');
+    if(a==='tex')m.tex=b;else if(a==='cut')m.cutStyle=b;else if(a==='seed')m.seed=b;else if(a==='stem')m.stem=b;
+    else if(a==='melt')m.melt={T:+b};else if(a==='rise'){m.rise={T:55,max:1.3};m.cooked=['#f6c070','#c87a30','#6a3a12'];m.fleshCooked='#fff3da';m.cookT=70;m.cookSec=9}
+    else if(a==='need')m.needsCook=true;else if(a==='nocook')m.needsCook=false;
+    else if(a==='soft')Object.assign(m,{k:.08,edge:.25,plastic:.03,thresh:999,frag:0,squeeze:0,chunks:2});
+    else if(a==='shards')Object.assign(m,{shards:true,thresh:999,frag:0,chunks:0});
+    else if(a==='jelly'){m.jelly=true;m.skin=shade3(skin).map(c=>rgba(c,.85));m.flesh=m.fleshHi=m.fleshDk=rgba(flesh,.85);m.juice=flesh;m.k=.08;m.edge=.25;m.lineCol=mix(skin,'#000000',.5)}
+    else if(a==='frozen'){m.startT=-12;m.melt={T:0};m.heat=.01}
+    else if(a==='light')m.dens=.3;else if(a==='fat')m.fat=true;else if(a==='k')m.k=+b;else if(a==='thresh')m.thresh=+b}
+  if(shape==='leaf')Object.assign(m,{k:.15,edge:.35,thresh:999,frag:0,heat:.03,chunks:0,cookT:90,cookSec:4});
+  if(m.seed==='#000'&&m.cutStyle==='seeds')m.seed='#f0e0b0';
+  if(m.cutStyle==='segments')m.citrus=true;if(m.cutStyle==='holes')m.holes=true;if(m.tex==='dimples')m.dimples=true;
+  M[key]=m;
+}
+const FOODS=Object.keys(M).filter(k=>M[k].cat&&M[k].cat!=='none'&&CATNAME[M[k].cat]);
 
 /* ================= world ================= */
 let bodies=[],drops=[],drips=[],puffs=[],fx=[],segs=[],uid=0,frame=0,shake=0,mess=0;
@@ -329,7 +614,9 @@ let tool='hand';
 const pan={lvl:0,T:ROOM},pot={lvl:0,T:ROOM};
 const oven={kind:'oven',open:false,lvl:0,T:ROOM};
 const micro={kind:'micro',open:false,lvl:0,T:ROOM,timer:0};
-const BOXES=[oven,micro];
+const freezer={kind:'freezer',open:false,T:-18};
+const grill={lvl:0,T:ROOM},fryer={lvl:0,T:ROOM};
+const BOXES=[oven,micro,freezer];
 const bowl={},plate={};let mixT=0;
 
 function P(x,y,vx=0,vy=0){return{x,y,px:x-vx,py:y-vy,cut:false,stem:false,s1:Math.random(),s2:Math.random()}}
@@ -352,10 +639,10 @@ function initBody(type,pts,o){
   const A=polyArea(pts),s=o.state||{},mm=o.mat||M[type];
   return{type,m:mm,pts,rest,L,restArea:A,R:Math.sqrt(A/Math.PI),rot:0,cx,cy,health:s.health??100,imp:0,inv:o.inv||0,
     chunk:!!o.chunk,shard:false,tex:o.tex,texOff:o.texOff||{x:0,y:0},texRot0:o.texRot0||0,hits:[],id:++uid,
-    T:s.T??ROOM,cook:s.cook||0,melt:s.melt||0,grow:s.grow||1,popAt:rnd(0,40),
+    T:s.T??(mm.startT??ROOM),cook:s.cook||0,fried:s.fried||0,grill:s.grill||0,melt:s.melt||0,grow:s.grow||1,popAt:rnd(0,40),
     minX:0,maxX:0,minY:0,maxY:0,sndCd:0,ke:mm.k,ee:mm.edge,pl:mm.plastic};
 }
-function stateOf(b){return{T:b.T,cook:b.cook,melt:b.melt,grow:b.grow,health:Math.max(b.health,40)}}
+function stateOf(b){return{T:b.T,cook:b.cook,melt:b.melt,grow:b.grow,fried:b.fried,grill:b.grill,health:Math.max(b.health,40)}}
 function add(b){bodies.push(b);trimBodies();return b}
 function trimBodies(){
   while(bodies.length>60){const i=bodies.findIndex(b=>b.chunk||b.shard||b.type==='popcorn'||b.type==='yolk');if(i<0)break;burst(bodies[i],true)}
@@ -364,36 +651,50 @@ function trimBodies(){
 /* ================= layout (kitchen furniture) ================= */
 const LY={};
 function layout(){
-  const side=84+(LY.saL||0);LY.xl=side+4;LY.xr=W-2-(LY.saR||0);
-  const x0=side+8,SW=LY.xr-6-x0;LY.x0=x0;LY.SW=SW;
+  const side=84+(LY.saL||0),vw=Math.max(300,W-side-(LY.saR||0));LY.side=side;LY.vw=vw;
+  WW=Math.ceil(side+STN.length*vw+(LY.saR||0)+2);LY.xl=side+4;LY.xr=side+STN.length*vw-4;LY.maxCam=(STN.length-1)*vw;
   counterTop=H*.7;floorY=H*.8;counterFront=H*.865;
-  pan.w=clamp(SW*.15,90,160);pan.cx=x0+SW*.31;pan.x0=pan.cx-pan.w/2;pan.x1=pan.cx+pan.w/2;pan.y=floorY-22;pan.ry=7;
-  pot.w=clamp(SW*.12,80,140);pot.cx=x0+SW*.475;pot.x0=pot.cx-pot.w/2;pot.x1=pot.cx+pot.w/2;pot.y=floorY-14;pot.h=Math.min(pot.w*.66,H*.2);
-  bowl.w=clamp(SW*.15,95,170);bowl.cx=x0+SW*.645;bowl.x0=bowl.cx-bowl.w/2;bowl.x1=bowl.cx+bowl.w/2;bowl.h=bowl.w*.42;bowl.y=floorY-4;bowl.rim=bowl.y-bowl.h;
-  plate.w=clamp(SW*.2,120,220);plate.cx=Math.min(x0+SW*.87,LY.xr-plate.w/2-4);plate.x0=plate.cx-plate.w/2;plate.x1=plate.cx+plate.w/2;plate.y=floorY-7;
-  LY.board={x0:x0,x1:Math.max(x0+70,pan.x0-40),y:floorY-5};
-  const top=48;
-  const mw=clamp(SW*.26,150,240),mh=Math.min(mw*.6,counterTop-top-60);
-  Object.assign(micro,{x:x0+4,y:top+6,w:mw,h:mh});
-  micro.pw=mw*.27;micro.ix0=micro.x+8;micro.ix1=micro.x+mw-micro.pw-4;micro.iy0=micro.y+8;micro.iy1=micro.y+mh-10;
-  const ow=clamp(SW*.26,165,260),oh=Math.min(ow*.82,counterTop-top-50);
-  Object.assign(oven,{x:Math.max(micro.x+micro.w+16,x0+SW*.33),y:top,w:ow,h:oh});
+  const sx=(i,f)=>side+i*vw+f*vw,top=48;LY.sx=sx;
+  LY.ky=(counterFront+H-(LY.saB||0))/2+2;
+  // 0: prep
+  LY.board={x0:sx(0,.04),x1:sx(0,.52),y:floorY-5};
+  bowl.w=clamp(vw*.22,110,190);bowl.cx=sx(0,.76);bowl.x0=bowl.cx-bowl.w/2;bowl.x1=bowl.cx+bowl.w/2;bowl.h=bowl.w*.42;bowl.y=floorY-4;bowl.rim=bowl.y-bowl.h;
+  // 1: stove
+  pan.w=clamp(vw*.22,100,170);pan.cx=sx(1,.2);pan.x0=pan.cx-pan.w/2;pan.x1=pan.cx+pan.w/2;pan.y=floorY-22;pan.ry=7;
+  pot.w=clamp(vw*.17,90,150);pot.cx=sx(1,.49);pot.x0=pot.cx-pot.w/2;pot.x1=pot.cx+pot.w/2;pot.y=floorY-14;pot.h=Math.min(pot.w*.7,H*.22);
+  grill.w=clamp(vw*.24,110,190);grill.cx=sx(1,.79);grill.x0=grill.cx-grill.w/2;grill.x1=grill.cx+grill.w/2;grill.y=floorY-18;
+  // 2: oven + microwave
+  const ow=clamp(vw*.38,180,300),oh=Math.min(ow*.74,counterTop-top-44);
+  Object.assign(oven,{x:sx(2,.03),y:top,w:ow,h:oh});
   oven.ph=Math.max(20,oh*.14);oven.ix0=oven.x+12;oven.ix1=oven.x+ow-12;oven.iy0=oven.y+oven.ph+10;oven.iy1=oven.y+oh-14;
-  pan.kx=pan.cx;pot.kx=pot.cx;bowl.kx=bowl.cx;pan.ky=pot.ky=bowl.ky=(counterFront+H-(LY.saB||0))/2+2;
+  const mw=clamp(vw*.24,150,240),mh=Math.min(mw*.62,counterTop-top-70);
+  Object.assign(micro,{x:Math.max(oven.x+ow+14,sx(2,.45)),y:top+24,w:mw,h:mh});
+  micro.pw=mw*.27;micro.ix0=micro.x+8;micro.ix1=micro.x+mw-micro.pw-4;micro.iy0=micro.y+8;micro.iy1=micro.y+mh-10;
+  // 3: fryer + freezer
+  fryer.w=clamp(vw*.24,110,190);fryer.cx=sx(3,.27);fryer.x0=fryer.cx-fryer.w/2;fryer.x1=fryer.cx+fryer.w/2;fryer.y=floorY-6;fryer.h=Math.min(fryer.w*.62,H*.24);fryer.oil=fryer.y-fryer.h*.58;
+  const fw=clamp(vw*.22,150,230),fh=Math.min(fw*.66,counterTop-top-60);
+  Object.assign(freezer,{x:sx(3,.46),y:top+24,w:fw,h:fh});
+  freezer.pw=fw*.22;freezer.ix0=freezer.x+8;freezer.ix1=freezer.x+fw-freezer.pw-4;freezer.iy0=freezer.y+8;freezer.iy1=freezer.y+fh-10;
+  // 4: serving
+  plate.w=clamp(vw*.3,140,240);plate.cx=sx(4,.5);plate.x0=plate.cx-plate.w/2;plate.x1=plate.cx+plate.w/2;plate.y=floorY-7;
+  LY.critic={x:plate.cx,size:Math.min(counterTop-top-6,vw*.34,230)};
+  LY.drop=[(LY.board.x0+LY.board.x1)/2,pan.cx,sx(2,.55),sx(3,.6),sx(4,.18)];
+  for(const o of[pan,pot,grill,fryer,bowl])o.kx=o.cx;
   buildSegs();
 }
-function seg(ax,ay,bx,by,r=3,on=null){segs.push({ax,ay,bx,by,r,on})}
+function seg(ax,ay,bx,by,r=3,on=null,box=false){segs.push({ax,ay,bx,by,r,on,box})}
 function buildSegs(){
   segs=[];
   const B=LY.board;seg(B.x0,B.y,B.x1,B.y,2);
   const pb=pan.y;seg(pan.x0+8,pb,pan.x1-8,pb,3);seg(pan.x0-2,pb-14,pan.x0+8,pb,3);seg(pan.x1-8,pb,pan.x1+2,pb-14,3);
   const tb=pot.y;seg(pot.x0+3,tb,pot.x1-3,tb,3);seg(pot.x0,tb-pot.h,pot.x0+3,tb,3);seg(pot.x1-3,tb,pot.x1,tb-pot.h,3);
-  // boxes: roof, underside, interior floor and ceiling always; side walls only while the door is shut
+  seg(grill.x0,grill.y,grill.x1,grill.y,3);
+  const fb=fryer.y;seg(fryer.x0+4,fb,fryer.x1-4,fb,3);seg(fryer.x0,fb-fryer.h,fryer.x0+4,fb,3);seg(fryer.x1-4,fb,fryer.x1,fb-fryer.h,3);
   for(const b of BOXES){
-    seg(b.x,b.y,b.x+b.w,b.y,3);seg(b.x,b.y+b.h,b.x+b.w,b.y+b.h,3);
-    seg(b.ix0,b.iy1,b.ix1,b.iy1,3);seg(b.ix0,b.iy0,b.ix1,b.iy0,3);
-    seg(b.ix0,b.iy0,b.ix0,b.iy1,3,()=>!b.open);
-    if(b.kind==='micro')seg(b.ix1,b.iy0,b.ix1,b.iy1,3);else seg(b.ix1,b.iy0,b.ix1,b.iy1,3,()=>!b.open);
+    seg(b.x,b.y,b.x+b.w,b.y,3,null,true);seg(b.x,b.y+b.h,b.x+b.w,b.y+b.h,3,null,true);
+    seg(b.ix0,b.iy1,b.ix1,b.iy1,3,null,true);seg(b.ix0,b.iy0,b.ix1,b.iy0,3,null,true);
+    seg(b.ix0,b.iy0,b.ix0,b.iy1,3,()=>!b.open,true);
+    if(b.kind!=='oven')seg(b.ix1,b.iy0,b.ix1,b.iy1,3,null,true);else seg(b.ix1,b.iy0,b.ix1,b.iy1,3,()=>!b.open,true);
   }
   {const n=9;let px=null,py=null;for(let i=0;i<=n;i++){const th=i/n*Math.PI,x=bowl.cx+bowl.w/2*Math.cos(th),y=bowl.rim+bowl.h*Math.sin(th);if(px!==null)seg(px,py,x,y,3);px=x;py=y}}
   seg(plate.x0+8,plate.y,plate.x1-8,plate.y,3);seg(plate.x0-2,plate.y-6,plate.x0+8,plate.y,3);seg(plate.x1-8,plate.y,plate.x1+2,plate.y-6,3);
@@ -404,8 +705,10 @@ function inPan(b){return b.cx>pan.x0&&b.cx<pan.x1&&b.cy>pan.y-60&&b.cy<pan.y+4}
 function inPot(b){return b.cx>pot.x0&&b.cx<pot.x1&&b.cy>pot.y-pot.h-4&&b.cy<pot.y+4}
 function inBowl(b){return b.cx>bowl.x0-4&&b.cx<bowl.x1+4&&b.cy>bowl.rim-130&&b.cy<bowl.y+2}
 function inPlate(b){return b.cx>plate.x0&&b.cx<plate.x1&&b.cy>plate.y-170&&b.cy<plate.y+4}
-function where(b){const o=boxOf(b);if(o)return o.kind;if(inPot(b))return'pot';if(inPan(b))return'pan';if(inBowl(b))return'bowl';if(inPlate(b))return'plate';return null}
-
+function where(b){const o=boxOf(b);if(o)return o.kind;if(inPot(b))return'pot';if(inPan(b))return'pan';
+  if(b.cx>grill.x0&&b.cx<grill.x1&&b.cy>grill.y-70&&b.cy<grill.y+2)return'grill';
+  if(b.cx>fryer.x0&&b.cx<fryer.x1&&b.cy>fryer.y-fryer.h-10&&b.cy<fryer.y+2)return'fryer';
+  if(inBowl(b))return'bowl';if(inPlate(b))return'plate';return null}
 /* ================= physics ================= */
 function shapeMatch(b,k,first){
   const p=b.pts,q=b.rest,n=p.length;let cx=0,cy=0;
@@ -441,7 +744,7 @@ function bounds(b,first){
 function segHit(b,first){
   const m=b.m;
   for(const s of segs){
-    if(s.on&&!s.on())continue;
+    if(s.on&&!s.on())continue;if(s.box&&b===ptr.grab&&!boxOf(b))continue;
     const mnx=Math.min(s.ax,s.bx)-s.r,mxx=Math.max(s.ax,s.bx)+s.r,mny=Math.min(s.ay,s.by)-s.r,mxy=Math.max(s.ay,s.by)+s.r;
     if(b.maxX<mnx-20||b.minX>mxx+20||b.maxY<mny-20||b.minY>mxy+20)continue;
     const ex=s.bx-s.ax,ey=s.by-s.ay,l2=ex*ex+ey*ey,L=Math.sqrt(l2);
@@ -492,8 +795,11 @@ function heatSource(b){
   const w=where(b);
   if(w==='pan')return[pan.T,1];
   if(w==='pot')return[pot.T,.9];
+  if(w==='grill')return[grill.T,1.1];
+  if(w==='fryer')return b.cy>fryer.oil-b.R*.4?[fryer.T,1.7]:[lerp(ROOM,fryer.T,.3),.4];
   if(w==='oven')return oven.open?[lerp(ROOM,oven.T,.4),.3]:[oven.T,.65];
   if(w==='micro')return(!micro.open&&micro.lvl)?[b.m.pop?215:130,1.8]:[micro.T,.3];
+  if(w==='freezer')return freezer.open?[lerp(ROOM,-20,.4),.3]:[-20,1.4];
   return[ROOM,.12];
 }
 function cookStep(b){
@@ -503,7 +809,11 @@ function cookStep(b){
   if(m.cookSec){const over=b.T-m.cookT;if(over>0)b.cook=Math.min(2.4,b.cook+clamp(over/100,0,1.6)/(m.cookSec*60))}
   if(m.melt){if(b.T>m.melt.T)b.melt=Math.min(1,b.melt+(b.T-m.melt.T)*.00035);else if(b.T<m.melt.T-6)b.melt=Math.max(0,b.melt-.0015)}
   if(m.rise&&b.T>m.rise.T&&b.grow<m.rise.max){const f=1.0012;b.grow*=f;for(const r of b.rest){r.x*=f;r.y*=f}for(let i=0;i<b.L.length;i++)b.L[i]*=f;b.restArea*=f*f;b.R*=f}
+  const wz=where(b);
+  if(wz==='fryer'&&fryer.T>140&&b.cy>fryer.oil-b.R*.4)b.fried=Math.min(1.5,(b.fried||0)+.0024);
+  if(wz==='grill'&&grill.T>140)b.grill=Math.min(1,(b.grill||0)+.005);
   let k=lerp(m.k,.008,b.melt),e=lerp(m.edge,.05,b.melt),pl=b.melt>.15?lerp(m.plastic,.06,b.melt):m.plastic;
+  if(b.T<-3){k=Math.max(k,.85);e=Math.max(e,.9);pl=0}
   if(m.rise&&b.cook>.55){k=Math.max(k,.32);pl=0}
   if(b.type==='eggwhite'){k=lerp(.06,.35,clamp(b.cook,0,1));pl=b.cook>.6?0:m.plastic}
   b.ke=k;b.ee=e;b.pl=pl;
@@ -525,13 +835,13 @@ function popKernel(b){
 }
 
 /* ================= input ================= */
-const ptr={down:false,x:0,y:0,lx:0,ly:0,grab:null,gi:0,trail:[],combo:0,cx:0,cy:0};
-function local(e){const r=cv.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]}
+const ptr={down:false,x:0,y:0,lx:0,ly:0,sx:0,sx0:0,cam0:0,pan:false,canPan:false,grab:null,gi:0,trail:[],combo:0,cx:0,cy:0};
+function local(e){const r=cv.getBoundingClientRect(),sx=e.clientX-r.left;return[sx+camX,e.clientY-r.top,sx]}
 function inR(x,y,a,b,c,d){return x>=a&&x<=c&&y>=b&&y<=d}
 function controls(x,y){
-  if(Math.abs(x-bowl.kx)<38&&Math.abs(y-bowl.ky)<20){startMix();return true}
-  for(const[o,name]of[[pan,'Pfanne'],[pot,'Topf']]){if(Math.hypot(x-o.kx,y-o.ky)<26){o.lvl=(o.lvl+1)%3;sfx.click();
-    toast(o.lvl?`${name}: ${o.lvl===1?'mittlere':'volle'} Hitze`:`${name} aus`);return true}}
+  if(Math.abs(x-bowl.kx)<38&&Math.abs(y-LY.ky)<20){startMix();return true}
+  for(const[o,name,n]of KNOBS()){if(Math.hypot(x-o.kx,y-LY.ky)<26){o.lvl=(o.lvl+1)%n;sfx.click();
+    toast(o.lvl?(n===2?`${name} an (180 °C)`:`${name}: ${o.lvl===1?'mittlere':'volle'} Hitze`):`${name} aus`);return true}}
   const o=oven;
   if(inR(x,y,o.x,o.y,o.x+o.w,o.y+o.ph+4)){o.lvl=(o.lvl+1)%3;sfx.click();toast(o.lvl?`Ofen: ${o.lvl===1?'180':'250'} °C`+(o.open?' (Tür schließen!)':''):'Ofen aus');return true}
   if(!o.open&&inR(x,y,o.x,o.y+o.ph,o.x+o.w,o.y+o.h)){o.open=true;sfx.door();return true}
@@ -544,30 +854,43 @@ function controls(x,y){
     return true}
   if(!m.open&&inR(x,y,m.x,m.y,m.ix1+2,m.y+m.h)){m.open=true;if(m.lvl){m.lvl=0;m.timer=0}sfx.door();return true}
   if(m.open&&inR(x,y,m.x-6,m.y,m.x+24,m.y+m.h)){m.open=false;sfx.door();return true}
+  const f=freezer;
+  if(!f.open&&inR(x,y,f.x,f.y,f.x+f.w,f.y+f.h)){f.open=true;sfx.door();return true}
+  if(f.open&&inR(x,y,f.x-6,f.y,f.x+24,f.y+f.h)){f.open=false;sfx.door();return true}
   return false;
 }
+const KNOBS=()=>[[pan,'Pfanne',3],[pot,'Topf',3],[grill,'Grill',3],[fryer,'Fritteuse',2]];
+function stationIdx(){return Math.round(camT/LY.vw)}
+function goStation(i){camT=clamp(Math.round(i),0,STN.length-1)*LY.vw}
 function blocked(b){const o=boxOf(b);return o&&!o.open}
 cv.addEventListener('pointerdown',e=>{
   audioInit();
-  const[x,y]=local(e);
+  const[x,y,sx]=local(e);
   if(controls(x,y))return;
-  cv.setPointerCapture(e.pointerId);ptr.down=true;ptr.x=ptr.lx=x;ptr.y=ptr.ly=y;ptr.trail=[{x,y,t:performance.now()}];
+  cv.setPointerCapture(e.pointerId);ptr.down=true;ptr.x=ptr.lx=x;ptr.y=ptr.ly=y;ptr.sx=ptr.sx0=sx;ptr.cam0=camT;ptr.pan=false;ptr.canPan=false;ptr.trail=[{x,y,t:performance.now()}];
   for(const b of bodies)b.hits=[];ptr.combo=0;
   if(tool==='hand'){
     let pick=null;
     for(let i=bodies.length-1;i>=0;i--){const b=bodies[i];if(!blocked(b)&&inside(x,y,b.pts)){pick=b;break}}
-    if(!pick){let bd=36*36;for(const b of bodies){if(blocked(b))continue;for(const p of b.pts){const d=(p.x-x)**2+(p.y-y)**2;if(d<bd){bd=d;pick=b}}}}
+    if(!pick){let bd=30*30;for(const b of bodies){if(blocked(b))continue;for(const p of b.pts){const d=(p.x-x)**2+(p.y-y)**2;if(d<bd){bd=d;pick=b}}}}
     if(pick){let bi=0,bd=1e18;pick.pts.forEach((p,i)=>{const d=(p.x-x)**2+(p.y-y)**2;if(d<bd){bd=d;bi=i}});
-      ptr.grab=pick;ptr.gi=bi;bodies.splice(bodies.indexOf(pick),1);bodies.push(pick);sfx.squish(.12)}
+      ptr.grab=pick;ptr.gi=bi;bodies.splice(bodies.indexOf(pick),1);bodies.push(pick);sfx.squish(.12);game.ev.grab=1}
+    else ptr.canPan=true;
   }else if(tool==='mallet')smash(x,y);
 });
 cv.addEventListener('pointermove',e=>{
   if(!ptr.down)return;
   const evs=e.getCoalescedEvents?e.getCoalescedEvents():[];
-  for(const ev of(evs.length?evs:[e])){const[x,y]=local(ev);ptr.lx=ptr.x;ptr.ly=ptr.y;ptr.x=x;ptr.y=y;
+  for(const ev of(evs.length?evs:[e])){const[x,y,sx]=local(ev);ptr.sx=sx;
+    if(ptr.canPan){const dx=sx-ptr.sx0;if(Math.abs(dx)>10)ptr.pan=true;if(ptr.pan){camT=clamp(ptr.cam0-dx,0,LY.maxCam);camX=camT;continue}}
+    ptr.lx=ptr.x;ptr.ly=ptr.y;ptr.x=x;ptr.y=y;
     if(tool==='knife'){ptr.trail.push({x,y,t:performance.now()});knife(ptr.lx,ptr.ly,x,y)}}
 });
-function up(){if(ptr.combo>=3){fx.push({k:'text',x:clamp(ptr.cx,70,W-70),y:Math.max(110,ptr.cy-50),t:0,life:70,txt:`${ptr.combo}er-Schnitt!`});sfx.combo(ptr.combo);buzz(40)}ptr.combo=0;ptr.down=false;ptr.grab=null;for(const b of bodies)b.hits=[]}
+function up(){
+  if(ptr.combo>=3){fx.push({k:'text',x:clamp(ptr.cx,camX+LY.side+70,camX+W-70),y:Math.max(110,ptr.cy-50),t:0,life:70,txt:`${ptr.combo}er-Schnitt!`});sfx.combo(ptr.combo);buzz(40)}
+  if(ptr.pan){const dx=ptr.sx-ptr.sx0;let i=Math.round(ptr.cam0/LY.vw);if(dx<-45)i++;else if(dx>45)i--;goStation(i)}
+  else if(ptr.grab)goStation(camT/LY.vw);
+  ptr.combo=0;ptr.down=false;ptr.grab=null;ptr.pan=false;ptr.canPan=false;for(const b of bodies)b.hits=[]}
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
 
 function knife(ax,ay,bx,by){
@@ -603,7 +926,7 @@ function cut(b,A,B,silent){
   const p2=[mk(I2),...ring((i2+1)%n,i1),mk(I1),...chord(I1,I2)];
   const O={x:b.cx+b.texOff.x*Math.cos(b.rot)-b.texOff.y*Math.sin(b.rot),y:b.cy+b.texOff.x*Math.sin(b.rot)+b.texOff.y*Math.cos(b.rot)};
   const TA=b.texRot0+b.rot,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;
-  remove(b);if(!silent){sfx.cut();ptr.combo++;ptr.cx=(I1.x+I2.x)/2;ptr.cy=(I1.y+I2.y)/2;fx.push({k:'slash',x1:I1.x-(I2.x-I1.x)*.25,y1:I1.y-(I2.y-I1.y)*.25,x2:I2.x+(I2.x-I1.x)*.25,y2:I2.y+(I2.y-I1.y)*.25,t:0,life:12});if(b.R>12)wetSplat(b,b.R*.55)}
+  remove(b);if(!silent){sfx.cut();game.ev.cut=1;ptr.combo++;ptr.cx=(I1.x+I2.x)/2;ptr.cy=(I1.y+I2.y)/2;fx.push({k:'slash',x1:I1.x-(I2.x-I1.x)*.25,y1:I1.y-(I2.y-I1.y)*.25,x2:I2.x+(I2.x-I1.x)*.25,y2:I2.y+(I2.y-I1.y)*.25,t:0,life:12});if(b.R>12)wetSplat(b,b.R*.55)}
   for(const[pp,sg]of[[p1,side[(i1+1)%n]>0?1:-1],[p2,side[(i2+1)%n]>0?1:-1]]){
     for(const p of pp){p.x+=nx*sg*1.5;p.y+=ny*sg*1.5;p.px+=nx*sg*.6;p.py+=ny*sg*.6}
     const a=Math.abs(polyArea(pp));
@@ -659,6 +982,8 @@ function drop(x,y,vx,vy,c,s,alpha=1){if(drops.length>1600)return;const bx=closed
 function landY(x){
   if(x>pan.x0+6&&x<pan.x1-6)return pan.y-1;
   if(x>pot.x0+3&&x<pot.x1-3)return pot.y-1;
+  if(x>grill.x0&&x<grill.x1)return grill.y-1;
+  if(x>fryer.x0+4&&x<fryer.x1-4)return fryer.y-2;
   if(x>bowl.x0+6&&x<bowl.x1-6){const u=(x-bowl.cx)/(bowl.w/2);return bowl.rim+bowl.h*Math.sqrt(Math.max(0,1-u*u))-2}
   if(x>plate.x0+6&&x<plate.x1-6)return plate.y-1;
   return floorY+rnd(-14,20);
@@ -698,14 +1023,19 @@ function mixMaterial(parts,A){
   m.label=mixName(ingr,taste,dough,keys);
   return m}
 function mixName(ingr,taste,dough,keys){
-  const has=k=>(ingr[k]||0)>.06,P=k=>NAME_PART[k]||(M[k]&&M[k].label)||k;
-  const fruit=['strawberry','banana','melon','orange','lemon'].filter(has);
-  if(dough>.2)return(taste[0]>=taste[1]*.6||['chocolate','banana','strawberry','mallow'].some(has))?'Kuchenteig':(has('cheese')||has('tomato')?'Pizzateig':'Brotteig');
-  if(has('egg')&&(keys.length===1||['cheese','steak','sausage','tomato','chili','butter'].some(has)))return'Rührei-Mix';
-  if(has('chocolate')&&fruit.length)return`Schoko-${P(fruit[0])}-Creme`;
+  const has=k=>(ingr[k]||0)>.06,P=k=>NAME_PART[k]||(M[k]&&M[k].label)||k,cat=k=>M[k]?M[k].cat:'';
+  const fruit=keys.filter(k=>cat(k)==='obst'||cat(k)==='beeren'),meat=keys.filter(k=>cat(k)==='fleisch'),fish=keys.filter(k=>cat(k)==='fisch'),veg=keys.filter(k=>cat(k)==='gemuese'||cat(k)==='pilze'),dairy=keys.filter(k=>cat(k)==='milch'&&k!=='egg'&&k!=='quail');
+  const sweet=taste[0]>=taste[1]*.6||keys.some(k=>cat(k)==='suess');
+  if(dough>.2)return sweet?'Kuchenteig':(has('cheese')||has('tomato')||has('mozzarella')?'Pizzateig':'Brotteig');
+  if((has('egg')||has('quail'))&&!sweet)return'Rührei-Mix';
+  if(keys.some(k=>M[k]&&M[k].melt&&cat(k)==='suess')&&fruit.length)return`Schoko-${P(fruit[0])}-Creme`;
   if(fruit.length&&fruit.length===keys.length)return fruit.length>1?'Obst-Smoothie':P(fruit[0])+'mus';
-  if(has('tomato')&&keys.length>1)return has('chili')?'Scharfe Salsa':'Tomatensoße';
-  if(has('steak')||has('sausage'))return'Hackmasse';
+  if(fruit.length&&dairy.length&&sweet)return`${P(fruit[0])}-Creme`;
+  if(has('tomato')&&keys.length>1)return has('chili')||has('jalapeno')||has('habanero')?'Scharfe Salsa':'Tomatensoße';
+  if(fish.length)return'Fischfrikadellen-Masse';
+  if(meat.length)return'Hackmasse';
+  if(veg.length===keys.length)return veg.length>1?'Gemüsepüree':P(veg[0])+'püree';
+  if(dairy.length>=keys.length/2)return sweet?'Süße Creme':'Käsecreme';
   if(keys.length===1)return P(keys[0])+'brei';
   return`${P(keys[0])}-${P(keys[1])}-Mix`}
 function mergeBowl(){
@@ -737,6 +1067,8 @@ function smash(x,y){
 function step(){
   frame++;
   for(const o of[pan,pot])o.T+=(LEVELS[o.lvl]-o.T)*.012;
+  grill.T+=([ROOM,210,290][grill.lvl]-grill.T)*.012;fryer.T+=([ROOM,180][fryer.lvl]-fryer.T)*.006;
+  if(ptr.down&&ptr.grab&&LY.vw){if(ptr.sx<LY.side+40)camT=Math.max(0,camT-8);else if(ptr.sx>W-40)camT=Math.min(LY.maxCam,camT+8)}
   const ot=[ROOM,180,250][oven.lvl];oven.T+=((oven.open?lerp(ROOM,ot,.45):ot)-oven.T)*.006;
   if(micro.lvl){micro.T=lerp(micro.T,45,.01);if(--micro.timer<=0||micro.open){micro.lvl=0;if(!micro.open){sfx.ding();toast('Pling! Mikrowelle fertig.')}}}else micro.T=lerp(micro.T,ROOM,.01);
   if(mixT>0){mixT++;const cx=bowl.cx,cy=bowl.rim+bowl.h*.55;
@@ -744,10 +1076,12 @@ function step(){
     if(mixT>80){mixT=0;mergeBowl()}}
   for(const b of bodies.slice())cookStep(b);
   for(const b of bodies)for(const p of b.pts){const vx=(p.x-p.px)*.996,vy=(p.y-p.py)*.996;p.px=p.x;p.py=p.y;p.x+=vx;p.y+=vy+G}
+  for(const b of bodies){if(where(b)!=='fryer')continue;let sub=0;for(const p of b.pts)if(p.y>fryer.oil){sub++;p.y-=G*1.45*b.m.dens/(b.m.dens>1?1.3:1);p.px+=(p.x-p.px)*.12;p.py+=(p.y-p.py)*.12}
+    if(sub&&fryer.T>140&&Math.random()<.06)drop(rnd(fryer.x0+8,fryer.x1-8),fryer.oil-2,rnd(-2,2),rnd(-5,-2),'#f0c050',rnd(1,2),.6)}
   for(let it=0;it<4;it++){
     const first=it===0;
-    for(const b of bodies){shapeMatch(b,b.ke*.5,first);edges(b);pressure(b)}
-    if(ptr.grab&&ptr.down){const b=ptr.grab,n=b.pts.length;for(let k=-2;k<=2;k++){const p=b.pts[(ptr.gi+k+n)%n],w=k?.18:.45;p.x+=(ptr.x-p.x)*w;p.y+=(ptr.y-p.y)*w}}
+    for(const b of bodies){shapeMatch(b,b.ke*.5,first&&b!==ptr.grab);edges(b);pressure(b)}
+    if(ptr.grab&&ptr.down){const b=ptr.grab,n=b.pts.length,g=b.pts[ptr.gi],dx=(ptr.x-g.x)*.12,dy=(ptr.y-g.y)*.12;for(const p of b.pts){p.x+=dx;p.y+=dy}for(let k=-2;k<=2;k++){const p=b.pts[(ptr.gi+k+n)%n],w=k?.15:.4;p.x+=(ptr.x-p.x)*w;p.y+=(ptr.y-p.y)*w}}
     for(const b of bodies)aabb(b);
     for(let i=0;i<bodies.length;i++)for(let j=i+1;j<bodies.length;j++){const a=bodies[i],c=bodies[j];
       if(a.maxX<c.minX||c.maxX<a.minX||a.maxY<c.minY||c.maxY<a.minY)continue;pushPoints(a,c,first);pushPoints(c,a,first)}
@@ -756,6 +1090,7 @@ function step(){
   for(const b of bodies.slice()){
     const m=b.m;if(b.sndCd>0)b.sndCd--;
     if(b.inv>0){b.inv--;b.imp=0;continue}
+    if(b===ptr.grab){b.imp=0;b.health=Math.max(b.health,30)}
     if(b.imp>3.5&&!b.sndCd){(b.type==='egg'||b.type==='kernel'||b.shard?sfx.bonk:sfx.squish)(clamp(b.imp/25,.05,.6)*(b.type==='kernel'?.3:1));b.sndCd=8}
     let th=b.chunk?m.thresh*.85:m.thresh;if(b.type==='egg'&&b.cook>.5)th*=3;
     if(b.imp>th)b.health-=(b.imp-th)*m.frag*(b.chunk?1.3:1);
@@ -766,7 +1101,7 @@ function step(){
   }
   for(let i=drops.length-1;i>=0;i--){const d=drops[i];
     d.vy+=G*.9;d.vx*=.995;d.x+=d.vx;d.y+=d.vy;
-    if(d.x<0){d.x=0;d.vx*=-.3}else if(d.x>W){d.x=W;d.vx*=-.3}
+    if(d.x<LY.xl){d.x=LY.xl;d.vx*=-.3}else if(d.x>LY.xr){d.x=LY.xr;d.vx*=-.3}
     const bx=d.box;
     if(bx){if(bx.open)d.box=null;else{if(d.x<bx.ix0+2){d.x=bx.ix0+2;d.vx*=-.3}else if(d.x>bx.ix1-2){d.x=bx.ix1-2;d.vx*=-.3}if(d.y<bx.iy0+2){d.y=bx.iy0+2;d.vy*=-.3}
       if(d.k==='drop'&&Math.random()<.04&&Math.hypot(d.vx,d.vy)>4){stampWall(d.x,d.y,d.c,d.s*.8,d.a,true);drops.splice(i,1);continue}}}
@@ -782,9 +1117,9 @@ function step(){
   for(let i=puffs.length-1;i>=0;i--){const p=puffs[i];p.x+=p.vx+Math.sin((frame+i)*.05)*.2;p.y+=p.vy;p.vy*=.995;p.r+=.18;if(++p.life>p.max)puffs.splice(i,1)}
   for(let i=fx.length-1;i>=0;i--){if(++fx[i].t>fx[i].life)fx.splice(i,1)}
   shake*=.85;
-  let siz=0;for(const b of bodies){const w=where(b);if((w==='pan'||w==='pot')&&b.T>105&&b.m.heat)siz+=b.type==='kernel'?.25:1}
+  let siz=0;for(const b of bodies){const w=where(b);if((w==='pan'||w==='pot'||w==='grill'||w==='fryer')&&b.T>105&&b.m.heat)siz+=b.type==='kernel'?.25:w==='fryer'?1.6:1}
   loops.set('sizzle',Math.min(.2,siz*.045));
-  loops.set('gas',(pan.lvl?.03:0)+(pot.lvl?.03:0));
+  loops.set('gas',(pan.lvl?.03:0)+(pot.lvl?.03:0)+(grill.lvl?.02:0)+(fryer.lvl?.02:0));
   loops.set('hum',micro.lvl?.05:0);loops.set('mixer',mixT>0?.12:0);loops.set('oven',oven.lvl?.025:0);
 }
 function hitsAppliance(x,y){for(const o of BOXES)if(x>o.x&&x<o.x+o.w&&y>o.y&&y<o.y+o.h)return true;return false}
@@ -831,36 +1166,54 @@ function stampSeed(d){stx.save();stx.translate(d.x,d.fy);stx.rotate(d.r);stx.fil
 /* ================= static background ================= */
 function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
 function drawBg(){
-  const g=bgx;g.setTransform(DPR,0,0,DPR,0,0);
-  g.fillStyle='#a89c88';g.fillRect(0,0,W,H);
-  const tw=clamp(W/5.5,58,110),th=tw/2,gr=2.5;
+  const g=bgx;g.setTransform(BD,0,0,BD,0,0);
+  g.fillStyle='#a89c88';g.fillRect(0,0,WW,H);
+  const tw=clamp(W/6,56,104),th=tw/2,gr=2.5;
   for(let r=0,y=-th*.3;y<counterTop;r++,y+=th){const off=(r%2)*tw/2;
-    for(let x=-off;x<W;x+=tw){const v=rnd(-6,6),lg=g.createLinearGradient(0,y,0,y+th);
+    for(let x=-off;x<WW;x+=tw){const v=rnd(-6,6),lg=g.createLinearGradient(0,y,0,y+th);
       lg.addColorStop(0,`rgb(${244+v},${238+v},${226+v})`);lg.addColorStop(.55,`rgb(${232+v},${224+v},${208+v})`);lg.addColorStop(1,`rgb(${214+v},${204+v},${186+v})`);
       g.fillStyle=lg;rr(g,x+gr/2,y+gr/2,tw-gr,th-gr,4);g.fill();
-      g.fillStyle='rgba(255,255,255,.55)';rr(g,x+4,y+3,tw-10,3,2);g.fill();
+      g.fillStyle='rgba(255,255,255,.5)';rr(g,x+4,y+3,tw-10,3,2);g.fill();
       g.strokeStyle='rgba(90,70,40,.18)';g.lineWidth=1;rr(g,x+gr/2,y+gr/2,tw-gr,th-gr,4);g.stroke()}}
-  let rg=g.createRadialGradient(W*.42,-H*.05,10,W*.42,-H*.05,H*.95);
-  rg.addColorStop(0,'rgba(255,214,150,.22)');rg.addColorStop(.6,'rgba(255,190,120,.05)');rg.addColorStop(1,'rgba(0,0,0,0)');
-  g.fillStyle=rg;g.fillRect(0,0,W,counterTop);
+  const sx=LY.sx,vw=LY.vw;
+  for(let i=0;i<STN.length;i++){const cx=sx(i,.5),rg=g.createRadialGradient(cx,-H*.05,10,cx,-H*.05,H*.9);
+    rg.addColorStop(0,'rgba(255,214,150,.2)');rg.addColorStop(.6,'rgba(255,190,120,.04)');rg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=rg;g.fillRect(sx(i,0),0,vw,counterTop)}
   for(const o of BOXES){const sg=g.createLinearGradient(0,o.y+o.h,0,o.y+o.h+18);sg.addColorStop(0,'rgba(60,40,20,.35)');sg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=sg;g.fillRect(o.x+4,o.y+o.h,o.w-8,18);
     g.fillStyle='rgba(60,40,20,.18)';g.fillRect(o.x+o.w,o.y+6,6,o.h)}
+  // shelf with jars (prep station)
+  {const y=Math.max(70,counterTop*.42),x0=sx(0,.06),x1=sx(0,.5);g.fillStyle='rgba(60,40,20,.25)';g.fillRect(x0+4,y+8,x1-x0,6);
+    const cols=['#c8401a','#e8b020','#5a8a2a','#8a5a2a','#f0e6d0','#6a2a4a'];let x=x0+8;let k=0;
+    while(x<x1-30){const w=20+((k*37)%14),h=26+((k*53)%18);g.fillStyle='rgba(255,255,255,.35)';rr(g,x,y-h,w,h,4);g.fill();
+      g.fillStyle=cols[k%cols.length];rr(g,x+2,y-h*.7,w-4,h*.7-2,3);g.fill();g.fillStyle='#8a6a4a';g.fillRect(x+3,y-h-5,w-6,6);
+      g.strokeStyle='rgba(60,40,20,.35)';rr(g,x,y-h,w,h,4);g.stroke();x+=w+8;k++}
+    g.fillStyle='#8a5a30';g.fillRect(x0,y,x1-x0,8);g.fillStyle='rgba(255,230,190,.35)';g.fillRect(x0,y,x1-x0,1.5)}
+  // range hood over the stove
+  {const x0=sx(1,.06),x1=sx(1,.64),y1=Math.max(90,counterTop*.36),y0=48;
+    let lg=g.createLinearGradient(x0,0,x1,0);lg.addColorStop(0,'#9aa0a6');lg.addColorStop(.4,'#e4e6e8');lg.addColorStop(1,'#80868c');
+    g.fillStyle=lg;g.beginPath();g.moveTo(x0+(x1-x0)*.32,y0-60);g.lineTo(x0+(x1-x0)*.68,y0-60);g.lineTo(x0+(x1-x0)*.68,y0);g.lineTo(x1,y1);g.lineTo(x0,y1);g.lineTo(x0+(x1-x0)*.32,y0);g.closePath();g.fill();
+    g.fillStyle='#3a3c40';g.fillRect(x0,y1,x1-x0,6);g.fillStyle='rgba(255,220,150,.5)';g.fillRect(x0+20,y1+6,x1-x0-40,2);
+    const lg2=g.createLinearGradient(0,y1,0,counterTop);lg2.addColorStop(0,'rgba(255,220,160,.18)');lg2.addColorStop(1,'rgba(255,220,160,0)');g.fillStyle=lg2;g.fillRect(x0,y1+6,x1-x0,counterTop-y1)}
+  // chalkboard + lamp at the serving station
+  {const x=sx(4,.05),y=70,w=Math.min(vw*.22,150),h=Math.min(counterTop-120,110);g.fillStyle='#6a4a2a';rr(g,x-5,y-5,w+10,h+10,4);g.fill();g.fillStyle='#2a302c';g.fillRect(x,y,w,h);
+    g.font='14px Bungee, Impact, sans-serif';g.fillStyle='rgba(240,236,220,.85)';g.textAlign='left';g.fillText('HEUTE',x+10,y+24);
+    g.font='12px "Courier Prime", monospace';g.fillStyle='rgba(240,236,220,.6)';['Was der Gast','sich wünscht.','Frisch.'].forEach((t,i)=>g.fillText(t,x+10,y+46+i*16));
+    const lx=plate.cx;g.strokeStyle='#2a2a2a';g.lineWidth=1.5;g.beginPath();g.moveTo(lx,0);g.lineTo(lx,30);g.stroke();
+    g.fillStyle='#2a3a30';g.beginPath();g.moveTo(lx-26,46);g.quadraticCurveTo(lx,18,lx+26,46);g.closePath();g.fill();g.fillStyle='#ffe9b0';g.beginPath();g.ellipse(lx,46,22,4,0,0,TAU);g.fill()}
   const ct=counterTop,cf=counterFront;
   let lg=g.createLinearGradient(0,ct,0,cf);lg.addColorStop(0,'#8a5a30');lg.addColorStop(1,'#c88a50');
-  g.fillStyle=lg;g.fillRect(0,ct,W,cf-ct);
+  g.fillStyle=lg;g.fillRect(0,ct,WW,cf-ct);
   const strips=Math.max(4,Math.round(W/70));
   for(let i=0;i<strips;i++){const y0=ct+(cf-ct)*i/strips,y1=ct+(cf-ct)*(i+1)/strips,v=rnd(-14,14);
-    g.fillStyle=`rgba(${170+v},${110+v},${60+v},.3)`;g.fillRect(0,y0,W,y1-y0);g.fillStyle='rgba(30,15,5,.35)';g.fillRect(0,y0,W,.8)}
-  for(let i=0;i<220;i++){const y=rnd(ct,cf),x=rnd(-50,W),l=rnd(40,220);g.strokeStyle=`rgba(${Math.random()<.5?'40,20,8':'210,160,110'},${rnd(.05,.14)})`;g.lineWidth=rnd(.4,1.4);
+    g.fillStyle=`rgba(${170+v},${110+v},${60+v},.3)`;g.fillRect(0,y0,WW,y1-y0);g.fillStyle='rgba(30,15,5,.35)';g.fillRect(0,y0,WW,.8)}
+  for(let i=0;i<220*WW/W;i++){const y=rnd(ct,cf),x=rnd(-50,WW),l=rnd(40,220);g.strokeStyle=`rgba(${Math.random()<.5?'40,20,8':'210,160,110'},${rnd(.05,.14)})`;g.lineWidth=rnd(.4,1.4);
     g.beginPath();g.moveTo(x,y);g.bezierCurveTo(x+l*.3,y+rnd(-1.5,1.5),x+l*.6,y+rnd(-1.5,1.5),x+l,y+rnd(-1,1));g.stroke()}
   lg=g.createLinearGradient(0,ct-18,0,ct+14);lg.addColorStop(0,'rgba(0,0,0,0)');lg.addColorStop(.55,'rgba(40,24,10,.4)');lg.addColorStop(1,'rgba(0,0,0,0)');
-  g.fillStyle=lg;g.fillRect(0,ct-18,W,32);
-  // cooktop glass
-  const cx0=pan.x0-14,cx1=Math.min(W-4,pot.x1+12),cy0=lerp(ct,floorY,.35),cy1=lerp(floorY,cf,.6);
+  g.fillStyle=lg;g.fillRect(0,ct-18,WW,32);
+  // cooktop glass under pan + pot
+  const cx0=pan.x0-14,cx1=pot.x1+14,cy0=lerp(ct,floorY,.35),cy1=lerp(floorY,cf,.6);
   lg=g.createLinearGradient(0,cy0,0,cy1);lg.addColorStop(0,'#0c0d0f');lg.addColorStop(1,'#1d1f23');
   g.fillStyle=lg;rr(g,cx0,cy0,cx1-cx0,cy1-cy0,4);g.fill();
   g.strokeStyle='rgba(255,255,255,.12)';g.lineWidth=1;rr(g,cx0+.5,cy0+.5,cx1-cx0-1,cy1-cy0-1,4);g.stroke();
-  g.fillStyle='rgba(255,255,255,.05)';g.beginPath();g.moveTo(cx0+20,cy0+2);g.lineTo(cx0+60,cy0+2);g.lineTo(cx0+40,cy1-2);g.lineTo(cx0,cy1-2);g.closePath();g.fill();
   for(const o of[pan,pot]){const rx=o.w*.42;g.strokeStyle='#3a3c40';g.lineWidth=3;g.beginPath();g.ellipse(o.cx,floorY-2,rx,6,0,0,TAU);g.stroke();
     g.fillStyle='#26272b';g.beginPath();g.ellipse(o.cx,floorY-3,rx*.45,3.5,0,0,TAU);g.fill();
     g.fillStyle='#2c2d31';for(const s of[-1,1])g.fillRect(o.cx+s*rx*.85-2,floorY-12,4,10)}
@@ -873,15 +1226,13 @@ function drawBg(){
   for(let i=0;i<25;i++){g.strokeStyle=`rgba(90,50,20,${rnd(.08,.2)})`;g.lineWidth=.6;const y=rnd(B.y,B.y+9);g.beginPath();g.moveTo(B.x0+4,y);g.lineTo(B.x1-4,y+rnd(-1,1));g.stroke()}
   // front edge
   lg=g.createLinearGradient(0,cf,0,H);lg.addColorStop(0,'#8a5a32');lg.addColorStop(.08,'#6a4224');lg.addColorStop(1,'#2a1a0e');
-  g.fillStyle=lg;g.fillRect(0,cf,W,H-cf);
-  g.fillStyle='rgba(255,220,170,.35)';g.fillRect(0,cf,W,1.2);
-  for(let x=rnd(-30,0);x<W;x+=rnd(28,46)){g.fillStyle='rgba(0,0,0,.25)';g.fillRect(x,cf+2,1,H-cf)}
-  const kx0=pan.kx-30,kx1=bowl.kx+44;lg=g.createLinearGradient(0,pan.ky-20,0,pan.ky+20);lg.addColorStop(0,'#2a2b2f');lg.addColorStop(1,'#141518');
-  g.fillStyle=lg;rr(g,kx0,pan.ky-21,kx1-kx0,44,10);g.fill();g.strokeStyle='rgba(255,255,255,.1)';rr(g,kx0+.5,pan.ky-20.5,kx1-kx0-1,43,10);g.stroke();
-  rg=g.createRadialGradient(W/2,H*.45,Math.min(W,H)*.35,W/2,H*.45,Math.max(W,H)*.85);
-  rg.addColorStop(0,'rgba(0,0,0,0)');rg.addColorStop(1,'rgba(30,18,8,.4)');g.fillStyle=rg;g.fillRect(0,0,W,H);
+  g.fillStyle=lg;g.fillRect(0,cf,WW,H-cf);
+  g.fillStyle='rgba(255,220,170,.35)';g.fillRect(0,cf,WW,1.2);
+  for(let x=rnd(-30,0);x<WW;x+=rnd(28,46)){g.fillStyle='rgba(0,0,0,.25)';g.fillRect(x,cf+2,1,H-cf)}
+  const plateK=(a,b)=>{lg=g.createLinearGradient(0,LY.ky-20,0,LY.ky+20);lg.addColorStop(0,'#2a2b2f');lg.addColorStop(1,'#141518');
+    g.fillStyle=lg;rr(g,a,LY.ky-21,b-a,44,10);g.fill();g.strokeStyle='rgba(255,255,255,.1)';rr(g,a+.5,LY.ky-20.5,b-a-1,43,10);g.stroke()};
+  plateK(pan.kx-32,grill.kx+40);plateK(bowl.kx-46,bowl.kx+46);plateK(fryer.kx-40,fryer.kx+44);
 }
-
 /* ================= food rendering ================= */
 function trace(p){const n=p.length,a=p[n-1],b=p[0];X.moveTo((a.x+b.x)/2,(a.y+b.y)/2);
   for(let i=0;i<n;i++){const q=p[i],r=p[(i+1)%n];X.quadraticCurveTo(q.x,q.y,(q.x+r.x)/2,(q.y+r.y)/2)}X.closePath()}
@@ -913,6 +1264,11 @@ function drawBody(b){
   X.fillStyle=g;X.fillRect(bx0,by0,bw,bh);
   X.save();X.translate(T.x,T.y);X.rotate(T.a);texture(b,b.tex.R);X.restore();X.globalAlpha=baseA;
   if(b.type==='banana'&&!b.chunk){bananaTex(b);X.globalAlpha=baseA}
+  if(b.fried>.05){X.globalAlpha=Math.min(.85,b.fried*.85);X.fillStyle=b.fried>1.3?'#7a400e':'#d8962e';X.fillRect(b.minX-3,b.minY-3,b.maxX-b.minX+6,b.maxY-b.minY+6);
+    X.globalAlpha=Math.min(.7,b.fried*.6);X.fillStyle='#ffd27a';for(let i=0;i<b.tex.dots.length;i+=3){const d=b.tex.dots[i];X.beginPath();X.arc(cx+d.x*.6,cy+d.y*.6,1+d.s*1.6,0,TAU);X.fill()}X.globalAlpha=baseA}
+  if(b.grill>.1){X.save();X.translate(cx,cy);X.rotate(.55);X.globalAlpha=Math.min(.75,b.grill);X.strokeStyle='#2a1004';X.lineWidth=Math.max(2,R*.12);for(let k=-4;k<=4;k++){X.beginPath();X.moveTo(k*R*.38,-R*2);X.lineTo(k*R*.38,R*2);X.stroke()}X.restore();X.globalAlpha=baseA}
+  if(b.T<-1){X.globalAlpha=clamp(-b.T/25,0,.45);X.fillStyle='#e6f4ff';X.fillRect(b.minX-3,b.minY-3,b.maxX-b.minX+6,b.maxY-b.minY+6);X.globalAlpha=clamp(-b.T/15,0,.9);X.fillStyle='#ffffff';
+    for(let i=0;i<b.tex.dots.length;i+=4){const d=b.tex.dots[i];X.fillRect(cx+d.x*.8,cy+d.y*.8,1.5,1.5)}X.globalAlpha=baseA}
   if(!b.chunk&&!b.shard)drawCuts(b);X.globalAlpha=baseA;
   if(ew&&b.cook>.7){X.strokeStyle=`rgba(150,90,30,${clamp((b.cook-.7)*.8,0,.8)})`;X.lineWidth=5;X.beginPath();trace(p);X.stroke()}
   if(m.fat&&!b.chunk){X.strokeStyle=mix('#f6ead8','#b07040',b.cook*.6);X.globalAlpha=.85;X.lineWidth=7;X.beginPath();trace(p);X.stroke();X.globalAlpha=1}
@@ -930,11 +1286,12 @@ function drawBody(b){
   if(m.jelly){X.fillStyle='rgba(255,255,255,.5)';X.beginPath();X.ellipse(cx+R*.45,cy-R*.1,R*.04,R*.12,.3,0,TAU);X.fill()}
   X.strokeStyle=`rgba(255,255,255,${Math.min(.75,sp*.55+.12)})`;X.lineWidth=Math.max(1.5,R*.1);X.lineCap='round';X.beginPath();X.arc(cx,cy,R*.7,-2.75,-1.8);X.stroke();
   X.restore();
-  if(!ew){X.save();X.globalAlpha=m.jelly?.55:.9;X.strokeStyle=m.jelly?'rgba(10,80,30,.9)':mix(skin[2],'#000000',.5);X.lineWidth=Math.max(1.4,Math.min(3,R*.07));X.lineJoin='round';X.beginPath();trace(p);X.stroke();X.restore()}
+  if(!ew){X.save();X.globalAlpha=m.jelly?.55:.9;X.strokeStyle=m.jelly?(m.lineCol||'rgba(10,80,30,.9)'):mix(skin[2],'#000000',.5);X.lineWidth=Math.max(1.4,Math.min(3,R*.07));X.lineJoin='round';X.beginPath();trace(p);X.stroke();X.restore()}
   if(m.stem&&!b.chunk)for(let i=0;i<p.length;i++)if(p[i].stem)drawStem(b,p[i]);
 }
 function texture(b,tr){
   const m=b.m,dots=b.tex.dots,t=b.type;
+  if(m.tex&&!b.chunk){genTex(b,tr,m.tex);return}
   if(m.speck){for(let i=0;i<dots.length;i+=2){const d=dots[i];X.globalAlpha=.6;X.fillStyle=m.speck[(i>>1)%m.speck.length];X.beginPath();X.ellipse(d.x*.8,d.y*.8,1.4+d.s*2.2,1+d.s*1.4,d.s*6,0,TAU);X.fill()}
     X.globalAlpha=.2;X.fillStyle='#fff';for(let i=1;i<dots.length;i+=4){const d=dots[i];X.fillRect(d.x*.7,d.y*.7,1.2,1.2)}return}
   if(b.chunk){
@@ -970,9 +1327,9 @@ function texture(b,tr){
   }else if(t==='steak'){
     X.globalAlpha=.4*clamp(1-b.cook,.15,1);X.strokeStyle='#ffe6e0';X.lineWidth=1;
     for(let i=0;i<7;i++){const d=dots[i*11];X.beginPath();X.moveTo(d.x*.6,d.y*.4);X.bezierCurveTo(d.x*.6+8,d.y*.4-4,d.x*.6+12,d.y*.4+4,d.x*.6+20,d.y*.4);X.stroke()}
-    grill(b,tr);
+    grillMarks(b,tr);
   }else if(t==='sausage'){
-    X.globalAlpha=.15;X.strokeStyle='#fff';X.lineWidth=1;X.beginPath();X.moveTo(-tr*.9,-tr*.12);X.lineTo(tr*.9,-tr*.12);X.stroke();grill(b,tr);
+    X.globalAlpha=.15;X.strokeStyle='#fff';X.lineWidth=1;X.beginPath();X.moveTo(-tr*.9,-tr*.12);X.lineTo(tr*.9,-tr*.12);X.stroke();grillMarks(b,tr);
   }else if(t==='cheese'){
     for(let i=0;i<9;i++){const d=dots[i*13];const r=2+d.s*4;X.globalAlpha=.55;X.fillStyle='#c89a10';X.beginPath();X.ellipse(d.x*.7,d.y*.35,r,r*.8,0,0,TAU);X.fill();
       X.globalAlpha=.4;X.fillStyle='#fff6c0';X.beginPath();X.ellipse(d.x*.7+r*.25,d.y*.35+r*.3,r*.6,r*.4,0,0,TAU);X.fill()}
@@ -989,7 +1346,7 @@ function bananaTex(b){ // drawn in world space so the ridge follows the bent sha
   const p=b.pts;X.beginPath();p.forEach((q,i)=>{const x=b.cx+(q.x-b.cx)*.55,y=b.cy+(q.y-b.cy)*.55;i?X.lineTo(x,y):X.moveTo(x,y)});X.closePath();X.stroke();
   X.globalAlpha=clamp(.35+b.cook*.3,0,.9);X.fillStyle='#4a2c08';for(let i=0;i<14+b.cook*30;i++){const q=p[(i*7)%p.length],f=.3+((i*37)%60)/100;X.beginPath();X.arc(b.cx+(q.x-b.cx)*f,b.cy+(q.y-b.cy)*f,.8+(i%3)*.5,0,TAU);X.fill()}
 }
-function grill(b,tr){if(b.cook<.45)return;X.globalAlpha=clamp((b.cook-.45)*.9,0,.7);X.strokeStyle='#2a1004';X.lineWidth=3;X.lineCap='round';
+function grillMarks(b,tr){if(b.cook<.45)return;X.globalAlpha=clamp((b.cook-.45)*.9,0,.7);X.strokeStyle='#2a1004';X.lineWidth=3;X.lineCap='round';
   for(let k=-3;k<=3;k++){X.beginPath();X.moveTo(k*tr*.28-tr*.2,-tr*.5);X.lineTo(k*tr*.28+tr*.2,tr*.5);X.stroke()}}
 function fleshOf(b){const m=b.m;if(m.fleshCooked&&b.cook>0){const t=clamp(b.cook*.8,0,1);return[mix(m.fleshDk,m.fleshCooked,t),mix(m.flesh,m.fleshCooked,t),mix(m.fleshHi,'#ffffff',t*.3)]}return[m.fleshDk,m.flesh,m.fleshHi]}
 function drawCuts(b){
@@ -1012,6 +1369,14 @@ function drawCuts(b){
     const a=r[0],z=r[r.length-1],L=Math.hypot(z.x-a.x,z.y-a.y)||1,nx=(z.y-a.y)/L,ny=-(z.x-a.x)/L;
     const sg=((b.cx-a.x)*nx+(b.cy-a.y)*ny)>0?1:-1;
     for(const q of r){
+      if(m.cutStyle==='core'||m.cutStyle==='pit'||m.cutStyle==='kiwi'||m.cutStyle==='hollow'||m.cutStyle==='rings'){if(q!==r[r.length>>1])continue;
+        const mx=q.x+nx*sg*w*.3,my=q.y+ny*sg*w*.3;
+        if(m.cutStyle==='pit'){X.fillStyle='#8a5028';X.beginPath();X.ellipse(mx,my,w*.2,w*.14,Math.atan2(ny,nx)+Math.PI/2,0,TAU);X.fill();X.fillStyle='rgba(255,255,255,.25)';X.beginPath();X.ellipse(mx-2,my-2,w*.06,w*.04,0,0,TAU);X.fill()}
+        else if(m.cutStyle==='core'){X.fillStyle=mix(m.flesh,'#c8a060',.4);X.beginPath();X.arc(mx,my,w*.16,0,TAU);X.fill();X.fillStyle='#4a2a10';for(let k=0;k<5;k++){const a=k/5*TAU;X.beginPath();X.ellipse(mx+Math.cos(a)*w*.08,my+Math.sin(a)*w*.08,2.2,1.3,a,0,TAU);X.fill()}}
+        else if(m.cutStyle==='kiwi'){X.fillStyle='#fffbe0';X.beginPath();X.ellipse(mx,my,w*.12,w*.07,Math.atan2(ny,nx)+Math.PI/2,0,TAU);X.fill();X.fillStyle='#1a1a10';for(let k=0;k<14;k++){const a=k/14*TAU;X.beginPath();X.arc(mx+Math.cos(a)*w*.19,my+Math.sin(a)*w*.12,1.2,0,TAU);X.fill()}}
+        else if(m.cutStyle==='hollow'){X.fillStyle='rgba(40,20,10,.35)';X.beginPath();X.ellipse(mx,my,w*.3,w*.16,Math.atan2(ny,nx)+Math.PI/2,0,TAU);X.fill();X.fillStyle='#fff6d8';for(let k=0;k<6;k++)X.fillRect(mx+(k-3)*3,my+(k%2)*3,2,2)}
+        else{X.strokeStyle=mix(m.flesh,'#000000',.15);X.lineWidth=1.2;X.globalAlpha=.6;for(const f2 of[.12,.24,.36]){X.beginPath();X.moveTo(r[0].x+nx*sg*w*f2,r[0].y+ny*sg*w*f2);X.lineTo(r[r.length-1].x+nx*sg*w*f2,r[r.length-1].y+ny*sg*w*f2);X.stroke()}X.globalAlpha=1}
+        continue}
       if(m.citrus){X.strokeStyle='rgba(255,245,210,.55)';X.lineWidth=1;X.beginPath();X.moveTo(q.x,q.y);X.lineTo(q.x+nx*sg*w*.42,q.y+ny*sg*w*.42);X.stroke();continue}
       if(m.holes||(m.rise&&b.cook>.5)){if(q.s1<.5){const d=w*(.1+q.s2*.3),x=q.x+nx*sg*d,y=q.y+ny*sg*d;X.fillStyle=m.holes?'#d8a820':'rgba(150,110,60,.5)';X.beginPath();X.ellipse(x,y,1.5+q.s2*3,1+q.s2*2,0,0,TAU);X.fill()}continue}
       if(b.type==='sausage'){if(q.s1<.4){X.fillStyle='rgba(255,240,230,.7)';X.beginPath();X.arc(q.x+nx*sg*w*.2*q.s2,q.y+ny*sg*w*.2*q.s2,1,0,TAU);X.fill()}continue}
@@ -1028,6 +1393,9 @@ function drawStem(b,q){
   const dx=q.x-b.cx,dy=q.y-b.cy,l=Math.hypot(dx,dy)||1,ux=dx/l,uy=dy/l,a=Math.atan2(uy,ux),m=b.m;
   X.save();X.translate(q.x-ux*2,q.y-uy*2);X.rotate(a+Math.PI/2);
   if(m.stem==='navel'){X.fillStyle='#6b4a1a';X.beginPath();X.ellipse(0,1,3.2,2.2,0,0,TAU);X.fill();X.fillStyle='#3e5a14';X.beginPath();X.arc(0,1,1.5,0,TAU);X.fill();X.restore();return}
+  if(m.gen&&m.stem==='top'&&m.cat!=='gemuese'){X.strokeStyle='#5a3a1a';X.lineWidth=2;X.beginPath();X.moveTo(0,0);X.quadraticCurveTo(2,-6,4,-10);X.stroke();X.fillStyle='#4a8a2a';X.beginPath();X.ellipse(7,-8,5,2.4,-.5,0,TAU);X.fill();X.restore();return}
+  if(m.gen&&m.stem==='top'){X.fillStyle='#3d7d22';X.fillRect(-2.5,-8,5,9);X.fillStyle='rgba(255,255,255,.2)';X.fillRect(-2.5,-8,1.5,9);X.restore();return}
+  if(b.type==='carrot'){X.strokeStyle='#3d8d22';X.lineWidth=2.5;for(const a of[-.5,0,.5]){X.beginPath();X.moveTo(0,0);X.quadraticCurveTo(a*8,-8,a*14,-16);X.stroke()}X.restore();return}
   if(m.stem==='left'){X.fillStyle=mix('#3d7d22','#3a2a08',b.cook*.6);X.beginPath();X.ellipse(0,1,5,3,0,0,TAU);X.fill();X.fillRect(-1.5,-7,3,7);X.restore();return}
   if(m.stem==='right'){X.fillStyle=mix('#5a4a1a','#1a0e04',b.cook*.5);X.fillRect(-2.6,-6,5.2,8);X.fillStyle='#2a1e08';X.fillRect(-2.6,-7,5.2,2);X.restore();return}
   const cooked=clamp(b.cook,0,1),c1=mix('#2f6b1c','#4a3a10',cooked),c2=mix('#1c4410','#2a1e08',cooked);
@@ -1193,24 +1561,87 @@ function drawMicroFront(){
     X.fillStyle='rgba(0,0,0,.5)';X.beginPath();X.moveTo(o.x+4,o.y+8);X.lineTo(o.x+14,o.y+3);X.lineTo(o.x+14,o.y+o.h-3);X.lineTo(o.x+4,o.y+o.h-8);X.closePath();X.fill()}
 }
 function drawKnobs(){
-  X.textAlign='center';X.textBaseline='middle';
-  for(const[o,name]of[[pan,'Pfanne'],[pot,'Topf']]){
-    const x=o.kx,y=o.ky-3,r=13;
-    X.fillStyle='rgba(0,0,0,.4)';X.beginPath();X.arc(x+1,y+2,r+1,0,TAU);X.fill();
-    X.fillStyle=steel(X,x-r,y-r,x+r,y+r);X.beginPath();X.arc(x,y,r,0,TAU);X.fill();
-    X.fillStyle='#1a1b1e';X.beginPath();X.arc(x,y,r-4,0,TAU);X.fill();
-    const a=-Math.PI/2+o.lvl*1.2;X.strokeStyle='#e8e2d8';X.lineWidth=2.5;X.lineCap='round';X.beginPath();X.moveTo(x+Math.cos(a)*2,y+Math.sin(a)*2);X.lineTo(x+Math.cos(a)*(r-5),y+Math.sin(a)*(r-5));X.stroke();
-    X.fillStyle=o.lvl?(o.lvl===2?'#ff5a2a':'#ffa040'):'#3a2a24';X.beginPath();X.arc(x+r+7,y-6,2.5,0,TAU);X.fill();
-    X.font=`700 8px ${UIFONT}`;X.fillStyle='rgba(246,234,216,.6)';X.fillText(name.toUpperCase(),x,y+r+8);
-  }
-  const x=bowl.kx,y=bowl.ky-3,w=66,h=26,on=mixT>0;
+  for(const[o,name,n]of KNOBS())drawKnob(o,name,n);
+  const x=bowl.kx,y=LY.ky-3,w=66,h=26,on=mixT>0;
   X.fillStyle='rgba(0,0,0,.4)';rr(X,x-w/2+1,y-h/2+2,w,h,13);X.fill();
   X.fillStyle=on?'#ff7a1a':steel(X,0,y-h/2,0,y+h/2);rr(X,x-w/2,y-h/2,w,h,13);X.fill();
   if(on){X.fillStyle='rgba(255,255,255,.35)';rr(X,x-w/2,y-h/2,Math.max(26,w*mixT/80),h,13);X.fill()}
-  X.font=`700 11px ${UIFONT}`;X.fillStyle=on?'#fff':'#1a1b1e';X.fillText('MIXEN',x,y+1);
+  X.font=`700 11px ${UIFONT}`;X.fillStyle=on?'#fff':'#1a1b1e';X.textAlign='center';X.textBaseline='middle';X.fillText('MIXEN',x,y+1);
   X.font=`700 8px ${UIFONT}`;X.fillStyle='rgba(246,234,216,.6)';X.fillText('SCHÜSSEL',x,y+h/2+9);
 }
-
+function drawGrill(){const o=grill,y=o.y,hot=clamp((o.T-60)/200,0,1);
+  X.fillStyle='#1a1a1c';X.fillRect(o.x0+8,y+6,6,floorY-y-6);X.fillRect(o.x1-14,y+6,6,floorY-y-6);
+  const g=X.createLinearGradient(0,y-4,0,y+10);g.addColorStop(0,'#3a3a3e');g.addColorStop(1,'#151517');X.fillStyle=g;rr(X,o.x0,y-2,o.w,12,3);X.fill();
+  for(let x=o.x0+8;x<o.x1-4;x+=9){X.strokeStyle=mix('#4a4a50','#ff6a20',hot);X.lineWidth=3;X.beginPath();X.moveTo(x,y-1);X.lineTo(x+4,y-1);X.stroke()}
+  if(hot>.2){X.save();X.globalCompositeOperation='lighter';X.fillStyle=`rgba(255,110,30,${hot*.25})`;X.fillRect(o.x0,y+2,o.w,6);X.restore()}
+  X.fillStyle='#2a2b2f';X.fillRect(o.x0-6,y+2,6,4);X.fillStyle=o.lvl?'#ff5a2a':'#3a2a24';X.beginPath();X.arc(o.x1-8,y+5,2,0,TAU);X.fill();
+  if(o.T>120&&Math.random()<.2)puff(rnd(o.x0,o.x1),y-4,'smoke');}
+function drawFryerBack(){const o=fryer,top=o.y-o.h;
+  X.fillStyle='#202226';X.fillRect(o.x0+2,top,o.w-4,o.h);
+  X.fillStyle='rgba(255,255,255,.06)';X.fillRect(o.x0+6,top+4,o.w-12,4);
+  // basket handle
+  X.strokeStyle='#1a1a1c';X.lineWidth=5;X.lineCap='round';X.beginPath();X.moveTo(o.x1-10,top+6);X.lineTo(o.x1+22,top-26);X.stroke();X.strokeStyle='#c83a1a';X.lineWidth=6;X.beginPath();X.moveTo(o.x1+12,top-18);X.lineTo(o.x1+24,top-28);X.stroke()}
+function drawFryerFront(){const o=fryer,top=o.y-o.h,hot=clamp((o.T-60)/120,0,1);
+  const g=X.createLinearGradient(0,o.oil,0,o.y);g.addColorStop(0,`rgba(232,170,40,${.55+hot*.15})`);g.addColorStop(1,'rgba(150,90,10,.75)');
+  X.fillStyle=g;X.fillRect(o.x0+3,o.oil,o.w-6,o.y-o.oil);
+  X.strokeStyle='rgba(255,230,140,.8)';X.lineWidth=1.5;X.beginPath();X.moveTo(o.x0+3,o.oil);X.lineTo(o.x1-3,o.oil);X.stroke();
+  if(o.T>120){for(let i=0;i<Math.round(hot*10);i++){const bx=o.x0+8+((frame*3+i*37)%(o.w-16)),by=o.y-((frame*2+i*23)%(o.y-o.oil));X.strokeStyle='rgba(255,240,180,.7)';X.lineWidth=1;X.beginPath();X.arc(bx,by,1.5+i%3,0,TAU);X.stroke()}}
+  X.strokeStyle=steel(X,o.x0,0,o.x1,0);X.lineWidth=5;X.beginPath();X.moveTo(o.x0+2,top);X.lineTo(o.x0+2,o.y+2);X.lineTo(o.x1-2,o.y+2);X.lineTo(o.x1-2,top);X.stroke();
+  X.fillStyle=steel(X,o.x0,0,o.x1,0);X.fillRect(o.x0-4,top-4,o.w+8,6);
+  X.fillStyle='rgba(255,255,255,.18)';X.fillRect(o.x0+8,o.oil+6,3,o.y-o.oil-12)}
+function drawFreezerBack(){const o=freezer;
+  const g=X.createLinearGradient(0,o.iy0,0,o.iy1);g.addColorStop(0,'#e8f4fb');g.addColorStop(1,'#b8d4e4');X.fillStyle=g;X.fillRect(o.ix0,o.iy0,o.ix1-o.ix0,o.iy1-o.iy0);
+  X.strokeStyle='rgba(255,255,255,.8)';X.lineWidth=1;for(let i=0;i<4;i++){const y=o.iy0+(o.iy1-o.iy0)*(i+1)/5;X.beginPath();X.moveTo(o.ix0,y);X.lineTo(o.ix1,y);X.stroke()}}
+function drawFreezerFront(){const o=freezer;
+  if(!o.open){X.fillStyle='rgba(230,244,255,.42)';X.fillRect(o.ix0,o.iy0,o.ix1-o.ix0,o.iy1-o.iy0);
+    X.fillStyle='rgba(255,255,255,.5)';for(let i=0;i<18;i++){const x=o.ix0+((i*53)%(o.ix1-o.ix0)),y=o.iy0+((i*31)%(o.iy1-o.iy0));X.beginPath();X.arc(x,y,2+(i%3),0,TAU);X.fill()}}
+  X.save();X.beginPath();rr(X,o.x,o.y,o.w,o.h,8);X.rect(o.ix0,o.iy0,o.ix1-o.ix0,o.iy1-o.iy0);X.fillStyle='#f4f2ee';X.fill('evenodd');
+  X.strokeStyle='rgba(60,60,70,.4)';X.lineWidth=1;rr(X,o.x+.5,o.y+.5,o.w-1,o.h-1,8);X.stroke();X.strokeStyle='rgba(60,80,100,.5)';X.lineWidth=2;X.strokeRect(o.ix0-1,o.iy0-1,o.ix1-o.ix0+2,o.iy1-o.iy0+2);X.restore();
+  const px=o.ix1+4,pw=o.x+o.w-px-6;X.fillStyle='#dde4ea';rr(X,px,o.y+7,pw,o.h-14,5);X.fill();
+  X.fillStyle='#0a1a2a';rr(X,px+4,o.y+11,pw-8,15,3);X.fill();X.font='700 10px ui-monospace,Menlo,monospace';X.textAlign='center';X.textBaseline='middle';X.fillStyle='#7ad0ff';X.font='700 9px ui-monospace,Menlo,monospace';X.fillText('-18',px+pw/2,o.y+19);
+  X.font=`700 8px ${UIFONT}`;X.fillStyle='#5a6a7a';X.fillText('FROST',px+pw/2,o.y+o.h-18);
+  if(!o.open){X.fillStyle=steel(X,0,0,4,0);rr(X,o.ix1-7,o.iy0+8,4,o.iy1-o.iy0-16,2);X.fill()}
+  else{X.fillStyle='#e8e6e2';X.beginPath();X.moveTo(o.x,o.y+2);X.lineTo(o.x+18,o.y-6);X.lineTo(o.x+18,o.y+o.h+6);X.lineTo(o.x,o.y+o.h-2);X.closePath();X.fill();
+    X.fillStyle='rgba(120,160,190,.4)';X.beginPath();X.moveTo(o.x+4,o.y+8);X.lineTo(o.x+14,o.y+3);X.lineTo(o.x+14,o.y+o.h-3);X.lineTo(o.x+4,o.y+o.h-8);X.closePath();X.fill()}}
+function drawCriticBust(){
+  const c=game.bust;if(!c)return;const s=LY.critic.size,cx=LY.critic.x,top=counterTop-s;
+  X.save();X.beginPath();X.rect(cx-s/2-20,top-10,s+40,s+11);X.clip();X.drawImage(c,cx-s/2,top+s*.04,s,s);X.restore();
+  // name card on the counter
+  if(game.bustName){X.font=`11px Bungee, Impact, sans-serif`;const w=X.measureText(game.bustName).width+20,x=plate.x1+10,y=floorY-24;
+    X.fillStyle='#fbf3e4';X.beginPath();X.moveTo(x,y+20);X.lineTo(x+6,y);X.lineTo(x+w-6,y);X.lineTo(x+w,y+20);X.closePath();X.fill();X.strokeStyle='rgba(60,40,20,.4)';X.stroke();
+    X.fillStyle='#2a1208';X.textAlign='center';X.textBaseline='middle';X.fillText(game.bustName,x+w/2,y+11)}
+}
+function drawKnob(o,name,n){const x=o.kx,y=LY.ky-3,r=13;
+  X.fillStyle='rgba(0,0,0,.4)';X.beginPath();X.arc(x+1,y+2,r+1,0,TAU);X.fill();
+  X.fillStyle=steel(X,x-r,y-r,x+r,y+r);X.beginPath();X.arc(x,y,r,0,TAU);X.fill();
+  X.fillStyle='#1a1b1e';X.beginPath();X.arc(x,y,r-4,0,TAU);X.fill();
+  const a=-Math.PI/2+o.lvl*(n===2?1.6:1.2);X.strokeStyle='#e8e2d8';X.lineWidth=2.5;X.lineCap='round';X.beginPath();X.moveTo(x+Math.cos(a)*2,y+Math.sin(a)*2);X.lineTo(x+Math.cos(a)*(r-5),y+Math.sin(a)*(r-5));X.stroke();
+  X.fillStyle=o.lvl?(o.lvl===2||n===2?'#ff5a2a':'#ffa040'):'#3a2a24';X.beginPath();X.arc(x+r+7,y-6,2.5,0,TAU);X.fill();
+  X.font=`700 8px ${UIFONT}`;X.fillStyle='rgba(246,234,216,.6)';X.textAlign='center';X.textBaseline='middle';X.fillText(name.toUpperCase(),x,y+r+8)}
+function genTex(b,tr,kind){
+  const d=b.tex.dots,m=b.m,dk=m.skin[2],lt=m.skin[0];X.lineCap='round';
+  if(kind==='speckle'){X.globalAlpha=.3;X.fillStyle=dk;for(let i=0;i<d.length;i+=2)X.fillRect(d[i].x*.85,d[i].y*.85,1.3,1.3)}
+  else if(kind==='fuzz'){X.globalAlpha=.16;X.fillStyle='#fff';for(const q of d)X.fillRect(q.x,q.y,1,1);X.globalAlpha=.18;X.fillStyle=mix(m.skin[1],'#ffd040',.4);X.beginPath();X.arc(tr*.25,tr*.15,tr*.5,0,TAU);X.fill()}
+  else if(kind==='bloom'){X.globalAlpha=.22;X.fillStyle='#e8ecff';X.beginPath();X.ellipse(0,-tr*.15,tr*.6,tr*.4,0,0,TAU);X.fill()}
+  else if(kind==='drupes'){for(let i=0;i<d.length;i+=4){const q=d[i];X.globalAlpha=.55;X.strokeStyle=dk;X.lineWidth=.8;X.beginPath();X.arc(q.x*.7,q.y*.7,tr*.13,0,TAU);X.stroke();X.globalAlpha=.4;X.fillStyle='#fff';X.fillRect(q.x*.7-1,q.y*.7-1,1.2,1.2)}}
+  else if(kind==='scales'){X.globalAlpha=.35;X.strokeStyle=dk;X.lineWidth=1;const s=Math.max(4,tr*.2);for(let y=-tr;y<tr;y+=s*.8)for(let x=-tr+((y/s|0)%2)*s/2;x<tr;x+=s){X.beginPath();X.arc(x,y,s*.5,0,Math.PI);X.stroke()}}
+  else if(kind==='netting'){X.globalAlpha=.4;X.strokeStyle=lt;X.lineWidth=1;for(let i=0;i<14;i++){const q=d[i*5],q2=d[i*5+3];X.beginPath();X.moveTo(q.x,q.y);X.quadraticCurveTo(0,0,q2.x,q2.y);X.stroke()}}
+  else if(kind==='ridges'||kind==='stripes'){X.globalAlpha=kind==='ridges'?.3:.35;X.strokeStyle=kind==='ridges'?dk:lt;X.lineWidth=Math.max(1,tr*.06);for(let k=-3;k<=3;k++){X.beginPath();for(let s2=-1;s2<=1.001;s2+=.1){const y=s2*tr*.85,x=Math.sin(k/3.4*1.4)*tr*Math.sqrt(Math.max(0,1-s2*s2));s2<=-1?X.moveTo(x,y):X.lineTo(x,y)}X.stroke()}}
+  else if(kind==='bumps'){for(let i=0;i<d.length;i+=5){const q=d[i];X.globalAlpha=.35;X.fillStyle=i%2?lt:dk;X.beginPath();X.arc(q.x*.8,q.y*.8,tr*.14,0,TAU);X.fill()}}
+  else if(kind==='kernels'){X.globalAlpha=.4;X.strokeStyle=dk;X.lineWidth=.8;const s=Math.max(3,tr*.12);for(let y=-tr;y<tr;y+=s)for(let x=-tr*1.6;x<tr*1.6;x+=s*1.1){X.beginPath();X.ellipse(x,y,s*.45,s*.4,0,0,TAU);X.stroke()}}
+  else if(kind==='leafveins'){X.globalAlpha=.4;X.strokeStyle=lt;X.lineWidth=1.2;X.beginPath();X.moveTo(-tr*1.3,0);X.lineTo(tr*1.3,0);X.stroke();X.lineWidth=.8;for(let k=-4;k<=4;k++){X.beginPath();X.moveTo(k*tr*.3,0);X.lineTo(k*tr*.3+tr*.2,-tr*.4);X.moveTo(k*tr*.3,0);X.lineTo(k*tr*.3+tr*.2,tr*.4);X.stroke()}}
+  else if(kind==='marble'){X.globalAlpha=.45;X.strokeStyle='#fff4ee';X.lineWidth=1.2;for(let i=0;i<6;i++){const q=d[i*9];X.beginPath();X.moveTo(q.x*.7,q.y*.5);X.bezierCurveTo(q.x*.7+8,q.y*.5-4,q.x*.7+12,q.y*.5+4,q.x*.7+20,q.y*.5);X.stroke()}}
+  else if(kind==='fatdots'){X.globalAlpha=.6;X.fillStyle='#fff0ea';for(let i=0;i<d.length;i+=4){const q=d[i];X.beginPath();X.arc(q.x*.7,q.y*.7,1+q.s*1.5,0,TAU);X.fill()}}
+  else if(kind==='grain'){X.globalAlpha=.35;X.fillStyle='#fff4dc';for(let i=0;i<d.length;i+=2)X.fillRect(d[i].x*.8,d[i].y*.8,1.2,1.2);X.globalAlpha=.3;X.strokeStyle=dk;X.lineWidth=1.6;for(let k=-1;k<=1;k++){X.beginPath();X.moveTo(k*tr*.4-tr*.12,-tr*.45);X.lineTo(k*tr*.4+tr*.12,-tr*.1);X.stroke()}}
+  else if(kind==='grid'){X.globalAlpha=.4;X.strokeStyle=dk;X.lineWidth=1.4;const s=Math.max(4,tr*.28);for(let v=-tr*2;v<tr*2;v+=s){X.beginPath();X.moveTo(v,-tr*2);X.lineTo(v,tr*2);X.moveTo(-tr*2,v);X.lineTo(tr*2,v);X.stroke()}}
+  else if(kind==='chips'){X.globalAlpha=.85;X.fillStyle='#3a1a0a';for(let i=0;i<d.length;i+=9){const q=d[i];X.beginPath();X.arc(q.x*.7,q.y*.3,1.6,0,TAU);X.fill()}}
+  else if(kind==='sprinkles'){const c=['#ff4a8a','#4ac0ff','#ffe04a','#7ae070','#fff'];X.globalAlpha=.95;X.lineWidth=1.6;for(let i=0;i<d.length;i+=3){const q=d[i];X.strokeStyle=c[i%5];X.beginPath();X.moveTo(q.x*.8,q.y*.3);X.lineTo(q.x*.8+2.5,q.y*.3+1);X.stroke()}}
+  else if(kind==='wrinkles'){X.globalAlpha=.4;X.strokeStyle=dk;X.lineWidth=1;for(let i=0;i<7;i++){const q=d[i*7];X.beginPath();X.moveTo(q.x*.6,q.y*.6);X.quadraticCurveTo(q.x*.6+3,q.y*.6-4,q.x*.6+6,q.y*.6);X.stroke()}}
+  else if(kind==='spikes'){X.globalAlpha=.55;X.strokeStyle=dk;X.lineWidth=1.2;for(let i=0;i<d.length;i+=3){const q=d[i];X.beginPath();X.moveTo(q.x*.9,q.y*.9);X.lineTo(q.x*.9+2,q.y*.9-3);X.stroke()}}
+  else if(kind==='salt'){X.globalAlpha=.85;X.fillStyle='#ffffff';for(let i=0;i<d.length;i+=7){const q=d[i];X.fillRect(q.x*.7,q.y*.6-tr*.2,2,2)}}
+  else if(kind==='dimples'){for(const q of d){X.globalAlpha=.16;X.fillStyle=dk;X.beginPath();X.arc(q.x,q.y,.9+q.s*.9,0,TAU);X.fill()}}
+  X.globalAlpha=1;
+}
 function drawBowlBack(){const o=bowl;
   X.fillStyle='rgba(60,30,10,.22)';X.beginPath();X.ellipse(o.cx,floorY+1,o.w*.4,5,0,0,TAU);X.fill();
   X.fillStyle='rgba(210,230,240,.08)';X.beginPath();X.ellipse(o.cx,o.rim,o.w/2,o.h,0,0,Math.PI);X.fill();
@@ -1237,23 +1668,34 @@ function drawPlate(){const o=plate,y=o.y;
 /* ================= frame render ================= */
 function render(){
   const s=reduce?0:shake;shakeX=rnd(-s,s)*.5*DPR;shakeY=rnd(-s,s)*.5*DPR;
+  camX+=(camT-camX)*.22;if(Math.abs(camT-camX)<.4)camX=camT;
+  if(ptr.down&&ptr.grab)ptr.x=ptr.sx+camX;
   ctx.setTransform(DPR,0,0,DPR,shakeX,shakeY);X=ctx;
-  ctx.drawImage(bg,0,0,W,H);
-  drawMicroBack();drawOvenBack();
-  ctx.drawImage(st,0,0,W,H);
-  const groups={oven:[],micro:[],pot:[],pan:[],bowl:[],plate:[],out:[]};
-  for(const b of bodies){aabb(b);groups[where(b)||'out'].push(b)}
+  ctx.drawImage(bg,camX*BD,0,W*BD,H*BD,0,0,W,H);
+  ctx.save();ctx.translate(-camX,0);
+  drawCriticBust();drawMicroBack();drawOvenBack();drawFreezerBack();
+  ctx.restore();
+  ctx.drawImage(st,camX*BD,0,W*BD,H*BD,0,0,W,H);
+  ctx.save();ctx.translate(-camX,0);
+  const v0=camX-80,v1=camX+W+80,groups={oven:[],micro:[],freezer:[],pot:[],pan:[],grill:[],fryer:[],bowl:[],plate:[],out:[]};
+  for(const b of bodies){aabb(b);if(b.maxX<v0||b.minX>v1)continue;groups[where(b)||'out'].push(b)}
   for(const b of groups.oven)drawBody(b);drawOvenFront();
   for(const b of groups.micro)drawBody(b);drawMicroFront();
+  for(const b of groups.freezer)drawBody(b);drawFreezerFront();
   for(const b of groups.out)drawShadow(b);
   drawPanBack();for(const b of groups.pan)drawBody(b);drawPanFront();
   drawPotBack();for(const b of groups.pot)drawBody(b);drawPotFront();
+  drawGrill();for(const b of groups.grill)drawBody(b);flames(grill,floorY-4,0);
+  drawFryerBack();for(const b of groups.fryer)drawBody(b);drawFryerFront();
   drawBowlBack();for(const b of groups.bowl)drawBody(b);drawBowlFront();
   drawPlate();for(const b of groups.plate)drawBody(b);
   for(const b of groups.out)drawBody(b);
   drawDrops();drawPuffs();drawKnobs();drawFx();if(tool==='knife')drawTrail();
+  if(game.mark){const t=performance.now()/300;X.strokeStyle=`rgba(255,210,60,${.55+.35*Math.sin(t)})`;X.lineWidth=3;X.setLineDash([6,5]);X.beginPath();X.arc(game.mark.x,game.mark.y,game.mark.r+3*Math.sin(t),0,TAU);X.stroke();X.setLineDash([])}
+  ctx.restore();
+  const rg=ctx.createRadialGradient(W/2,H*.45,Math.min(W,H)*.45,W/2,H*.45,Math.max(W,H)*.8);rg.addColorStop(0,'rgba(0,0,0,0)');rg.addColorStop(1,'rgba(30,18,8,.35)');ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);
+  if(stationIdx()!==game.lastStn){game.lastStn=stationIdx();updTabs()}
 }
-
 /* ================= audio ================= */
 let AC=null,NB=null,muted=false,sndBudget=0;
 const loops={nodes:{},set(k,v){const n=this.nodes[k];if(n&&AC)n.gain.setTargetAtTime(muted?0:v,AC.currentTime,.1)}};
@@ -1287,138 +1729,210 @@ const sfx={
 function buzz(ms){try{if(navigator.userActivation&&!navigator.userActivation.hasBeenActive)return;navigator.vibrate&&navigator.vibrate(ms)}catch(e){}}
 
 /* ================= UI ================= */
+const scr=id=>document.getElementById(id);
 document.querySelectorAll('.tool').forEach(btn=>btn.addEventListener('click',()=>{tool=btn.dataset.tool;
   document.querySelectorAll('.tool').forEach(b=>b.setAttribute('aria-pressed',String(b===btn)))}));
-const sndBtn=document.getElementById('snd');
-sndBtn.addEventListener('click',()=>{audioInit();muted=!muted;document.getElementById('wave').hidden=muted;document.getElementById('xmark').hidden=!muted;
+const sndBtn=scr('snd');
+sndBtn.addEventListener('click',()=>{audioInit();muted=!muted;scr('wave').hidden=muted;scr('xmark').hidden=!muted;
   sndBtn.setAttribute('aria-label',muted?'Ton einschalten':'Ton ausschalten');for(const k in loops.nodes)loops.set(k,0)});
-document.getElementById('clean').addEventListener('click',()=>{
-  stx.clearRect(0,0,W,H);drips=[];mess=0;drops=drops.filter(d=>d.k==='drop');
+scr('clean').addEventListener('click',()=>{
+  stx.clearRect(0,0,WW,H);drips=[];mess=0;drops=drops.filter(d=>d.k==='drop');
   if(game.mode==='sandbox'){bodies=[];drops=[];puffs=[];ptr.grab=null;toast('Alles sauber.')}else toast('Küche geputzt.')});
-const tray=document.getElementById('tray');
+// station tabs
+const tabsEl=scr('tabs');
+STN.forEach((n,i)=>{const b=document.createElement('button');b.className='tab';b.textContent=n;b.addEventListener('click',()=>goStation(i));tabsEl.append(b)});
+function updTabs(){const i=stationIdx();[...tabsEl.children].forEach((b,j)=>b.setAttribute('aria-current',String(i===j)))}
+// pantry rail
+const tray=scr('tray'),catSel=scr('catSel'),trayBtns={};
 function iconFor(type){
-  const c=document.createElement('canvas');c.width=c.height=84;const g=c.getContext('2d');
+  const c=document.createElement('canvas');c.width=c.height=76;const g=c.getContext('2d');
   const b=type==='kernel'?makeBody('popcorn',0,0,{r:20,seed:2}):makeBody(type,0,0);
-  aabb(b);const s=32/Math.max(b.maxX-b.minX,b.maxY-b.minY);
+  aabb(b);const s=30/Math.max(b.maxX-b.minX,b.maxY-b.minY);
   for(const p of b.pts){p.x*=s;p.y*=s}b.R*=s;b.tex=makeTex(b.tex.R*s);b.cx=0;b.cy=0;aabb(b);
-  g.scale(2,2);g.translate(21,21+(b.m.stem==='top'||b.m.stem==='navel'?3:0));X=g;drawBody(b);X=ctx;return c;
+  g.scale(2,2);g.translate(19,19+(b.m.stem==='top'||b.m.stem==='navel'?3:0));X=g;drawBody(b);X=ctx;return c;
 }
-const trayBtns={};
-(function buildTray(){
-  let lastCat=null;
-  for(const type of FOODS){
-    const cat=M[type].cat;if(cat!==lastCat){const l=document.createElement('div');l.className='cat';l.textContent=cat==='sweet'?'Süß':'Herzhaft';tray.append(l);lastCat=cat}
-    const btn=document.createElement('button');btn.className='food';btn.setAttribute('aria-label',M[type].label+' holen');
-    const l=document.createElement('span');l.textContent=M[type].label;const n=document.createElement('span');n.className='n';n.hidden=true;
-    btn.append(iconFor(type),l,n);tray.append(btn);trayBtns[type]={btn,n};
-    btn.addEventListener('click',()=>{audioInit();if(game.pantry){if(!game.pantry[type])return;game.pantry[type]--;updTray()}spawn(type)});
-  }
-})();
+function trayButton(type){
+  if(trayBtns[type])return trayBtns[type];
+  const btn=document.createElement('button');btn.className='food';btn.setAttribute('aria-label',M[type].label+' holen');btn.dataset.type=type;
+  const l=document.createElement('span');l.textContent=M[type].label;const n=document.createElement('span');n.className='n';n.hidden=true;
+  btn.append(iconFor(type),l,n);
+  btn.addEventListener('click',()=>{audioInit();if(game.pantry){if(!game.pantry[type])return;game.pantry[type]--;updTray()}spawn(type)});
+  return trayBtns[type]={btn,n};
+}
+CATS.forEach(([k,n])=>{const o=document.createElement('option');o.value=k;o.textContent=`${n} (${FOODS.filter(f=>M[f].cat===k).length})`;catSel.append(o)});
+catSel.addEventListener('change',()=>updTray());
 function updTray(){
-  for(const t in trayBtns){const{btn,n}=trayBtns[t];
-    if(!game.pantry){btn.hidden=false;btn.disabled=false;n.hidden=true;continue}
-    const c=game.pantry[t];btn.hidden=c===undefined;btn.disabled=!c;n.hidden=false;n.textContent=c||0}
-  document.querySelectorAll('.cat').forEach(el=>{let nx=el.nextElementSibling,any=false;while(nx&&!nx.classList.contains('cat')){if(!nx.hidden)any=true;nx=nx.nextElementSibling}el.hidden=!any});
+  tray.innerHTML='';
+  if(game.pantry){catSel.hidden=true;for(const t in game.pantry){const{btn,n}=trayButton(t);btn.disabled=!game.pantry[t];n.hidden=false;n.textContent=game.pantry[t];tray.append(btn)}return}
+  catSel.hidden=false;for(const t of FOODS.filter(f=>M[f].cat===catSel.value)){const{btn,n}=trayButton(t);btn.disabled=false;n.hidden=true;tray.append(btn)}
+  tray.scrollTop=0;
 }
 function spawn(type){
-  const m=M[type];
-  if(type==='kernel'){for(let i=0;i<12;i++)add(makeBody('kernel',pot.cx+((i%4)-1.5)*pot.w*.2+rnd(-2,2),pot.y-10-Math.floor(i/4)*13,{vx:rnd(-.3,.3)}));sfx.squish(.1);
-    if(!pot.lvl)toast('Maiskörner im Topf. Dreh den Topf-Knopf auf volle Hitze.');return}
-  const B=LY.board,r=m.r*1.3;
-  const x=B.x1-B.x0>r*2?rnd(B.x0+r,B.x1-r):(B.x0+B.x1)/2;
-  const y=Math.min(B.y-m.r*1.1-(type==='egg'?12:55),counterTop-m.r);
-  add(makeBody(type,x,y,{vx:rnd(-.4,.4),vr:rnd(-.006,.006)}));sfx.squish(.1);
+  const m=M[type],i=stationIdx(),x0=LY.drop[i];
+  if(type==='kernel'){for(let k=0;k<12;k++)add(makeBody('kernel',x0+((k%4)-1.5)*12+rnd(-2,2),floorY-60-Math.floor(k/4)*13,{vx:rnd(-.3,.3)}));sfx.squish(.1);return}
+  const B=LY.board,r=m.r*1.3;let x=x0+rnd(-10,10),y=floorY-m.r*1.2-60;
+  if(i===0){x=B.x1-B.x0>r*2?rnd(B.x0+r,B.x1-r):(B.x0+B.x1)/2;y=B.y-m.r*1.1-(type==='egg'||type==='quail'?12:55)}
+  else if(type==='egg'||type==='quail')y=floorY-m.r*1.2-30;
+  y=Math.min(y,counterTop-m.r);
+  add(makeBody(type,x,y,{vx:rnd(-.4,.4),vr:rnd(-.006,.006)}));sfx.squish(.1);game.ev.spawn=type;
 }
-const toastEl=document.getElementById('toast');let toastT=null;
+const toastEl=scr('toast');let toastT=null;
 function toast(t,ms=2600){toastEl.textContent=t;toastEl.style.opacity='1';clearTimeout(toastT);toastT=setTimeout(()=>toastEl.style.opacity='0',ms)}
-const messEl=document.getElementById('mess'),barEl=document.getElementById('mbar');
+const messEl=scr('mess'),barEl=scr('mbar');
 function messPct(){return Math.min(100,Math.round(mess/(W*H*.012)*100))}
 function updMess(){const v=messPct();messEl.textContent=v+'%';barEl.style.width=v+'%'}
 
-/* ================= critics & story ================= */
+/* ================= logo ================= */
+function srand(seed){let s=(seed>>>0)||1;return()=>{s^=s<<13;s>>>=0;s^=s>>>17;s^=s<<5;s>>>=0;return s/4294967296}}
+function splatPath(cx,cy,r,seed,n=18){const R=srand(seed),p=[];for(let i=0;i<n;i++){const a=i/n*TAU,k=i%2?.74+R()*.12:1+R()*.24;p.push([cx+Math.cos(a)*r*k*1.4,cy+Math.sin(a)*r*k*.82])}
+  let d=`M${((p[n-1][0]+p[0][0])/2).toFixed(1)},${((p[n-1][1]+p[0][1])/2).toFixed(1)}`;
+  for(let i=0;i<n;i++){const a=p[i],b=p[(i+1)%n];d+=`Q${a[0].toFixed(1)},${a[1].toFixed(1)} ${((a[0]+b[0])/2).toFixed(1)},${((a[1]+b[1])/2).toFixed(1)}`}return d+'Z'}
+function logoSVG(){return`<svg viewBox="0 0 320 168" role="img" aria-label="Squish Kitchen">
+  <path d="${splatPath(160,72,86,11)}" fill="#d8341f"/>
+  <path d="M104 116q6 26 1 38q-6-10-1-38z M214 112q4 18 0 26q-4-8 0-26z" fill="#d8341f"/>
+  <circle cx="30" cy="112" r="7" fill="#d8341f"/><circle cx="292" cy="30" r="5" fill="#d8341f"/><circle cx="276" cy="134" r="8" fill="#d8341f"/><circle cx="18" cy="52" r="4" fill="#d8341f"/>
+  <text x="160" y="88" text-anchor="middle" font-family="Bungee, Impact, sans-serif" font-size="56" fill="#fff6e6" stroke="#2a1208" stroke-width="9" stroke-linejoin="round" paint-order="stroke">SQUISH</text>
+  <g transform="rotate(-3 160 120)"><rect x="80" y="102" width="160" height="30" fill="#2a1208"/><text x="160" y="124" text-anchor="middle" font-family="Bungee, Impact, sans-serif" font-size="19" letter-spacing="6" fill="#ffcf3a">KITCHEN</text></g>
+</svg>`}
+scr('logoBig').innerHTML=logoSVG();
+
+/* ================= critics ================= */
 const DIMS=['süß','herzhaft','sauer','scharf','cremig'];
 const CRITICS=[
- {id:'erna',name:'Oma Erna',title:'Hausmannskost seit 1952',quote:'Kind, Hauptsache warm und satt!',
+ {name:'Oma Erna',title:'Hausmannskost seit 1952',quote:'Kind, Hauptsache warm und satt!',
   look:{skin:'#f2c9a8',hair:'#ebe6dc',style:'bun',glasses:'round',cheeks:1,shirt:'#7a5a9a'},
   wants:[{t:'warm',w:1,v:45},{t:'portion',w:1,v:3},{t:'done',w:1},{t:'taste',w:.6,want:{herzhaft:1,cremig:.5},hate:{}}],
-  pantry:{steak:1,egg:2,butter:1,tomato:2,cheese:1},
-  hint:'Tipp: Leg das Steak in die Pfanne und dreh den Pfannen-Knopf auf. Wenn es braun ist, ab auf den Teller rechts.',
-  good:'So schmeckt es wie früher. Ich bin pappsatt!',ok:'Schon ganz ordentlich, Kind.',bad:'Na, das üben wir aber noch, Kind.'},
- {id:'greta',name:'Greta Gramm',title:'Konditorei-Kritikerin',quote:'Süß. Cremig. Gemischt. Alles andere ist Zeitverschwendung.',
+  pantry:{steak:1,egg:2,butter:1,tomato:2,cheese:1,potato:2},good:'So schmeckt es wie früher. Ich bin pappsatt!',ok:'Schon ganz ordentlich, Kind.',bad:'Na, das üben wir aber noch, Kind.'},
+ {name:'Greta Gramm',title:'Konditorei-Kritikerin',quote:'Süß. Cremig. Gemischt. Sonst nichts.',
   look:{skin:'#f6d3bc',hair:'#ff8fb5',style:'curly',bow:'#ff3d7a',lips:1,shirt:'#ffd0e0'},
   wants:[{t:'taste',w:2,want:{'süß':1,cremig:.7},hate:{herzhaft:1,scharf:1}},{t:'mixed',w:1.2,v:3},{t:'portion',w:.6,v:2}],
-  pantry:{chocolate:1,banana:2,strawberry:3,mallow:2,butter:1,egg:1},
-  hint:'Tipp: Leg mindestens drei süße Zutaten in die Glasschüssel und tippe auf MIXEN.',
-  good:'Himmlisch! Das kommt in meine Kolumne.',ok:'Nett. Aber nicht verliebt.',bad:'Das ist kein Dessert, das ist eine Beleidigung.'},
- {id:'bruno',name:'Bruno Brätling',title:'Grillmeister',quote:'Fleisch muss brutzeln. Obst ist was für Vögel.',
+  pantry:{chocolate:1,banana:2,strawberry:3,mallow:2,cream:1,egg:1},good:'Himmlisch! Das kommt in meine Kolumne.',ok:'Nett. Aber nicht verliebt.',bad:'Das ist kein Dessert, das ist eine Beleidigung.'},
+ {name:'Bruno Brätling',title:'Grillmeister',quote:'Fleisch muss brutzeln. Obst ist was für Vögel.',
   look:{skin:'#dc9a72',hair:'#3a2418',style:'bald',mustache:'#3a2418',beard:'#3a2418',shirt:'#c0392b'},
-  wants:[{t:'taste',w:1.5,want:{herzhaft:1},hate:{'süß':1,sauer:.6}},{t:'done',w:1.6},{t:'warm',w:1,v:55},{t:'portion',w:.8,v:4}],
-  pantry:{steak:2,sausage:2,chili:1,cheese:1,strawberry:2,banana:1},
-  hint:'Tipp: Brate Fleisch und Würstchen schön braun, aber lass nichts verbrennen. Obst lieber weglassen.',
-  good:'Das ist ein Stück Fleisch, mein Freund!',ok:'Kann man essen.',bad:'Roh oder verkohlt, beides ist ein Verbrechen.'},
- {id:'fein',name:'Dr. Viola Fein',title:'Sterne-Testerin',quote:'Ich erwarte Präzision. Kleine Stücke. Viele Farben. Eine saubere Küche.',
+  wants:[{t:'taste',w:1.5,want:{herzhaft:1},hate:{'süß':1,sauer:.6}},{t:'done',w:1.6},{t:'grilled',w:1.2},{t:'warm',w:1,v:55},{t:'portion',w:.8,v:4}],
+  pantry:{steak:2,sausage:2,ribs:1,corn:1,strawberry:2,banana:1},good:'Das ist ein Stück Fleisch, mein Freund!',ok:'Kann man essen.',bad:'Roh oder verkohlt, beides ist ein Verbrechen.'},
+ {name:'Dr. Viola Fein',title:'Sterne-Testerin',quote:'Ich erwarte Präzision. Kleine Stücke. Viele Farben. Eine saubere Küche.',
   look:{skin:'#f1d6c0',hair:'#1c1a24',style:'bob',monocle:1,pearls:1,shirt:'#2c3e70'},
-  wants:[{t:'fine',w:1.2,v:8},{t:'variety',w:1.2,v:4},{t:'clean',w:1,v:25},{t:'taste',w:1,want:{'süß':.6,sauer:.6},hate:{scharf:1}}],
-  pantry:{strawberry:2,orange:1,lemon:1,melon:1,banana:1,mallow:1},
-  hint:'Tipp: Schneide viele kleine Stücke, nimm mindestens vier Obstsorten und halte die Küche sauber.',
-  good:'Exquisit. Fast schon Kunst.',ok:'Solide. Nicht mehr.',bad:'Grob, eintönig und schmutzig. Nein.'},
- {id:'pikant',name:'Prof. Pikant',title:'Lehrstuhl für Schärfe',quote:'Wenn mir keine Tränen kommen, war es nicht scharf genug!',
+  wants:[{t:'fine',w:1.2,v:10},{t:'variety',w:1.2,v:5},{t:'clean',w:1,v:25},{t:'taste',w:1,want:{'süß':.6,sauer:.6},hate:{scharf:1}}],
+  pantry:{strawberry:2,orange:1,lemon:1,melon:1,kiwi:1,mango:1,blueberry:3},good:'Exquisit. Fast schon Kunst.',ok:'Solide. Nicht mehr.',bad:'Grob, eintönig und schmutzig. Nein.'},
+ {name:'Prof. Pikant',title:'Lehrstuhl für Schärfe',quote:'Wenn mir keine Tränen kommen, war es nicht scharf genug!',
   look:{skin:'#c58a5c',hair:'#a8a8b0',style:'spiky',glasses:'square',goatee:'#a8a8b0',bowtie:'#e0201a',shirt:'#f4efe6'},
-  wants:[{t:'taste',w:2,want:{scharf:1,sauer:.7},hate:{'süß':1}},{t:'warm',w:.8,v:50},{t:'variety',w:.8,v:3},{t:'done',w:.8}],
-  pantry:{chili:3,lemon:2,tomato:2,sausage:1,cheese:1,egg:1},
-  hint:'Tipp: Mix Chili, Tomate und Zitrone zu einer Salsa und mach sie im Topf warm.',
-  good:'Feuer! Endlich! Ich weine vor Glück.',ok:'Ein Funke. Aber kein Feuer.',bad:'Lauwarm und lasch. Wie meine Studenten.'},
- {id:'mixeur',name:'Madame Mixeur',title:'Pâtissière aus Paris',quote:'Ein Kuchen, chérie. Gemischt, gebacken, warm.',
+  wants:[{t:'taste',w:2,want:{scharf:1,sauer:.7},hate:{'süß':1}},{t:'warm',w:.8,v:50},{t:'variety',w:.8,v:4},{t:'mixed',w:.8,v:3}],
+  pantry:{chili:2,habanero:1,lime:2,tomato:2,onion:1,chorizo:1,garlic:1},good:'Feuer! Endlich! Ich weine vor Glück.',ok:'Ein Funke. Aber kein Feuer.',bad:'Lauwarm und lasch. Wie meine Studenten.'},
+ {name:'Madame Mixeur',title:'Pâtissière aus Paris',quote:'Ein Kuchen, chérie. Gemischt, gebacken, warm.',
   look:{skin:'#eab892',hair:'#8a3a1a',style:'long',beret:'#c0204a',lips:1,shirt:'#1a1a1a'},
-  wants:[{t:'baked',w:2},{t:'mixed',w:1,v:3},{t:'taste',w:1,want:{'süß':1,cremig:.5},hate:{herzhaft:.6,scharf:1}},{t:'warm',w:.6,v:40}],
-  pantry:{dough:2,egg:2,butter:1,chocolate:2,banana:1,strawberry:2},
-  hint:'Tipp: Teig, Ei und Süßes in die Schüssel, MIXEN, dann in den Ofen. Tür zu, Ofen an und warten bis er braun ist.',
-  good:'Magnifique! Wie in Paris.',ok:'Pas mal. Nicht schlecht.',bad:'Mon dieu… das ist kein Kuchen.'},
- {id:'loeffel',name:'Der Goldene Löffel',title:'Legendärer Oberkritiker',quote:'Ich habe alles gegessen. Überrasche mich.',
+  wants:[{t:'baked',w:2},{t:'mixed',w:1,v:4},{t:'taste',w:1,want:{'süß':1,cremig:.5},hate:{herzhaft:.6,scharf:1}},{t:'warm',w:.6,v:40}],
+  pantry:{cakedough:2,egg:2,butter:1,chocolate:2,raspberry:2,almond:2},good:'Magnifique! Wie in Paris.',ok:'Pas mal. Nicht schlecht.',bad:'Mon dieu… das ist kein Kuchen.'},
+ {name:'Der Goldene Löffel',title:'Legendärer Oberkritiker',quote:'Ich habe alles gegessen. Überrasche mich.',
   look:{skin:'#efc6a0',hair:'#cfcfd4',style:'short',chefhat:1,mustache:'#cfcfd4',gold:1,shirt:'#f6f1e6'},
-  wants:[{t:'taste',w:1.4,want:{'süß':.8,herzhaft:.8,cremig:.5},hate:{},balance:1},{t:'done',w:1.2},{t:'warm',w:.8,v:45},{t:'variety',w:1,v:5},{t:'portion',w:.8,v:5},{t:'clean',w:.6,v:50}],
-  pantry:{steak:1,egg:2,dough:1,cheese:1,tomato:2,chocolate:1,strawberry:2,banana:1,butter:1,chili:1,kernel:1},
-  hint:'Tipp: Süß und herzhaft, alles gar, schön warm und mindestens fünf Zutaten.',
-  good:'…Bravo. Das war das Beste seit Jahren.',ok:'Respektabel.',bad:'Hm. Ich habe schon Schlimmeres gegessen. Aber selten.'},
+  wants:[{t:'taste',w:1.4,want:{'süß':.8,herzhaft:.8,cremig:.5},hate:{},balance:1},{t:'done',w:1.2},{t:'warm',w:.8,v:45},{t:'variety',w:1,v:6},{t:'portion',w:.8,v:6},{t:'clean',w:.6,v:45},{t:'fine',w:.6,v:8}],
+  pantry:{duck:1,potato:2,mushroom:0,porcini:2,cream:1,cherry:3,chocolate:1,raspberry:2,thyme:2,butter:1},good:'…Bravo. Das war das Beste seit Jahren.',ok:'Respektabel.',bad:'Hm. Ich habe schon Schlimmeres gegessen. Aber selten.'},
+ {name:'Kapitän Kabeljau',title:'Fischkutter „Möwe 3“',quote:'Fisch muss gar sein, aber saftig. Und ein Spritzer Zitrone!',
+  look:{skin:'#d89a72',hair:'#e8e4dc',style:'short',beard:'#e8e4dc',shirt:'#2a4a8a'},
+  wants:[{t:'taste',w:1.5,want:{herzhaft:1,sauer:.6},hate:{'süß':1}},{t:'done',w:1.4},{t:'grilled',w:1},{t:'variety',w:.8,v:4}],
+  pantry:{salmon:1,trout:1,shrimp:3,lemon:2,potato:2,dill:2,sweetpotato:1},good:'Ahoi! Das schmeckt nach Meer.',ok:'Seefest, aber nicht mehr.',bad:'Das werfe ich den Möwen hin.'},
+ {name:'Frieda Fritt',title:'Königin der Imbissbude',quote:'Knusprig muss es sein. Und heiß. Und viel.',
+  look:{skin:'#f0c0a0',hair:'#ffd23a',style:'curly',lips:1,shirt:'#d8341f'},
+  wants:[{t:'fried',w:1.8},{t:'taste',w:1.2,want:{herzhaft:1},hate:{}},{t:'warm',w:1,v:55},{t:'portion',w:1,v:5}],
+  pantry:{potato:3,fishstick:2,chickenbreast:1,onion:2,cheddar:1,shrimp:2},good:'Knusper-Himmel! Noch eine Portion!',ok:'Geht so. Mehr Knusper!',bad:'Labberig. Pfui.'},
+ {name:'Professor Frost',title:'Polarforscher und Eisfan',quote:'Unter null Grad schmeckt alles besser.',
+  look:{skin:'#e8d4c8',hair:'#dfe8f0',style:'spiky',glasses:'round',mustache:'#dfe8f0',shirt:'#5a8aa0'},
+  wants:[{t:'cold',w:1.8,v:-2},{t:'mixed',w:1.2,v:3},{t:'taste',w:1.2,want:{'süß':1,cremig:.8},hate:{herzhaft:1}}],
+  pantry:{cream:2,strawberry:2,banana:1,raspberry:3,sugarcube:2,whitechoc:1},good:'Brrr-illant! Perfektes Eis.',ok:'Kühl, aber nicht frostig.',bad:'Das ist ja warm! Igitt.'},
 ];
-const LINES={
-  taste:'Das schmeckt mir überhaupt nicht.',raw:'Das ist ja noch roh!',burnt:'Das schmeckt nach Holzkohle.',warm:'Kalt? Ernsthaft?',
+CRITICS[6].pantry=Object.fromEntries(Object.entries(CRITICS[6].pantry).filter(([k,v])=>v&&M[k]));
+const LINES={taste:'Das schmeckt mir überhaupt nicht.',raw:'Das ist ja noch roh!',burnt:'Das schmeckt nach Holzkohle.',warm:'Kalt? Ernsthaft?',
   portion:'Davon wird ja keiner satt.',variety:'Etwas eintönig, oder?',fine:'Die Stücke sind viel zu grob.',clean:'Wie sieht denn die Küche aus?!',
-  mixed:'Ich wollte etwas Gemischtes.',baked:'Wo ist das Gebäck?'};
-const game={mode:'menu',level:-1,pantry:null,stars:loadStars()};
-function loadStars(){try{const s=JSON.parse(localStorage.getItem('squishKitchen.stars')||'[]');return Array.isArray(s)?s:[]}catch(e){return[]}}
-function saveStars(){try{localStorage.setItem('squishKitchen.stars',JSON.stringify(game.stars))}catch(e){}}
-function chipsFor(c){const out=[];for(const w of c.wants){
-  if(w.t==='taste'){for(const k in w.want)out.push([k,0]);for(const k in w.hate)out.push(['kein '+k,1])}
-  else out.push([{warm:'warm',portion:`satt (${w.v} Bissen)`,done:'gut gegart',variety:`${w.v}+ Zutaten`,fine:`${w.v}+ Stücke`,clean:'saubere Küche',mixed:`gemixt (${w.v}+)`,baked:'gebacken'}[w.t],0])}
+  mixed:'Ich wollte etwas Gemischtes.',baked:'Wo ist das Gebäck?',cold:'Das sollte doch kalt sein!',fried:'Wo ist das Knusprige?',grilled:'Ich schmecke keinen Grill.'};
+const CHAPTERS=[
+ {name:'Omas Küche',cats:['gemuese','fleisch','milch','backen'],want:['herzhaft','cremig'],hate:['scharf'],extra:['warm','portion','done','variety'],boss:0,quotes:['Wie bei Muttern, bitte.','Ich hab Hunger wie ein Bär.','Schön deftig soll es sein.','Was Warmes für den Bauch!']},
+ {name:'Zuckerbäckerei',cats:['suess','obst','beeren','milch'],want:['süß','cremig'],hate:['herzhaft','scharf'],extra:['mixed','portion','variety','fine'],boss:1,quotes:['Ich habe einen süßen Zahn.','Nachtisch zuerst!','Zucker ist mein Gemüse.']},
+ {name:'Grillabend',cats:['fleisch','gemuese','milch'],want:['herzhaft'],hate:['süß'],extra:['grilled','done','warm','portion'],boss:2,quotes:['Wo ist der Rost?','Riecht nach Sommer!','Bitte mit Streifen.']},
+ {name:'Gartenfrisch',cats:['obst','beeren','gemuese','pilze'],want:['süß','sauer'],hate:['scharf'],extra:['fine','variety','clean','cold'],boss:3,quotes:['Frisch aus dem Beet, bitte.','Leicht und bunt.','Ich esse mit den Augen.']},
+ {name:'Feuer & Säure',cats:['gemuese','fleisch','obst','fisch'],want:['scharf','sauer'],hate:['süß'],extra:['warm','variety','done','mixed'],boss:4,quotes:['Mach mir Feuer!','Sauer macht lustig.','Ohne Chili ess ich nicht.']},
+ {name:'Backstube',cats:['backen','suess','milch','obst','nuesse'],want:['süß','cremig'],hate:['scharf'],extra:['baked','mixed','warm','portion'],boss:5,quotes:['Riecht hier nach Kuchen?','Bitte frisch aus dem Ofen.','Ein Stück vom Glück.']},
+ {name:'Am Meer',cats:['fisch','gemuese','pilze','obst'],want:['herzhaft','sauer'],hate:['süß'],extra:['done','grilled','fine','variety'],boss:7,quotes:['Was schwimmt, schmeckt.','Frisch vom Kutter!','Ein Hauch Meer, bitte.']},
+ {name:'Imbissbude',cats:['gemuese','fleisch','fisch','backen','milch'],want:['herzhaft'],hate:[],extra:['fried','warm','portion','done'],boss:8,quotes:['Einmal mit alles!','Knusprig, bitte.','Schnell und heiß.']},
+ {name:'Eiszeit',cats:['suess','beeren','obst','milch','nuesse'],want:['süß','cremig'],hate:['herzhaft'],extra:['cold','mixed','variety','fine'],boss:9,quotes:['Mir ist zu warm.','Eis, Eis, Baby.','Kalt wie mein Herz.']},
+ {name:'Die große Gala',cats:null,want:['süß','herzhaft','cremig'],hate:[],extra:['done','warm','variety','portion','clean','fine','mixed'],boss:6,quotes:['Ich erwarte Großes.','Beeindrucken Sie mich.','Heute nur das Beste.']},
+];
+const FIRST=['Hilde','Klaus','Jens','Mia','Karl','Fritz','Lotte','Ben','Ida','Emil','Paul','Rita','Udo','Uschi','Theo','Nele','Otto','Frida','Kurt','Elli','Hans','Lina','Moritz','Tilda','Heinz','Anni','Gustav','Wanda','Bodo','Edda'];
+const LAST=['Pfeffer','Krümel','Schmalz','Löffelholz','Senf','Kümmel','Butterbrot','Zwiebel','Knusper','Rübe','Gurkner','Salzmann','Brösel','Schnitzel','Hefe','Muskat','Petersil','Sahnig','Brezel','Quark','Zimt','Grieß','Möhre','Speckmann','Knödel','Paprika','Dill','Rahm','Kloß','Waffel'];
+const TITLES=['Stammgast','Food-Bloggerin','Hobbykoch','Lokalreporter','Feinschmeckerin','Nachbar von oben','Kantinenchef','Taxifahrer','Opernsängerin','Postbote','Zahnärztin','Rentner','Studentin','Bauarbeiter','Gärtnerin','Bürgermeister'];
+const HINT={warm:'warm servieren',portion:'eine große Portion',done:'alles gar, nichts roh',variety:'viele verschiedene Zutaten',fine:'klein schneiden',clean:'sauber arbeiten',
+  mixed:'in der Schüssel mixen',cold:'im Gefrierfach kühlen (Station Fritte)',fried:'in der Fritteuse frittieren',grilled:'auf dem Grill grillen (Station Herd)',baked:'Teig mixen und im Ofen backen'};
+function randLook(R){const p=a=>a[Math.floor(R()*a.length)];
+  const L={skin:p(['#f2c9a8','#e8b890','#c58a5c','#8a5a3a','#f6d3bc','#dc9a72','#6a4028']),hair:p(['#1c1a24','#3a2418','#8a3a1a','#e0c070','#a8a8b0','#ebe6dc','#c8502a','#ff8fb5','#2a4a8a']),
+    style:p(['bun','curly','bald','bob','spiky','long','short']),shirt:p(['#7a5a9a','#c0392b','#2c3e70','#3f8f3a','#e8a020','#1a1a1a','#f4efe6','#5a8aa0'])};
+  const a=R();if(a<.2)L.glasses=R()<.5?'round':'square';else if(a<.27)L.monocle=1;
+  const b=R();if(b<.14)L.mustache=L.hair;else if(b<.22)L.beard=L.hair;else if(b<.28)L.goatee=L.hair;
+  const c=R();if(c<.1)L.beret=p(['#c0204a','#2a2a6a']);else if(c<.18)L.bow=p(['#ff3d7a','#3a8aff']);else if(c<.22)L.chefhat=1;
+  if(R()<.15)L.bowtie=p(['#e0201a','#1a1a1a']);if(R()<.2)L.cheeks=1;if(R()<.1)L.pearls=1;if(R()<.15)L.lips=1;return L}
+function mkWish(t,d,R){const w={t,w:1};
+  if(t==='warm')w.v=Math.round(40+d*20);else if(t==='portion')w.v=Math.round(2+d*4+R());else if(t==='variety')w.v=2+Math.round(d*3);
+  else if(t==='fine')w.v=4+Math.round(d*8);else if(t==='clean')w.v=Math.round(60-d*35);else if(t==='mixed')w.v=2+Math.round(d*2);else if(t==='cold')w.v=Math.round(10-d*14);
+  if(t==='done'||t==='baked'||t==='fried'||t==='grilled')w.w=1.3;return w}
+const LVCACHE={};
+function level(idx){
+  if(LVCACHE[idx])return LVCACHE[idx];
+  const ch=Math.floor(idx/10),j=idx%10,C=CHAPTERS[ch],d=idx/99;let lv;
+  if(j===9){const c=CRITICS[C.boss];lv=Object.assign({},c,{boss:true,time:Math.round(260-ch*9),pantry:Object.assign({},c.pantry)})}
+  else{
+    const R=srand(idx*7919+13),p=a=>a[Math.floor(R()*a.length)];
+    const want={},wd=C.want.slice().sort(()=>R()-.5);want[wd[0]]=1;if(wd[1]&&R()<.6)want[wd[1]]=.7;
+    const hate={};if(C.hate.length&&R()<.3+d*.6)hate[p(C.hate)]=1;
+    const wants=[{t:'taste',w:1.6,want,hate}],ex=C.extra.slice().sort(()=>R()-.5),n=Math.min(ex.length,1+Math.floor(d*3.4+R()*.8));
+    for(const t of ex.slice(0,n))wants.push(mkWish(t,d,R));
+    const pool=FOODS.filter(k=>(!C.cats||C.cats.includes(M[k].cat))&&k!=='jelly');
+    const sc=k=>{let s=0;for(const dm in want)s+=M[k].taste[DIMS.indexOf(dm)]*want[dm];for(const dm in hate)s-=M[k].taste[DIMS.indexOf(dm)]*hate[dm]*1.5;return s};
+    const good=pool.filter(k=>sc(k)>.35).sort(()=>R()-.5),decoy=pool.filter(k=>sc(k)<0).sort(()=>R()-.5);
+    const vw=wants.find(w=>w.t==='variety'),need=Math.max(3,(vw?vw.v:2)+1),pantry={};
+    for(let i=0;i<Math.min(good.length,need+(R()<.5?1:0));i++)pantry[good[i]]=1+(R()<.7-d*.5?1:0)+(R()<.25-d*.2?1:0);
+    if(d>.1)for(let i=0;i<Math.min(decoy.length,1+(R()<.5?1:0));i++)pantry[decoy[i]]=1+(R()<.5?1:0);
+    if(wants.some(w=>w.t==='baked')){const dg=['cakedough','dough','pizzadough','puffpastry'].find(k=>pool.includes(k))||'dough';pantry[dg]=(pantry[dg]||0)+2}
+    if(wants.some(w=>w.t==='fine')){const fw=wants.find(w=>w.t==='fine');const big=Object.keys(pantry).sort((a,b)=>M[b].r-M[a].r)[0];if(big)pantry[big]+=fw.v>8?1:0}
+    const pw=wants.find(w=>w.t==='portion');if(pw){const ks=Object.keys(pantry);let bites=ks.reduce((s,k)=>s+pantry[k]*Math.PI*M[k].r*M[k].r*.8/900,0),g=0;
+      while(bites<pw.v*1.6&&g<12&&ks.length){const k=ks[g%ks.length];pantry[k]++;bites+=Math.PI*M[k].r**2*.8/900;g++}}
+    const hs=wants.filter(w=>w.t!=='taste').map(w=>HINT[w.t]);
+    lv={name:p(FIRST)+' '+p(LAST),title:p(TITLES),quote:p(C.quotes),look:randLook(R),wants,pantry,time:Math.round(200-d*100),
+      hint:hs.length?'Tipp: '+hs.join(', ')+'.':'',good:p(['Wunderbar!','Genau so!','Köstlich, danke!','Ich komme wieder!']),ok:p(['Ganz okay.','Geht so.','Nicht schlecht.']),bad:p(['Nee, wirklich nicht.','Das war nichts.','Ich geh lieber woanders hin.'])}}
+  lv.idx=idx;lv.chapter=ch;return LVCACHE[idx]=lv;
+}
+function chipLines(c){const out=[];for(const w of c.wants){
+  if(w.t==='taste'){const a=Object.keys(w.want);if(a.length)out.push([a.join(' · '),0]);const h=Object.keys(w.hate);if(h.length)out.push(['nicht '+h.join(', '),1])}
+  else out.push([{warm:`warm (${w.v}°+)`,portion:`satt (${w.v} Bissen)`,done:'gut gegart',variety:`${w.v}+ Zutaten`,fine:`${w.v}+ Stücke`,clean:`Sauerei < ${w.v}%`,mixed:`gemixt (${w.v}+)`,baked:'gebacken',cold:`kalt (≤ ${w.v}°)`,fried:'frittiert',grilled:'gegrillt'}[w.t],0])}
   return out}
-function wishText(w){return{warm:`Warm serviert (mindestens ${w.v} °C)`,portion:`Eine satte Portion (${w.v} Bissen)`,done:'Alles gut gegart: nichts roh, nichts verbrannt',
-  variety:`Mindestens ${w.v} verschiedene Zutaten`,fine:`Fein geschnitten (${w.v}+ Stücke)`,clean:`Saubere Küche (Sauerei unter ${w.v} %)`,mixed:`Etwas Gemixtes aus ${w.v}+ Zutaten`,baked:'Etwas Gebackenes aus dem Ofen',
-  taste:w.t==='taste'?'Geschmack: '+Object.keys(w.want).join(', ')+(Object.keys(w.hate).length?' · bloß nicht '+Object.keys(w.hate).join(', '):'')+(w.balance?' · ausgewogen':''):''}[w.t]}
+function wishText(w){if(w.t==='taste')return'Geschmack: '+Object.keys(w.want).join(', ')+(Object.keys(w.hate).length?'. Bloß nicht '+Object.keys(w.hate).join(', '):'')+(w.balance?'. Ausgewogen':'');
+  return{warm:`Warm serviert, mindestens ${w.v} °C`,portion:`Satt werden: ${w.v} Bissen`,done:'Alles gar: nichts roh, nichts verbrannt',variety:`Mindestens ${w.v} verschiedene Zutaten`,
+    fine:`Fein geschnitten: ${w.v}+ Stücke`,clean:`Saubere Küche: Sauerei unter ${w.v} %`,mixed:`Etwas Gemixtes aus ${w.v}+ Zutaten`,baked:'Etwas Gebackenes aus dem Ofen',
+    cold:`Kalt serviert, höchstens ${w.v} °C`,fried:'Etwas Frittiertes',grilled:'Etwas vom Grill'}[w.t]}
 
-/* --- dish analysis --- */
+/* --- judging --- */
 function dishName(b){
   const m=b.m;let n=m.label;
-  if(m.mix){if(b.cook>.45&&b.cook<1.5)n=n.replace('Kuchenteig','Kuchen').replace('Brotteig','Brot').replace('Pizzateig','Pizza').replace('Rührei-Mix','Rührei').replace('Hackmasse','Frikadelle').replace('Tomatensoße','Tomatensuppe')}
+  if(m.mix){if(b.cook>.45&&b.cook<1.5)n=n.replace('Kuchenteig','Kuchen').replace('Brotteig','Brot').replace('Pizzateig','Pizza').replace('Rührei-Mix','Rührei').replace('Hackmasse','Frikadelle').replace('Fischfrikadellen-Masse','Fischfrikadelle').replace('Tomatensoße','Tomatensuppe').replace('Gemüsepüree','Gemüseeintopf');
+    if(b.T<-2&&m.taste[0]>.3)n=n.replace('Obst-Smoothie','Fruchteis').replace('-Creme','-Eis').replace(/mus$/,'eis').replace('Süße Creme','Sahneeis')}
   else if(b.type==='eggwhite'||b.type==='yolk')n=b.cook>.45?'Spiegelei':'rohes Ei';
   else if(b.type==='dough'&&b.cook>.45)n='Brot';
   else if(b.type==='kernel')n='Maiskorn';
-  if(b.cook>1.5)n='verbranntes '+n;else if(m.needsCook&&b.cook<.45&&!/rohes/.test(n))n='rohes '+n;
+  if(b.cook>1.5)n='verbrannt: '+n;else if(m.needsCook&&b.cook<.45&&!/rohes/.test(n))n='roh: '+n;
+  if(b.fried>.4)n+=' (frittiert)';else if(b.grill>.4)n+=' (gegrillt)';
   return n}
 function analyse(items){
-  let tot=0,T=0,raw=0,burnt=0,pieces=0,mixedMax=0,baked=0;const prof=[0,0,0,0,0],ingr={},names={};
+  let tot=0,T=0,raw=0,burnt=0,pieces=0,mixedMax=0,baked=0,fried=0,grilled=0;const prof=[0,0,0,0,0],ingr={},names={};
   for(const b of items){const w=Math.abs(polyArea(b.pts));tot+=w;const m=b.m;
     const q=b.cook>1.5?.35:1;for(let i=0;i<5;i++)prof[i]+=m.taste[i]*w*q;
     if(b.cook>.45&&b.cook<1.5&&(m.needsCook||m.mix))prof[1]+=.12*w;
+    if(b.fried>.4){prof[1]+=.2*w;fried+=w}if(b.grill>.4){prof[1]+=.15*w;grilled+=w}
     T+=b.T*w;
-    if(b.cook>1.5)burnt+=w;else if(m.needsCook&&b.cook<.45)raw+=w;
+    if(b.cook>1.5||b.fried>1.3)burnt+=w;else if(m.needsCook&&b.cook<.45)raw+=w;
     for(const k in m.ingr)ingr[k]=(ingr[k]||0)+m.ingr[k]*w;
     if(m.mix)mixedMax=Math.max(mixedMax,Object.keys(m.ingr).filter(k=>m.ingr[k]>.04).length);
-    if(m.rise&&b.cook>.45&&b.cook<1.5&&b.grow>1.08)baked=Math.max(baked,1);else if(m.rise&&b.cook>.2)baked=Math.max(baked,.4);
+    if(m.rise&&b.cook>.45&&b.cook<1.5&&b.grow>1.08)baked=1;else if(m.rise&&b.cook>.2)baked=Math.max(baked,.4);
     pieces++;const nm=dishName(b);names[nm]=(names[nm]||0)+1}
   if(tot)for(let i=0;i<5;i++)prof[i]/=tot;
-  const variety=Object.keys(ingr).filter(k=>ingr[k]/tot>.03).length;
-  return{tot,T:tot?T/tot:ROOM,raw:tot?raw/tot:0,burnt:tot?burnt/tot:0,pieces,mixedMax,baked,prof,variety,bites:tot/900,names}}
+  return{tot,T:tot?T/tot:ROOM,raw:tot?raw/tot:0,burnt:tot?burnt/tot:0,fried:tot?fried/tot:0,grilled:tot?grilled/tot:0,pieces,mixedMax,baked,prof,
+    variety:Object.keys(ingr).filter(k=>ingr[k]/tot>.03).length,bites:tot/900,names}}
 function judge(c,items){
   const a=analyse(items),res=[];
   for(const w of c.wants){let s=0,label='',note='';
@@ -1426,69 +1940,60 @@ function judge(c,items){
       for(const k in w.want){sw+=P(k)*w.want[k];ww+=w.want[k]}for(const k in w.hate){sh+=P(k)*w.hate[k];wh+=w.hate[k]}
       s=clamp(sw/ww/.42,0,1)-(wh?clamp(sh/wh/.3,0,1)*.9:0);
       if(w.balance){const ks=Object.keys(w.want).slice(0,2),lo=Math.min(P(ks[0]),P(ks[1])),hi=Math.max(P(ks[0]),P(ks[1]))||1;s*=.45+.55*clamp(lo/hi/.5,0,1)}
-      s=clamp(s,0,1);label='Geschmack';
-      const worstH=Object.keys(w.hate).sort((x,y)=>P(y)*w.hate[y]-P(x)*w.hate[x])[0];
+      s=clamp(s,0,1);label='Geschmack';const worstH=Object.keys(w.hate).sort((x,y)=>P(y)*w.hate[y]-P(x)*w.hate[x])[0];
       note=s>.75?'genau richtig':(worstH&&P(worstH)>.15?'zu '+worstH:'zu wenig '+Object.keys(w.want)[0])}
     else if(w.t==='done'){s=clamp(1-a.raw*1.8-a.burnt*1.6,0,1);label='Garzustand';note=a.raw>.05?'roh':a.burnt>.05?'verbrannt':'perfekt'}
     else if(w.t==='warm'){s=clamp((a.T-24)/(w.v-24),0,1);label='Temperatur';note=Math.round(a.T)+' °C'}
+    else if(w.t==='cold'){s=clamp((w.v+14-a.T)/14,0,1);label='Kälte';note=Math.round(a.T)+' °C'}
     else if(w.t==='portion'){s=clamp(a.bites/w.v,0,1);label='Portion';note=a.bites.toFixed(1)+' Bissen'}
     else if(w.t==='variety'){s=clamp(a.variety/w.v,0,1);label='Vielfalt';note=a.variety+' Zutaten'}
     else if(w.t==='fine'){s=clamp(a.pieces/w.v,0,1);label='Feinheit';note=a.pieces+' Stücke'}
     else if(w.t==='clean'){const mp=messPct();s=clamp(1-(mp-w.v)/40,0,1);label='Sauberkeit';note='Sauerei '+mp+' %'}
-    else if(w.t==='mixed'){s=clamp(a.mixedMax/w.v,0,1);label='Gemixt';note=a.mixedMax?a.mixedMax+' Zutaten':'nichts gemixt'}
-    else if(w.t==='baked'){s=a.baked;label='Gebacken';note=a.baked>=1?'goldbraun':a.baked?'noch roh':'kein Gebäck'}
+    else if(w.t==='mixed'){s=clamp(a.mixedMax/w.v,0,1);label='Gemixt';note=a.mixedMax?a.mixedMax+' Zutaten':'nichts'}
+    else if(w.t==='baked'){s=a.baked;label='Gebacken';note=a.baked>=1?'goldbraun':a.baked?'noch roh':'nichts'}
+    else if(w.t==='fried'){s=clamp(a.fried/.3,0,1);label='Frittiert';note=Math.round(a.fried*100)+' %'}
+    else if(w.t==='grilled'){s=clamp(a.grilled/.3,0,1);label='Gegrillt';note=Math.round(a.grilled*100)+' %'}
     res.push({t:w.t,w:w.w,s,label,note})}
   let score=0,ws=0;for(const r of res){score+=r.s*r.w;ws+=r.w}score=Math.round(score/ws*100);
-  if(a.burnt>.5)score=Math.round(score*.6);
-  if(!items.length)score=0;
+  if(a.burnt>.5)score=Math.round(score*.6);if(!items.length)score=0;
   const worst=res.slice().sort((x,y)=>x.s-y.s)[0];
   let quote=score>=85?c.good:score>=50?c.ok:c.bad;
   if(!items.length)quote='Der Teller ist ja leer!';
   else if(worst&&worst.s<.5&&score<85){const key=worst.t==='done'?(a.raw>a.burnt?'raw':'burnt'):worst.t;quote=LINES[key]+' '+(score>=50?c.ok:c.bad)}
-  const dish=Object.entries(game.lastNames=a.names).map(([n,k])=>k>1?`${k}× ${n}`:n).join(', ');
+  const dish=Object.entries(a.names).map(([n,k])=>k>1?`${k}× ${n}`:n).join(', ');
   return{score,res,quote,dish,stars:score>=85?3:score>=65?2:score>=45?1:0}}
 
-/* --- critic faces --- */
-function drawFace(g,c,mood=0,size=120){
+/* --- faces --- */
+function drawFace(g,c,mood=0,size=120,bgOn=true){
   const L=c.look;g.save();g.clearRect(0,0,size,size);const s=size/100;g.scale(s,s);
-  g.fillStyle='#f3e6d0';g.fillRect(0,0,100,100);
-  const sg=g.createRadialGradient(50,30,5,50,50,70);sg.addColorStop(0,'rgba(255,255,255,.6)');sg.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=sg;g.fillRect(0,0,100,100);
+  if(bgOn){g.fillStyle='#f0e2c8';g.fillRect(0,0,100,100)}
   const dk=mix(L.skin,'#5a2a10',.35);
-  // body
   g.fillStyle=L.shirt;g.beginPath();g.ellipse(50,108,40,28,0,0,TAU);g.fill();
   if(L.pearls){g.fillStyle='#fffaf0';for(let i=0;i<9;i++){const a=Math.PI*(.2+i*.075);g.beginPath();g.arc(50+Math.cos(a)*16,78+Math.sin(a)*9-4,1.9,0,TAU);g.fill()}}
   if(L.bowtie){g.fillStyle=L.bowtie;g.beginPath();g.moveTo(50,82);g.lineTo(40,77);g.lineTo(40,87);g.closePath();g.moveTo(50,82);g.lineTo(60,77);g.lineTo(60,87);g.closePath();g.fill()}
   if(L.gold){g.fillStyle='#ffcf3a';g.beginPath();g.ellipse(38,90,3,5,-.4,0,TAU);g.fill();g.fillRect(39,93,2,6)}
   g.fillStyle=L.skin;g.fillRect(44,66,12,12);
-  // hair behind
   g.fillStyle=L.hair;
   if(L.style==='long'){g.beginPath();g.ellipse(50,52,30,34,0,0,TAU);g.fill();g.fillRect(20,52,60,26)}
   if(L.style==='bun'){g.beginPath();g.arc(50,16,11,0,TAU);g.fill()}
   if(L.style==='curly'){for(let i=0;i<12;i++){const a=Math.PI*(1+i/11);g.beginPath();g.arc(50+Math.cos(a)*26,44+Math.sin(a)*28,9,0,TAU);g.fill()}for(const x of[24,76]){g.beginPath();g.arc(x,54,9,0,TAU);g.fill()}}
   if(L.style==='bob'){g.beginPath();g.ellipse(50,46,29,30,0,0,TAU);g.fill();g.fillRect(21,46,58,18)}
-  // ears + head
   g.fillStyle=L.skin;for(const x of[23,77]){g.beginPath();g.ellipse(x,48,5,7,0,0,TAU);g.fill()}
   g.beginPath();g.ellipse(50,46,25,28,0,0,TAU);g.fill();
-  const hg=g.createRadialGradient(42,38,4,50,46,30);hg.addColorStop(0,'rgba(255,255,255,.25)');hg.addColorStop(1,'rgba(120,60,20,.15)');g.fillStyle=hg;g.beginPath();g.ellipse(50,46,25,28,0,0,TAU);g.fill();
   if(L.cheeks||mood>.3){g.fillStyle='rgba(255,110,110,.35)';for(const x of[36,64]){g.beginPath();g.ellipse(x,56,5,3.2,0,0,TAU);g.fill()}}
-  // eyes & brows
   const ey=44,brow=mood<-.2?1:mood>.3?-1:0;
   for(const sx of[-1,1]){const x=50+sx*10;g.fillStyle='#fff';g.beginPath();g.ellipse(x,ey,4.6,mood>.6?2:4,0,0,TAU);g.fill();
     g.fillStyle='#2a1a10';g.beginPath();g.arc(x+(mood<-.4?0:.5),ey+.5,2.3,0,TAU);g.fill();g.fillStyle='#fff';g.beginPath();g.arc(x+1.2,ey-.6,.8,0,TAU);g.fill();
     g.strokeStyle=L.style==='bald'?dk:mix(L.hair,'#2a1a10',.3);g.lineWidth=2.2;g.lineCap='round';g.beginPath();
     g.moveTo(x-5*sx,ey-8+(brow>0?-2:brow<0?1:0));g.lineTo(x+4*sx,ey-8+(brow>0?2:brow<0?-1:0));g.stroke()}
-  // nose
   g.strokeStyle=dk;g.lineWidth=1.6;g.beginPath();g.moveTo(50,47);g.quadraticCurveTo(46,55,50,56);g.stroke();
-  // mouth
   const my=63,curve=mood*7;g.strokeStyle='#7a2a1a';g.lineWidth=2.4;g.lineCap='round';
   if(mood>.55){g.fillStyle='#7a1a10';g.beginPath();g.moveTo(41,my-1);g.quadraticCurveTo(50,my+11,59,my-1);g.closePath();g.fill();g.fillStyle='#fff';g.fillRect(44,my-1,12,2.5)}
   else{g.beginPath();g.moveTo(42,my);g.quadraticCurveTo(50,my+curve,58,my);g.stroke()}
   if(L.lips){g.strokeStyle='#e03050';g.lineWidth=1.4;g.stroke()}
-  // facial hair
   if(L.mustache){g.fillStyle=L.mustache;g.beginPath();g.moveTo(50,58);g.quadraticCurveTo(40,55,35,62);g.quadraticCurveTo(43,59,50,61);g.quadraticCurveTo(57,59,65,62);g.quadraticCurveTo(60,55,50,58);g.fill()}
   if(L.beard){g.fillStyle=L.beard;g.globalAlpha=.85;g.beginPath();g.moveTo(26,52);g.quadraticCurveTo(28,78,50,78);g.quadraticCurveTo(72,78,74,52);g.quadraticCurveTo(70,66,58,66);g.quadraticCurveTo(50,70,42,66);g.quadraticCurveTo(30,66,26,52);g.fill();g.globalAlpha=1}
   if(L.goatee){g.fillStyle=L.goatee;g.beginPath();g.moveTo(45,68);g.quadraticCurveTo(50,80,55,68);g.closePath();g.fill()}
-  // hair front
   g.fillStyle=L.hair;
   if(L.style==='bun'||L.style==='short'){g.beginPath();g.ellipse(50,26,24,10,0,Math.PI,TAU);g.fill();g.beginPath();g.ellipse(50,24,22,8,0,0,TAU);g.fill()}
   if(L.style==='curly'){for(let i=0;i<6;i++){g.beginPath();g.arc(32+i*7,22+Math.sin(i)*2,7,0,TAU);g.fill()}}
@@ -1496,7 +2001,6 @@ function drawFace(g,c,mood=0,size=120){
   if(L.style==='long'){g.beginPath();g.ellipse(50,24,24,9,0,0,TAU);g.fill()}
   if(L.style==='spiky'){for(let i=0;i<7;i++){const x=30+i*7;g.beginPath();g.moveTo(x-5,26);g.lineTo(x,8+(i%2)*5);g.lineTo(x+5,26);g.fill()}g.beginPath();g.ellipse(50,26,24,7,0,0,TAU);g.fill()}
   if(L.style==='bald'){g.fillStyle='rgba(255,255,255,.35)';g.beginPath();g.ellipse(42,26,7,4,-.3,0,TAU);g.fill()}
-  // accessories
   if(L.glasses){g.strokeStyle='#2a1a10';g.lineWidth=1.8;for(const sx of[-1,1]){g.beginPath();L.glasses==='round'?g.arc(50+sx*10,44,6.5,0,TAU):g.rect(50+sx*10-7,39,14,10);g.stroke()}g.beginPath();g.moveTo(46,44);g.lineTo(54,44);g.stroke()}
   if(L.monocle){g.strokeStyle='#c8a030';g.lineWidth=1.8;g.beginPath();g.arc(60,44,6.5,0,TAU);g.stroke();g.beginPath();g.moveTo(66,46);g.quadraticCurveTo(70,60,66,72);g.stroke()}
   if(L.bow){g.fillStyle=L.bow;g.beginPath();g.ellipse(66,18,7,4,.5,0,TAU);g.ellipse(76,24,7,4,.5,0,TAU);g.fill();g.beginPath();g.arc(71,21,3,0,TAU);g.fill()}
@@ -1504,127 +2008,174 @@ function drawFace(g,c,mood=0,size=120){
   if(L.chefhat){g.fillStyle='#ffffff';g.fillRect(30,12,40,12);for(const[x,y,r]of[[34,8,10],[50,2,12],[66,8,10]]){g.beginPath();g.arc(x,y,r,0,TAU);g.fill()}g.strokeStyle='#e0d6c4';g.lineWidth=1;g.strokeRect(30,18,40,6)}
   g.restore();
 }
+function setBust(c,mood=0){if(!c){game.bust=null;game.bustName='';return}const cv2=game.bust||document.createElement('canvas');cv2.width=cv2.height=256;drawFace(cv2.getContext('2d'),c,mood,256,false);game.bust=cv2;game.bustName=c.name}
 
-/* --- screens --- */
-const scr=id=>document.getElementById(id);
-function show(id){for(const s of['scrMenu','scrLevels','scrIntro','scrResult'])scr(s).hidden=s!==id}
+/* ================= game state & screens ================= */
+const game={mode:'menu',level:-1,pantry:null,ev:{},time:0,running:false,lastStn:-1,taster:0,bust:null,bustName:'',mark:null,save:loadSave()};
+function loadSave(){try{const s=JSON.parse(localStorage.getItem('squishKitchen.v2')||'{}');return{stars:Array.isArray(s.stars)?s.stars:[],tut:!!s.tut}}catch(e){return{stars:[],tut:false}}}
+function saveGame(){try{localStorage.setItem('squishKitchen.v2',JSON.stringify(game.save))}catch(e){}}
+const SCREENS=['scrMenu','scrLevels','scrIntro','scrResult'];
+function show(id){for(const s of SCREENS)scr(s).hidden=s!==id;game.running=!id&&game.mode==='story'&&game.time>0}
 document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',()=>openMenu()));
 function openMenu(){
-  game.mode='menu';show('scrMenu');scr('hud').hidden=true;
-  const n=game.stars.filter(x=>x>0).length;scr('storyProg').textContent=`${n} / ${CRITICS.length} Gäste`;
-  resetKitchen();demoScene();
+  game.mode='menu';show('scrMenu');scr('hud').hidden=true;scr('coach').hidden=true;game.mark=null;
+  const n=game.save.stars.filter(x=>x>0).length;scr('storyProg').textContent=`${n} / 100 Gäste`;scr('sandCount').textContent=`${FOODS.length} Zutaten`;
+  scr('menuNote').textContent=game.save.tut?'':'Neu hier? Das Tutorial zeigt in drei Minuten alles Wichtige.';
+  scr('goTut').classList.toggle('pulse',!game.save.tut);
+  resetKitchen();setBust(null);goStation(0);camX=camT;demoScene();
 }
-function unlocked(i){return i===0||(game.stars[i-1]||0)>0}
-function openLevels(){
-  show('scrLevels');const list=scr('levelList');list.innerHTML='';
-  CRITICS.forEach((c,i)=>{const b=document.createElement('button');b.className='lv';b.disabled=!unlocked(i);
-    const cv2=document.createElement('canvas');cv2.width=cv2.height=152;drawFace(cv2.getContext('2d'),c,(game.stars[i]||0)>=2?.7:0,152);
-    const st=game.stars[i]||0;
-    b.innerHTML=`<b>${c.name}</b><small>${c.title}</small><span class="stars">${'★'.repeat(st)}<span class="off">${'★'.repeat(3-st)}</span></span>${unlocked(i)?'':'<span class="lock">GESPERRT</span>'}`;
-    b.prepend(cv2);b.addEventListener('click',()=>{if(unlocked(i))openIntro(i)});list.append(b)});
+function unlocked(i){return i===0||(game.save.stars[i-1]||0)>0}
+let curChap=0;
+function openLevels(ch){
+  if(ch===undefined){ch=0;while(ch<9&&unlocked((ch+1)*10))ch++}curChap=ch;
+  show('scrLevels');const cl=scr('chapList');cl.innerHTML='';
+  CHAPTERS.forEach((C,i)=>{const b=document.createElement('button');b.className='chap';b.disabled=!unlocked(i*10);b.setAttribute('aria-current',String(i===ch));
+    const st=game.save.stars.slice(i*10,i*10+10).reduce((a,v)=>a+(v||0),0);b.innerHTML=`${i+1}. ${C.name}<small>${st} / 30 Sterne</small>`;
+    b.addEventListener('click',()=>{if(unlocked(i*10))openLevels(i)});cl.append(b)});
+  scr('chapTitle').textContent=`Kapitel ${ch+1}: ${CHAPTERS[ch].name}`;
+  const gr=scr('levelGrid');gr.innerHTML='';
+  for(let j=0;j<10;j++){const i=ch*10+j,L=level(i),b=document.createElement('button');b.className='lv'+(L.boss?' boss':'');b.disabled=!unlocked(i);
+    const c=document.createElement('canvas');c.width=c.height=104;drawFace(c.getContext('2d'),L,(game.save.stars[i]||0)>=2?.7:0,104);
+    const st=game.save.stars[i]||0;b.innerHTML=`<b>${i+1}</b><small>${L.name}</small><span class="st">${'★'.repeat(st)}<span class="off">${'★'.repeat(3-st)}</span></span>`;
+    b.insertBefore(c,b.firstChild.nextSibling);b.addEventListener('click',()=>{if(unlocked(i))openIntro(i)});gr.append(b)}
+  setTimeout(()=>{const a=cl.querySelector('[aria-current="true"]');if(a)a.scrollIntoView({inline:'center',block:'nearest'})},0);
 }
 function pantryText(p){return Object.entries(p).map(([k,v])=>`<span>${v}× ${M[k].label}</span>`).join('')}
 function openIntro(i){
-  const c=CRITICS[i];game.level=i;show('scrIntro');
-  drawFace(scr('introFace').getContext('2d'),c,0,240);
-  scr('introName').textContent=c.name;scr('introTitle').textContent=c.title;scr('introQuote').textContent='„'+c.quote+'“';
-  scr('introWish').innerHTML=c.wants.map(w=>`<li>${wishText(w)}</li>`).join('');
-  scr('introPantry').innerHTML=pantryText(c.pantry);scr('introHint').textContent=c.hint;
-  scr('introGo').textContent=game.mode==='story'&&game.level===i?'Weiter kochen':'Los geht\'s';
+  const L=level(i);game.level=i;show('scrIntro');game.running=false;
+  drawFace(scr('introFace').getContext('2d'),L,0,232);
+  scr('introName').textContent=L.name;scr('introTitle').textContent=L.title+(L.boss?' · Boss':'');scr('introQuote').textContent='„'+L.quote+'“';
+  scr('introNo').textContent=`GAST ${String(i+1).padStart(3,'0')}`;scr('introTime').textContent=`ZEIT ${fmtTime(L.time)}`;
+  scr('introWish').innerHTML=L.wants.map(w=>`<li>${wishText(w)}</li>`).join('');
+  scr('introPantry').innerHTML=pantryText(L.pantry);scr('introHint').textContent=L.hint||'';
+  scr('introGo').textContent=game.mode==='story'&&game.inLevel===i&&game.time>0?'Weiter kochen':'Kochen';
 }
-scr('introBack').addEventListener('click',()=>{if(game.mode==='story'){show(null)}else openLevels()});
-scr('introGo').addEventListener('click',()=>{if(game.mode==='story'&&game.inLevel===game.level){show(null);return}startLevel(game.level)});
-function setHud(c,sandbox){
-  const h=scr('hud');h.hidden=false;
-  if(sandbox){scr('hudName').textContent='Sandkasten';scr('hudTitle').textContent='Alles unbegrenzt. Lass einen Kritiker probieren:';
-    drawFace(scr('hudFace').getContext('2d'),CRITICS[game.taster],0,92);
-    scr('hudWish').innerHTML=`<span class="chip">${CRITICS[game.taster].name}</span><span class="chip">antippen zum Wechseln</span>`;scr('serve').textContent='Probieren lassen';return}
-  drawFace(scr('hudFace').getContext('2d'),c,0,92);scr('hudName').textContent=c.name;scr('hudTitle').textContent=c.title;
-  scr('hudWish').innerHTML=chipsFor(c).map(([t,no])=>`<span class="chip${no?' no':''}">${t}</span>`).join('');scr('serve').textContent='Servieren';
+scr('introBack').addEventListener('click',()=>{if(game.mode==='story'&&game.inLevel===game.level&&game.time>0)show(null);else openLevels(Math.floor(game.level/10))});
+scr('introGo').addEventListener('click',()=>{if(game.mode==='story'&&game.inLevel===game.level&&game.time>0){show(null);return}startLevel(game.level)});
+function fmtTime(t){t=Math.max(0,Math.ceil(t));return`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`}
+function setHud(c,mode){
+  const h=scr('hud');h.hidden=false;const face=scr('hudFace').getContext('2d');
+  if(mode==='sandbox'){const t=CRITICS[game.taster];drawFace(face,t,0,76);scr('hudName').textContent='Sandkasten';scr('hudTitle').textContent='Wer probiert? Gesicht antippen.';
+    scr('hudTimer').textContent='';scr('hudWish').innerHTML=`<li>${t.name}</li>`;scr('serve').textContent='Probieren lassen';setBust(t);return}
+  drawFace(face,c,0,76);scr('hudName').textContent=c.name;scr('hudTitle').textContent=mode==='tutorial'?'Tutorial':`Gast ${c.idx+1}${c.boss?' · Boss':''}`;
+  scr('hudWish').innerHTML=chipLines(c).map(([t,no])=>`<li${no?' class="no"':''}>${t}</li>`).join('');scr('serve').textContent='Servieren';setBust(c);updTimer();
 }
-scr('hudFace').addEventListener('click',()=>{if(game.mode==='story')openIntro(game.level);else{game.taster=(game.taster+1)%CRITICS.length;setHud(null,true)}});
+function updTimer(){const el=scr('hudTimer');if(game.mode!=='story'){el.textContent='';return}el.textContent=fmtTime(game.time);el.classList.toggle('low',game.time<20)}
+scr('hudFace').addEventListener('click',()=>{if(game.mode==='story')openIntro(game.level);else if(game.mode==='sandbox'){game.taster=(game.taster+1)%CRITICS.length;setHud(null,'sandbox')}});
 function startLevel(i){
-  game.mode='story';game.level=i;game.inLevel=i;const c=CRITICS[i];
-  game.pantry=Object.assign({},c.pantry);resetKitchen();updTray();show(null);setHud(c);
-  toast(c.hint,6000);lockLandscape();
+  const L=level(i);game.mode='story';game.level=i;game.inLevel=i;game.time=L.time;
+  game.pantry=Object.assign({},L.pantry);resetKitchen();updTray();goStation(0);camX=camT;show(null);setHud(L,'story');
+  if(L.hint)toast(L.hint,5500);lockLandscape();
 }
-function startSandbox(){
-  game.mode='sandbox';game.pantry=null;game.taster=game.taster||0;resetKitchen();demoScene();updTray();show(null);setHud(null,true);
-  toast('Sandkasten: alles unbegrenzt. Leg ein Gericht auf den Teller und lass einen Kritiker probieren.',5000);lockLandscape();
-}
+function startSandbox(){game.mode='sandbox';game.pantry=null;resetKitchen();demoScene();updTray();show(null);setHud(null,'sandbox');lockLandscape();toast('Wisch über die Küche, um zu Herd, Ofen, Fritteuse und Teller zu kommen.',4500)}
 scr('goStory').addEventListener('click',()=>{audioInit();lockLandscape();openLevels()});
 scr('goSandbox').addEventListener('click',()=>{audioInit();startSandbox()});
+scr('goTut').addEventListener('click',()=>{audioInit();startTutorial()});
 scr('menuBtn').addEventListener('click',()=>openMenu());
-scr('serve').addEventListener('click',()=>{
+scr('serve').addEventListener('click',()=>serve(false));
+function serve(auto){
   const items=bodies.filter(b=>where(b)==='plate');
-  if(!items.length){toast('Leg zuerst etwas auf den Teller rechts.');return}
-  const c=game.mode==='story'?CRITICS[game.level]:CRITICS[game.taster];
-  const r=judge(c,items);
+  if(!items.length&&!auto){toast('Leg zuerst etwas auf den Teller (Station „Teller“).');return}
+  const c=game.mode==='story'?level(game.level):game.mode==='tutorial'?CRITICS[0]:CRITICS[game.taster];
+  const r=judge(c,items);if(auto)r.quote=items.length?'Die Zeit ist um! '+r.quote:'Die Zeit ist um und der Teller ist leer.';
   for(const b of items){for(let i=0;i<4;i++)puff(b.cx+rnd(-b.R,b.R),b.cy,'steam');remove(b)}
-  sfx.chew();setTimeout(()=>showResult(c,r),550);
-});
+  game.running=false;game.time=0;game.ev.served=1;setBust(c,clamp((r.score-50)/45,-1,1));
+  sfx.chew();setTimeout(()=>showResult(c,r),auto?150:650);
+}
 function showResult(c,r){
   show('scrResult');const story=game.mode==='story';
-  drawFace(scr('resFace').getContext('2d'),c,clamp((r.score-50)/45,-1,1),240);
+  drawFace(scr('resFace').getContext('2d'),c,clamp((r.score-50)/45,-1,1),232);
   scr('resName').textContent=c.name;scr('resQuote').textContent='„'+r.quote+'“';
   scr('resDish').textContent='Serviert: '+(r.dish||'nichts');
   const sc=scr('resScore');let v=0;const tgt=r.score;const tick=()=>{v=Math.min(tgt,v+Math.max(1,Math.round(tgt/30)));sc.innerHTML=`${v}<small> / 100</small>`;if(v<tgt)requestAnimationFrame(tick)};tick();
   scr('resStars').innerHTML=`${'★'.repeat(r.stars)}<span class="off">${'★'.repeat(3-r.stars)}</span>`;
-  scr('resCrit').innerHTML=r.res.map(x=>`<div><span>${x.label}</span><i><u style="width:${Math.round(x.s*100)}%;background:${x.s>.75?'#3cb34a':x.s>.45?'#f0a020':'#e8401a'}"></u></i><em>${x.note}</em></div>`).join('');
+  scr('resCrit').innerHTML=r.res.map(x=>`<div><span>${x.label}</span><i><u style="width:${Math.round(x.s*100)}%;background:${x.s>.75?'#3f8f3a':x.s>.45?'#e0a020':'#d8341f'}"></u></i><em>${x.note}</em></div>`).join('');
   const btns=scr('resBtns');btns.innerHTML='';
   const mk=(t,cls,fn)=>{const b=document.createElement('button');b.className='cta '+cls;b.textContent=t;b.addEventListener('click',fn);btns.append(b)};
   if(story){
-    if(r.stars>(game.stars[game.level]||0)){game.stars[game.level]=r.stars;saveStars()}
-    if(r.stars>0&&game.level<CRITICS.length-1)mk('Nächster Gast','',()=>openIntro(game.level+1));
-    if(r.stars>0&&game.level===CRITICS.length-1)mk('Alle Gäste geschafft!','green',()=>openLevels());
-    mk('Nochmal','ghost',()=>startLevel(game.level));mk('Gästeliste','ghost',()=>openLevels());
-  }else{mk('Weiter kochen','',()=>show(null));mk('Menü','ghost',()=>openMenu())}
+    if(r.stars>(game.save.stars[game.level]||0)){game.save.stars[game.level]=r.stars;saveGame()}
+    if(r.stars>0&&game.level<99)mk('Nächster Gast','',()=>openIntro(game.level+1));
+    if(r.stars>0&&game.level===99)mk('Alle 100 geschafft!','green',()=>openLevels(9));
+    mk('Nochmal','ghost',()=>startLevel(game.level));mk('Gästeliste','ghost',()=>openLevels(Math.floor(game.level/10)));
+  }else if(game.mode==='tutorial'){game.save.tut=true;saveGame();scr('coach').hidden=true;game.mark=null;mk('Zur Story','',()=>{game.mode='menu';openLevels(0)});mk('Menü','ghost',()=>openMenu())}
+  else{mk('Weiter kochen','',()=>show(null));mk('Menü','ghost',()=>openMenu())}
   r.stars>=2?sfx.win():sfx.meh();
 }
 function lockLandscape(){try{if(matchMedia('(pointer:coarse)').matches&&!document.fullscreenElement&&document.documentElement.requestFullscreen){document.documentElement.requestFullscreen().then(()=>screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})).catch(()=>{})}}catch(e){}}
 function resetKitchen(){
-  bodies=[];drops=[];drips=[];puffs=[];fx=[];ptr.grab=null;mixT=0;stx.clearRect(0,0,W,H);mess=0;
-  pan.lvl=pot.lvl=0;pan.T=pot.T=ROOM;Object.assign(oven,{lvl:0,open:false,T:ROOM});Object.assign(micro,{lvl:0,open:false,T:ROOM,timer:0});
+  bodies=[];drops=[];drips=[];puffs=[];fx=[];ptr.grab=null;mixT=0;stx.clearRect(0,0,WW,H);mess=0;game.ev={};
+  pan.lvl=pot.lvl=grill.lvl=fryer.lvl=0;pan.T=pot.T=grill.T=fryer.T=ROOM;Object.assign(oven,{lvl:0,open:false,T:ROOM});Object.assign(micro,{lvl:0,open:false,T:ROOM,timer:0});freezer.open=false;
 }
 function demoScene(){
-  const B=LY.board;
-  const place=(t,x,y)=>{const b=add(makeBody(t,x,y));b.inv=120;return b};
-  place('tomato',B.x0+M.tomato.r*1.1,B.y-M.tomato.r*.9-2);
-  place('lemon',Math.min(B.x1-M.lemon.r,B.x0+M.tomato.r*2.2+M.lemon.r),B.y-M.lemon.r*.9-2);
-  place('steak',pan.cx,pan.y-M.steak.r*.6-3);
-  for(let i=0;i<8;i++)place('kernel',pot.cx+(i%4-1.5)*pot.w*.18,pot.y-8-Math.floor(i/4)*12);
+  const B=LY.board,place=(t,x,y)=>{const b=add(makeBody(t,x,y));b.inv=120;return b};
+  place('tomato',B.x0+M.tomato.r*1.1,B.y-M.tomato.r*.9-2);place('apple',B.x0+M.tomato.r*2.4+M.apple.r,B.y-M.apple.r-2);place('cucumber',B.x1-M.cucumber.r*2,B.y-M.cucumber.r-4);
   place('strawberry',bowl.cx-12,bowl.y-14);place('banana',bowl.cx+8,bowl.y-30);
-  place('dough',(oven.ix0+oven.ix1)/2,oven.iy1-M.dough.r*.8-3);
-  place('chocolate',(micro.ix0+micro.ix1)/2,micro.iy1-M.chocolate.r*.5-3);
-  for(let i=0;i<60;i++)step();
+  place('steak',pan.cx,pan.y-M.steak.r*.6-3);place('corn',grill.cx,grill.y-M.corn.r-2);
+  place('dough',(oven.ix0+oven.ix1)/2,oven.iy1-M.dough.r*.8-3);place('icecream',(freezer.ix0+freezer.ix1)/2,freezer.iy1-M.icecream.r-3);
+  for(let i=0;i<40;i++)step();
 }
 
+/* ================= tutorial ================= */
+const TUT=[
+ {t:'Tippe links in der Leiste auf die Tomate.',el:()=>trayBtns.tomato&&trayBtns.tomato.btn,ok:()=>bodies.some(b=>b.type==='tomato')},
+ {t:'Pack die Tomate mit dem Finger und zieh sie herum. Wirf sie ruhig mal.',mark:()=>{const b=bodies.find(b=>b.type==='tomato');return b&&{x:b.cx,y:b.cy,r:b.R+10}},ok:()=>game.ev.grab},
+ {t:'Wähle oben links das Messer und wisch einmal quer durch die Tomate.',el:()=>document.querySelector('[data-tool=knife]'),ok:()=>game.ev.cut},
+ {t:'Wisch auf einer freien Stelle von rechts nach links, um zum Herd zu kommen. Oder tippe oben auf „Herd“.',el:()=>tabsEl.children[1],ok:()=>stationIdx()===1&&Math.abs(camX-camT)<2},
+ {t:'Hol ein Steak aus der Leiste. Es fällt direkt in die Pfanne.',el:()=>{document.querySelector('[data-tool=hand]').click();return trayBtns.steak&&trayBtns.steak.btn},ok:()=>bodies.some(b=>b.type==='steak'&&where(b)==='pan')},
+ {t:'Dreh unten den Knopf „Pfanne“ auf.',mark:()=>({x:pan.kx,y:LY.ky-3,r:20}),ok:()=>pan.lvl>0},
+ {t:'Warte, bis das Steak schön braun ist. Mit dem Knopf kannst du die Hitze ändern.',mark:()=>({x:pan.cx,y:pan.y-14,r:pan.w*.5}),ok:()=>bodies.some(b=>b.type==='steak'&&b.cook>.55)},
+ {t:'Pack das Steak und zieh es an den rechten Bildschirmrand. Die Küche fährt mit. Leg es auf den Teller ganz rechts.',el:()=>tabsEl.children[4],ok:()=>bodies.some(b=>b.type==='steak'&&where(b)==='plate')},
+ {t:'Tippe auf „Servieren“. Oma Erna probiert jetzt.',el:()=>scr('serve'),ok:()=>game.ev.served},
+];
+let tutI=0,tutEl=null;
+function startTutorial(){
+  game.mode='tutorial';game.pantry={tomato:99,steak:99};resetKitchen();updTray();goStation(0);camX=camT;show(null);
+  const c=Object.assign({},CRITICS[0],{idx:-1});setHud(c,'tutorial');scr('hudWish').innerHTML='<li>ein braunes Steak</li>';
+  tutI=0;scr('coach').hidden=false;tutShow();lockLandscape();
+}
+function tutShow(){
+  if(tutEl)tutEl.classList.remove('pulse');tutEl=null;game.mark=null;
+  if(tutI>=TUT.length){scr('coach').hidden=true;return}
+  const s=TUT[tutI];scr('coachStep').textContent=`Schritt ${tutI+1} von ${TUT.length}`;scr('coachText').textContent=s.t;
+  if(s.el){tutEl=s.el();if(tutEl)tutEl.classList.add('pulse')}
+}
+function tutTick(){if(game.mode!=='tutorial'||tutI>=TUT.length)return;const s=TUT[tutI];if(s.mark)game.mark=s.mark();
+  if(s.ok()){tutI++;sfx.click();tutShow()}}
+scr('coachSkip').addEventListener('click',()=>{game.save.tut=true;saveGame();scr('coach').hidden=true;if(tutEl)tutEl.classList.remove('pulse');openMenu()});
+
 /* ================= sizing & loop ================= */
-const sa=document.getElementById('sa');
+const sa=scr('sa');
 function resize(){
-  const r=cv.getBoundingClientRect(),oW=W,oH=H;
-  let old=null;if(oW){old=document.createElement('canvas');old.width=st.width;old.height=st.height;old.getContext('2d').drawImage(st,0,0)}
+  const r=cv.getBoundingClientRect(),oVW=LY.vw,oSide=LY.side,stn=LY.vw?stationIdx():0;
+  let old=null;if(WW){old=document.createElement('canvas');old.width=st.width;old.height=st.height;old.getContext('2d').drawImage(st,0,0)}
   W=r.width;H=r.height;DPR=Math.min(2,window.devicePixelRatio||1);
-  for(const c of[cv,bg,st]){c.width=Math.round(W*DPR);c.height=Math.round(H*DPR)}
   const cs=getComputedStyle(sa);LY.saL=parseFloat(cs.paddingLeft)||0;LY.saR=parseFloat(cs.paddingRight)||0;LY.saB=parseFloat(cs.paddingBottom)||0;
   layout();
-  stx.setTransform(DPR,0,0,DPR,0,0);if(old)stx.drawImage(old,0,0,oW,oH);
-  drawBg();
+  BD=Math.min(DPR,1.5,Math.sqrt(14e6/(WW*H)));
+  cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
+  for(const c of[bg,st]){c.width=Math.round(WW*BD);c.height=Math.round(H*BD)}
+  stx.setTransform(BD,0,0,BD,0,0);if(old)stx.drawImage(old,0,0,WW,H);
+  if(oVW&&oVW!==LY.vw)for(const b of bodies)for(const p of b.pts){p.x=LY.side+(p.x-oSide)*LY.vw/oVW;p.px=LY.side+(p.px-oSide)*LY.vw/oVW}
+  camT=camX=stn*LY.vw;
+  drawBg();updTabs();
   scr('rotate').hidden=!(H>W*1.05&&W<900);
 }
 addEventListener('resize',resize);resize();
 openMenu();
+document.fonts&&document.fonts.ready.then(()=>{drawBg();scr('logoBig').innerHTML=logoSVG()});
 
 let last=performance.now(),acc=0,tick=0;
 function loop(t){
-  acc+=Math.min(60,t-last);last=t;let n=0;
+  const dt=Math.min(60,t-last);acc+=dt;last=t;let n=0;
   while(acc>=1000/60&&n<3){sndBudget=0;step();acc-=1000/60;n++}
-  render();if(++tick%10===0)updMess();
+  if(game.running){game.time-=dt/1000;if(++tick%6===0)updTimer();if(game.time<=0){game.time=0;game.running=false;updTimer();serve(true)}}
+  if(game.mode==='tutorial')tutTick();
+  render();if(tick++%10===0)updMess();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 document.addEventListener('visibilitychange',()=>{if(AC){document.hidden?AC.suspend():AC.resume()}last=performance.now()});
-window.__kitchen={bodies:()=>bodies,fx:()=>fx,pan,pot,oven,micro,bowl,plate,spawn,step,controls,where,LY,game,startLevel,startSandbox,judge,CRITICS,startMix};
+window.__kitchen={ptr,bodies:()=>bodies,fx:()=>fx,pan,pot,grill,fryer,freezer,oven,micro,bowl,plate,spawn,step,controls,where,LY,game,startLevel,startSandbox,startTutorial,judge,CRITICS,startMix,level,goStation,M,FOODS,cam:()=>[camX,camT]};
 })();
 </script>
 </body>
