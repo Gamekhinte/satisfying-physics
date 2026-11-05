@@ -1264,7 +1264,7 @@ function glassStep(){const g=glass;
   if(g.fly){const nx=g.cx+(g.hx-g.cx)*.14,ny=g.y+(g.hy-g.y)*.14-Math.min(6,Math.abs(g.hx-g.cx)*.04);
     if(Math.hypot(g.hx-g.cx,g.hy-g.y)<2){g.fly=false;g.load=[];setGlassGeo(g.hx,g.hy);buildSegs();sfx.click()}else{g.load=[];placeGlass(nx,ny)}return}
   const land=glassLand(g.cx);if(g.y<land-.5){g.vy+=.6;g.load=bodies.filter(b=>where(b)==='glass');placeGlass(g.cx,Math.min(land,g.y+g.vy));if(g.y>=land-.5){g.vy=0;sfx.clink()}}}
-function isDrink(b){return !!b.m.drink}
+function isDrink(b){return !!b.m.drink&&b.T>-2}
 
 /* ================= toaster, waffle iron ================= */
 function startToast(){const t=toaster;if(t.on){toast('Der Toaster läuft schon.');return}
@@ -1328,7 +1328,7 @@ function drawDeco(g,k,x,y,u,rot=0){g.save();g.translate(x,y);g.rotate(rot);const
 const PL={open:false,sel:null,mode:'move',act:null,R:1,cx:0,cy:0,u:1,sprites:new Map()};
 const pc=()=>scr('pc');
 function plState(){if(!game.plating)game.plating={pos:{},deco:[],sauce:[],undo:[],done:false};return game.plating}
-function plItems(){return bodies.filter(b=>where(b)==='plate'&&!b.m.drink)}
+function plItems(){return bodies.filter(b=>where(b)==='plate'&&!isDrink(b))}
 function openPlating(){const P=plState();PL.open=true;scr('plating').hidden=false;PL.sel=null;PL.mode='move';PL.sprites.clear();
   const items=plItems();items.forEach((b,i)=>{if(!P.pos[b.id])P.pos[b.id]={x:clamp((b.cx-plate.cx)/(plate.w*.5),-.6,.6),y:(i%2?.18:-.18)*(1+i*.15)%.6,rot:0}});
   for(const id in P.pos)if(!items.some(b=>b.id==id))delete P.pos[id];
@@ -2353,6 +2353,10 @@ const CRITICS=[
   pantry:{cream:2,strawberry:2,banana:1,raspberry:3,sugarcube:2,whitechoc:1},good:'Brrr-illant! Perfektes Eis.',ok:'Kühl, aber nicht frostig.',bad:'Das ist ja warm! Igitt.'},
 ];
 CRITICS[6].pantry=Object.fromEntries(Object.entries(CRITICS[6].pantry).filter(([k,v])=>v&&M[k]));
+const OMNI={name:'Toni Testesser',title:'Mag einfach alles',quote:'Her damit, ich probier alles!',omni:true,
+  look:{skin:'#f2c9a8',hair:'#8a3a1a',style:'curly',chefhat:1,cheeks:1,shirt:'#3f8f3a'},wants:[{t:'done',w:1}],pantry:{},
+  good:'Mmmh! Was ist das? Mehr davon!',ok:'Interessant! Probier ich gern wieder.',bad:'Hm, das war nix. Aber ich bin dir nicht böse.'};
+const TASTERS=[OMNI,...CRITICS];
 const LINES={taste:'Das schmeckt mir überhaupt nicht.',raw:'Das ist ja noch roh!',burnt:'Das schmeckt nach Holzkohle.',warm:'Kalt? Ernsthaft?',
   portion:'Davon wird ja keiner satt.',variety:'Etwas eintönig, oder?',fine:'Die Stücke sind viel zu grob.',clean:'Wie sieht denn die Küche aus?!',
   mixed:'Ich wollte etwas Gemischtes.',baked:'Wo ist das Gebäck?',cold:'Das sollte doch kalt sein!',fried:'Wo ist das Knusprige?',breaded:'Wo ist die Panade?',grilled:'Ich schmecke keinen Grill.',drink:'Und was soll ich dazu trinken?'};
@@ -2438,7 +2442,8 @@ function dishName(b){
   if(b.fried>.4)n+=' (frittiert)';else if(b.grill>.4)n+=' (gegrillt)';
   return n}
 function analyse(items){
-  const food=items.filter(b=>!b.m.drink),dr=items.filter(b=>b.m.drink),a=analyseFood(food.length?food:dr);
+  const food=items.filter(b=>!isDrink(b)),dr=items.filter(isDrink),a=analyseFood(food.length?food:dr);
+  for(const b of dr)if(b.m.mix)a.mixedMax=Math.max(a.mixedMax,Object.keys(b.m.ingr).filter(k=>b.m.ingr[k]>.04).length);
   a.drinks=dr.length;a.drink=dr.length?1:0;if(dr.length&&food.length){a.prof[3]*=.65;for(const b of dr){const nm=dishName(b);a.names[nm]=(a.names[nm]||0)+1}}
   return a}
 function analyseFood(items){
@@ -2483,9 +2488,11 @@ function judge(c,items,opt={}){
     else if(w.t==='grilled'){s=clamp(a.grilled/.3,0,1);label='Gegrillt';note=Math.round(a.grilled*100)+' %'}
     res.push({t:w.t,w:w.w,s,label,note})}
   let score=0,ws=0;for(const r of res){score+=r.s*r.w;ws+=r.w}score=Math.round(score/ws*100);
+  if(c.omni&&items.length){const ic={'süß':'süß','herzhaft':'herzhaft','sauer':'sauer','scharf':'scharf','cremig':'cremig'};DIMS.forEach((d,i)=>{const v=clamp(a.prof[i]*1.6,0,1);res.push({t:'info',w:0,s:v,label:ic[d][0].toUpperCase()+ic[d].slice(1),note:Math.round(v*100)+' %'})});
+    res.push({t:'info',w:0,s:clamp((a.T+20)/100,0,1),label:'Temperatur',note:Math.round(a.T)+' °C'})}
   if(opt.plating){const ps=opt.plating,bonus=clamp(Math.round((ps.s-.4)*14),-3,8);res.push({t:'plating',w:0,s:ps.s,label:'Anrichten',note:`${ps.note} (${bonus>=0?'+':''}${bonus})`});opt.bonus=bonus}
   if(a.burnt>.5)score=Math.round(score*.6);if(opt.loose)score=Math.round(score*.75);if(a.salt>.9)score=Math.round(score*.85);if(opt.bonus)score=clamp(score+opt.bonus,0,100);if(!items.length)score=0;
-  const worst=res.slice().sort((x,y)=>x.s-y.s)[0];
+  const worst=res.filter(r=>r.w>0).sort((x,y)=>x.s-y.s)[0];
   let quote=score>=85?c.good:score>=50?c.ok:c.bad;
   if(!items.length)quote='Der Teller ist ja leer!';
   else if(worst&&worst.s<.5&&score<85){const key=worst.t==='done'?(a.raw>a.burnt?'raw':'burnt'):worst.t;quote=LINES[key]+' '+(score>=50?c.ok:c.bad)}
@@ -2677,13 +2684,13 @@ scr('introGo').addEventListener('click',()=>{if(timed()&&game.inLevel===game.lev
 function fmtTime(t){t=Math.max(0,Math.ceil(t));return`${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`}
 function setHud(c,mode){
   const h=scr('hud');h.hidden=false;const face=scr('hudFace').getContext('2d');
-  if(mode==='sandbox'){const t=CRITICS[game.taster];drawFace(face,t,0,76);scr('hudName').textContent='Sandkasten';scr('hudTitle').textContent='Wer probiert? Gesicht antippen.';
+  if(mode==='sandbox'){const t=TASTERS[game.taster];drawFace(face,t,0,76);scr('hudName').textContent='Sandkasten';scr('hudTitle').textContent=t.omni?'Toni mag alles. Gesicht antippen für Kritiker.':'Wer probiert? Gesicht antippen.';
     scr('hudTimer').textContent='';scr('hudWish').innerHTML=`<li>${t.name}</li>`;scr('serve').textContent='Probieren lassen';setBust(t);return}
   drawFace(face,c,0,76);scr('hudName').textContent=c.name;scr('hudTitle').textContent=mode==='tutorial'?'Tutorial':c.daily?'Tagesgast':`Gast ${c.idx+1}${c.boss?' · Boss':''}`;
   scr('hudWish').innerHTML=chipLines(c).map(([t,no])=>`<li${no?' class="no"':''}>${t}</li>`).join('');scr('serve').textContent='Servieren';setBust(c);updTimer();
 }
 function updTimer(){const el=scr('hudTimer');if(!timed()){el.textContent='';return}el.textContent=fmtTime(game.time);el.classList.toggle('low',game.time<20)}
-scr('hudFace').addEventListener('click',()=>{if(timed())openIntro(game.level);else if(game.mode==='sandbox'){game.taster=(game.taster+1)%CRITICS.length;setHud(null,'sandbox')}});
+scr('hudFace').addEventListener('click',()=>{if(timed())openIntro(game.level);else if(game.mode==='sandbox'){game.taster=(game.taster+1)%TASTERS.length;setHud(null,'sandbox')}});
 function startLevel(i){
   const L=i<0?dailyLevel():level(i);game.mode=i<0?'daily':'story';game.level=i;game.inLevel=i;game.time=L.time;
   game.pantry=Object.assign({},L.pantry);resetKitchen();updTray();goStation(0);camX=camT;show(null);setHud(L,'story');
@@ -2702,8 +2709,8 @@ function serve(auto){
   const loose=items.filter(b=>isDrink(b)&&where(b)==='plate').length;
   if(!items.length&&!auto&&bodies.some(b=>where(b)==='glass')){toast('Bring das Glas zum Gast: Glas greifen und auf den Tab „Teller“ ziehen.',3500);return}
   if(!items.length&&!auto){toast('Leg zuerst etwas auf den Teller (Station „Teller“).');return}
-  const c=timed()?curLevel():game.mode==='tutorial'?CRITICS[0]:CRITICS[game.taster];
-  closePlating(true);const P=game.plating,ps=P&&P.done&&items.some(b=>!b.m.drink)?platingScore():null;
+  const c=timed()?curLevel():game.mode==='tutorial'?CRITICS[0]:TASTERS[game.taster];
+  closePlating(true);const P=game.plating,ps=P&&P.done&&items.some(b=>!isDrink(b))?platingScore():null;
   const r=judge(c,items,{loose,plating:ps});if(auto)r.quote=items.length?'Die Zeit ist um! '+r.quote:'Die Zeit ist um und der Teller ist leer.';
   for(const b of items)discover(dishName(b));
   for(const b of items){for(let i=0;i<4;i++)puff(b.cx+rnd(-b.R,b.R),b.cy,'steam');remove(b)}
@@ -2721,7 +2728,7 @@ function showResult(c,r){
   scr('resDish').textContent='Serviert: '+(r.dish||'nichts');
   const sc=scr('resScore');let v=0;const tgt=r.score;const tick=()=>{v=Math.min(tgt,v+Math.max(1,Math.round(tgt/30)));sc.innerHTML=`${v}<small> / 100</small>`;if(v<tgt)requestAnimationFrame(tick)};tick();
   scr('resStars').innerHTML=`${'★'.repeat(r.stars)}<span class="off">${'★'.repeat(3-r.stars)}</span>`;
-  scr('resCrit').innerHTML=r.res.map(x=>`<div><span>${x.label}</span><i><u style="width:${Math.round(x.s*100)}%;background:${x.s>.75?'#3f8f3a':x.s>.45?'#e0a020':'#d8341f'}"></u></i><em>${x.note}</em></div>`).join('');
+  scr('resCrit').innerHTML=r.res.map(x=>`<div><span>${x.label}</span><i><u style="width:${Math.round(x.s*100)}%;background:${x.t==='info'?'#5a8aa0':x.s>.75?'#3f8f3a':x.s>.45?'#e0a020':'#d8341f'}"></u></i><em>${x.note}</em></div>`).join('');
   const btns=scr('resBtns');btns.innerHTML='';
   const mk=(t,cls,fn)=>{const b=document.createElement('button');b.className='cta '+cls;b.textContent=t;b.addEventListener('click',fn);btns.append(b)};
   if(story){

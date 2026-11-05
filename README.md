@@ -8,7 +8,7 @@ Ein Koch- und Physikspiel fürs Handy im Querformat. Alles ist weich und wabbeli
 - **Story:** 100 Gäste in 10 Kapiteln (Omas Küche, Zuckerbäckerei, Grillabend, Gartenfrisch, Feuer & Säure, Backstube, Am Meer, Imbissbude, Eiszeit, Die große Gala). Jeder Gast hat eigene Wünsche, gibt dir nur bestimmte Zutaten und lässt dir begrenzt Zeit. Am Ende jedes Kapitels wartet ein Boss-Kritiker. Bewertet wird nach Geschmack, Garzustand, Temperatur, Portion, Vielfalt, Feinheit, Sauberkeit und mehr, mit bis zu 3 Sternen. 1 Stern schaltet den nächsten Gast frei.
 - **Tagesgast:** Jeden Tag ein neuer Gast, für alle gleich. Dein Bestwert des Tages, die letzten 7 Tage und deine Serie werden gespeichert (nur auf deinem Gerät).
 - **Rezeptbuch:** 32 Gerichte zum Entdecken, zum Beispiel Waffel, Toast, Schnitzel, Pommes, Multivitaminsaft oder Kakao. Unentdeckte zeigen einen Hinweis, wie man sie kocht.
-- **Sandkasten:** 230 Zutaten in 11 Kategorien (inklusive Vorrat wie Mehl, Milch, Zucker, Salz, Öl und Soßen), alles unbegrenzt. Du kannst jeden Kritiker probieren lassen.
+- **Sandkasten:** 230 Zutaten in 11 Kategorien (inklusive Vorrat wie Mehl, Milch, Zucker, Salz, Öl und Soßen), alles unbegrenzt. Standardmäßig probiert Toni Testesser, der einfach alles mag und dir das Geschmacksprofil (süß, herzhaft, sauer, scharf, cremig) und die Temperatur anzeigt. So kannst du neue Sachen ausprobieren. Tipp auf sein Gesicht, um zu einem strengen Kritiker zu wechseln.
 
 ## Die Küche
 
