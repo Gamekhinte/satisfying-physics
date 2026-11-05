@@ -64,6 +64,7 @@ button,select{font-family:var(--ui)}
 .tabs{display:flex;gap:2px;background:rgba(28,23,18,.92);border:1px solid var(--line);border-radius:10px;padding:2px;margin-right:auto}
 .tab{appearance:none;border:0;background:transparent;color:var(--muted);font:700 11px var(--ui);padding:6px 9px;border-radius:8px;cursor:pointer;letter-spacing:.02em}
 .tab[aria-current="true"]{background:var(--fg);color:var(--ink)}
+.tabs.drop .tab:not([aria-current="true"]){background:rgba(255,207,58,.3);color:var(--fg)}
 .meter{background:rgba(28,23,18,.92);border:1px solid var(--line);border-radius:10px;padding:5px 9px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;gap:6px;align-items:center}
 .meter b{color:var(--fg);font-variant-numeric:tabular-nums;font-size:12px;letter-spacing:0;min-width:3.2ch;text-align:right}
 .bar{width:26px;height:5px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}
@@ -607,6 +608,7 @@ for(const line of ITEMS.split('\n')){
   M[key]=m;
 }
 const FOODS=Object.keys(M).filter(k=>M[k].cat&&M[k].cat!=='none'&&CATNAME[M[k].cat]);
+for(const k in M){const m=M[k];m.fric=Math.min(m.fric,.55);m.bounce=Math.min(m.bounce*.5,.18);if(m.k>=.12&&m.k<.9)m.k=Math.min(.9,m.k*1.25)}
 
 /* ================= world ================= */
 let bodies=[],drops=[],drips=[],puffs=[],fx=[],segs=[],uid=0,frame=0,shake=0,mess=0;
@@ -618,6 +620,7 @@ const freezer={kind:'freezer',open:false,T:-18};
 const grill={lvl:0,T:ROOM},fryer={lvl:0,T:ROOM};
 const BOXES=[oven,micro,freezer];
 const bowl={},plate={};let mixT=0;
+const BREAD=[{k:0,name:'Mehl',col:'#fbf6ec'},{k:1,name:'Ei',col:'#ffc83a'},{k:2,name:'Brösel',col:'#d8a050'}];
 
 function P(x,y,vx=0,vy=0){return{x,y,px:x-vx,py:y-vy,cut:false,stem:false,s1:Math.random(),s2:Math.random()}}
 function polyArea(p){let a=0;for(let i=0,n=p.length;i<n;i++){const q=p[i],r=p[(i+1)%n];a+=q.x*r.y-r.x*q.y}return a/2}
@@ -639,10 +642,10 @@ function initBody(type,pts,o){
   const A=polyArea(pts),s=o.state||{},mm=o.mat||M[type];
   return{type,m:mm,pts,rest,L,restArea:A,R:Math.sqrt(A/Math.PI),rot:0,cx,cy,health:s.health??100,imp:0,inv:o.inv||0,
     chunk:!!o.chunk,shard:false,tex:o.tex,texOff:o.texOff||{x:0,y:0},texRot0:o.texRot0||0,hits:[],id:++uid,
-    T:s.T??(mm.startT??ROOM),cook:s.cook||0,fried:s.fried||0,grill:s.grill||0,melt:s.melt||0,grow:s.grow||1,popAt:rnd(0,40),
+    T:s.T??(mm.startT??ROOM),cook:s.cook||0,fried:s.fried||0,grill:s.grill||0,bread:s.bread||0,melt:s.melt||0,grow:s.grow||1,popAt:rnd(0,40),
     minX:0,maxX:0,minY:0,maxY:0,sndCd:0,ke:mm.k,ee:mm.edge,pl:mm.plastic};
 }
-function stateOf(b){return{T:b.T,cook:b.cook,melt:b.melt,grow:b.grow,fried:b.fried,grill:b.grill,health:Math.max(b.health,40)}}
+function stateOf(b){return{T:b.T,cook:b.cook,melt:b.melt,grow:b.grow,fried:b.fried,grill:b.grill,bread:b.bread,health:Math.max(b.health,40)}}
 function add(b){bodies.push(b);trimBodies();return b}
 function trimBodies(){
   while(bodies.length>60){const i=bodies.findIndex(b=>b.chunk||b.shard||b.type==='popcorn'||b.type==='yolk');if(i<0)break;burst(bodies[i],true)}
@@ -675,10 +678,11 @@ function layout(){
   const fw=clamp(vw*.22,150,230),fh=Math.min(fw*.66,counterTop-top-60);
   Object.assign(freezer,{x:sx(3,.46),y:top+24,w:fw,h:fh});
   freezer.pw=fw*.22;freezer.ix0=freezer.x+8;freezer.ix1=freezer.x+fw-freezer.pw-4;freezer.iy0=freezer.y+8;freezer.iy1=freezer.y+fh-10;
+  {const dw=clamp(vw*.11,60,96);[.6,.74,.88].forEach((f,i)=>{const d=BREAD[i];d.w=dw;d.cx=sx(3,f);d.x0=d.cx-dw/2;d.x1=d.cx+dw/2;d.y=floorY-6})}
   // 4: serving
   plate.w=clamp(vw*.3,140,240);plate.cx=sx(4,.5);plate.x0=plate.cx-plate.w/2;plate.x1=plate.cx+plate.w/2;plate.y=floorY-7;
   LY.critic={x:plate.cx,size:Math.min(counterTop-top-6,vw*.34,230)};
-  LY.drop=[(LY.board.x0+LY.board.x1)/2,pan.cx,sx(2,.55),sx(3,.6),sx(4,.18)];
+  LY.drop=[(LY.board.x0+LY.board.x1)/2,pan.cx,sx(2,.55),sx(3,.465),sx(4,.18)];
   for(const o of[pan,pot,grill,fryer,bowl])o.kx=o.cx;
   buildSegs();
 }
@@ -697,6 +701,7 @@ function buildSegs(){
     if(b.kind!=='oven')seg(b.ix1,b.iy0,b.ix1,b.iy1,3,null,true);else seg(b.ix1,b.iy0,b.ix1,b.iy1,3,()=>!b.open,true);
   }
   {const n=9;let px=null,py=null;for(let i=0;i<=n;i++){const th=i/n*Math.PI,x=bowl.cx+bowl.w/2*Math.cos(th),y=bowl.rim+bowl.h*Math.sin(th);if(px!==null)seg(px,py,x,y,3);px=x;py=y}}
+  for(const d of BREAD){seg(d.x0+6,d.y,d.x1-6,d.y,3);seg(d.x0-2,d.y-10,d.x0+6,d.y,3);seg(d.x1-6,d.y,d.x1+2,d.y-10,3)}
   seg(plate.x0+12,plate.y,plate.x1-12,plate.y,3);seg(plate.x0-4,plate.y-13,plate.x0+12,plate.y,3);seg(plate.x1-12,plate.y,plate.x1+4,plate.y-13,3);
 }
 function inBox(b,x,y){return x>b.ix0&&x<b.ix1&&y>b.iy0-4&&y<b.iy1+2}
@@ -708,7 +713,8 @@ function inPlate(b){return b.cx>plate.x0&&b.cx<plate.x1&&b.cy>plate.y-170&&b.cy<
 function where(b){const o=boxOf(b);if(o)return o.kind;if(inPot(b))return'pot';if(inPan(b))return'pan';
   if(b.cx>grill.x0&&b.cx<grill.x1&&b.cy>grill.y-70&&b.cy<grill.y+2)return'grill';
   if(b.cx>fryer.x0&&b.cx<fryer.x1&&b.cy>fryer.y-fryer.h-10&&b.cy<fryer.y+2)return'fryer';
-  if(inBowl(b))return'bowl';if(inPlate(b))return'plate';return null}
+  if(dishOf(b))return'dish';if(inBowl(b))return'bowl';if(inPlate(b))return'plate';return null}
+function dishOf(b){for(const d of BREAD)if(b.cx>d.x0&&b.cx<d.x1&&b.cy>d.y-60&&b.cy<d.y+3)return d;return null}
 /* ================= physics ================= */
 function shapeMatch(b,k,first){
   const p=b.pts,q=b.rest,n=p.length;let cx=0,cy=0;
@@ -744,7 +750,7 @@ function bounds(b,first){
 function segHit(b,first){
   const m=b.m;
   for(const s of segs){
-    if(s.on&&!s.on())continue;if(s.box&&b===ptr.grab&&!boxOf(b))continue;
+    if(s.on&&!s.on())continue;if(s.box&&(b===ptr.grab||b.carried)&&!boxOf(b))continue;
     const mnx=Math.min(s.ax,s.bx)-s.r,mxx=Math.max(s.ax,s.bx)+s.r,mny=Math.min(s.ay,s.by)-s.r,mxy=Math.max(s.ay,s.by)+s.r;
     if(b.maxX<mnx-20||b.minX>mxx+20||b.maxY<mny-20||b.minY>mxy+20)continue;
     const ex=s.bx-s.ax,ey=s.by-s.ay,l2=ex*ex+ey*ey,L=Math.sqrt(l2);
@@ -782,7 +788,7 @@ function pushPoints(a,b,first){
     if(first){const rv=Math.hypot((p.x-p.px)-(e0.x-e0.px),(p.y-p.py)-(e0.y-e0.py))*.75;if(rv>a.imp)a.imp=rv;if(rv>b.imp)b.imp=rv}
     p.x+=dx*wa;p.y+=dy*wa;
     e0.x-=dx*wb*(1-bt);e0.y-=dy*wb*(1-bt);e1.x-=dx*wb*bt;e1.y-=dy*wb*bt;
-    const fx=(p.x-p.px)*.05,fy=(p.y-p.py)*.05;p.px+=fx;p.py+=fy;
+    const fx=(p.x-p.px)*.12,fy=(p.y-p.py)*.12;p.px+=fx;p.py+=fy;
     if(first){const dT=(b.T-a.T)*.004;a.T+=dT;b.T-=dT}
   }
 }
@@ -796,7 +802,7 @@ function heatSource(b){
   if(w==='pan')return[pan.T,1];
   if(w==='pot')return[pot.T,.9];
   if(w==='grill')return[grill.T,1.1];
-  if(w==='fryer')return b.cy>fryer.oil-b.R*.4?[fryer.T,1.7]:[lerp(ROOM,fryer.T,.3),.4];
+  if(w==='fryer')return b.maxY>fryer.oil+b.R*.5?[fryer.T,1.7]:[lerp(ROOM,fryer.T,.3),.4];
   if(w==='oven')return oven.open?[lerp(ROOM,oven.T,.4),.3]:[oven.T,.65];
   if(w==='micro')return(!micro.open&&micro.lvl)?[b.m.pop?215:130,1.8]:[micro.T,.3];
   if(w==='freezer')return freezer.open?[lerp(ROOM,-20,.4),.3]:[-20,1.4];
@@ -810,7 +816,7 @@ function cookStep(b){
   if(m.melt){if(b.T>m.melt.T)b.melt=Math.min(1,b.melt+(b.T-m.melt.T)*.00035);else if(b.T<m.melt.T-6)b.melt=Math.max(0,b.melt-.0015)}
   if(m.rise&&b.T>m.rise.T&&b.grow<m.rise.max){const f=1.0012;b.grow*=f;for(const r of b.rest){r.x*=f;r.y*=f}for(let i=0;i<b.L.length;i++)b.L[i]*=f;b.restArea*=f*f;b.R*=f}
   const wz=where(b);
-  if(wz==='fryer'&&fryer.T>140&&b.cy>fryer.oil-b.R*.4)b.fried=Math.min(1.5,(b.fried||0)+.0024);
+  if(wz==='fryer'&&fryer.T>140&&b.maxY>fryer.oil+b.R*.5)b.fried=Math.min(1.5,(b.fried||0)+.0024);
   if(wz==='grill'&&grill.T>140)b.grill=Math.min(1,(b.grill||0)+.005);
   let k=lerp(m.k,.008,b.melt),e=lerp(m.edge,.05,b.melt),pl=b.melt>.15?lerp(m.plastic,.06,b.melt):m.plastic;
   if(b.T<-3){k=Math.max(k,.85);e=Math.max(e,.9);pl=0}
@@ -863,33 +869,50 @@ const KNOBS=()=>[[pan,'Pfanne',3],[pot,'Topf',3],[grill,'Grill',3],[fryer,'Fritt
 function stationIdx(){return Math.round(camT/LY.vw)}
 function goStation(i){camT=clamp(Math.round(i),0,STN.length-1)*LY.vw}
 function blocked(b){const o=boxOf(b);return o&&!o.open}
+const sel=new Set();let tabRects=[];
+function ctr(b){let x=0,y=0;for(const p of b.pts){x+=p.x;y+=p.y}return{x:x/b.pts.length,y:y/b.pts.length}}
+function carried(){const out=[];if(ptr.grab){out.push(ptr.grab);if(sel.has(ptr.grab))for(const b of sel)if(b!==ptr.grab&&bodies.includes(b))out.push(b)}return out}
+function jumpCarry(i){const old=camT;goStation(i);const d=camT-old;if(!d)return;camX=camT;
+  for(const b of carried()){for(const p of b.pts){p.x+=d;p.px+=d}b._lc=ctr(b)}sfx.click();buzz(10)}
 cv.addEventListener('pointerdown',e=>{
   audioInit();
   const[x,y,sx]=local(e);
   if(controls(x,y))return;
-  cv.setPointerCapture(e.pointerId);ptr.down=true;ptr.x=ptr.lx=x;ptr.y=ptr.ly=y;ptr.sx=ptr.sx0=sx;ptr.cam0=camT;ptr.pan=false;ptr.canPan=false;ptr.trail=[{x,y,t:performance.now()}];
-  for(const b of bodies)b.hits=[];ptr.combo=0;
+  cv.setPointerCapture(e.pointerId);clearTimeout(ptr.lp);
+  Object.assign(ptr,{down:true,x,y,lx:x,ly:y,sx,sx0:sx,t0:performance.now(),cam0:camT,pan:false,canPan:false,lasso:null,tapBody:null,trail:[{x,y,t:performance.now()}],combo:0});
+  for(const b of bodies)b.hits=[];
   if(tool==='hand'){
     let pick=null;
     for(let i=bodies.length-1;i>=0;i--){const b=bodies[i];if(!blocked(b)&&inside(x,y,b.pts)){pick=b;break}}
     if(!pick){let bd=30*30;for(const b of bodies){if(blocked(b))continue;for(const p of b.pts){const d=(p.x-x)**2+(p.y-y)**2;if(d<bd){bd=d;pick=b}}}}
     if(pick){let bi=0,bd=1e18;pick.pts.forEach((p,i)=>{const d=(p.x-x)**2+(p.y-y)**2;if(d<bd){bd=d;bi=i}});
-      ptr.grab=pick;ptr.gi=bi;bodies.splice(bodies.indexOf(pick),1);bodies.push(pick);sfx.squish(.12);game.ev.grab=1}
-    else ptr.canPan=true;
+      ptr.grab=pick;ptr.gi=bi;ptr.tapBody=pick;bodies.splice(bodies.indexOf(pick),1);bodies.push(pick);sfx.squish(.12);game.ev.grab=1;
+      for(const b of carried()){b.carried=true;b._lc=ctr(b)}tabRects=[...tabsEl.children].map(t=>t.getBoundingClientRect());
+      if(!game.tabHint&&game.mode!=='tutorial'){game.tabHint=1;setTimeout(()=>{if(ptr.grab)toast('Tipp: Zieh das Essen oben auf einen Tab, dann springst du direkt dorthin.',3500)},600)}}
+    else{ptr.canPan=true;ptr.lp=setTimeout(()=>{if(ptr.down&&!ptr.pan&&!ptr.grab&&Math.abs(ptr.sx-ptr.sx0)<10){ptr.canPan=false;ptr.lasso={x0:ptr.x,y0:ptr.y};buzz(15);sfx.click()}},380)}
   }else if(tool==='mallet')smash(x,y);
 });
 cv.addEventListener('pointermove',e=>{
   if(!ptr.down)return;
   const evs=e.getCoalescedEvents?e.getCoalescedEvents():[];
   for(const ev of(evs.length?evs:[e])){const[x,y,sx]=local(ev);ptr.sx=sx;
-    if(ptr.canPan){const dx=sx-ptr.sx0;if(Math.abs(dx)>10)ptr.pan=true;if(ptr.pan){camT=clamp(ptr.cam0-dx,0,LY.maxCam);camX=camT;continue}}
-    ptr.lx=ptr.x;ptr.ly=ptr.y;ptr.x=x;ptr.y=y;
-    if(tool==='knife'){ptr.trail.push({x,y,t:performance.now()});knife(ptr.lx,ptr.ly,x,y)}}
+    if(ptr.lasso){ptr.x=x;ptr.y=y;continue}
+    if(ptr.canPan){const dx=sx-ptr.sx0;if(Math.abs(dx)>10){ptr.pan=true;clearTimeout(ptr.lp)}if(ptr.pan){camT=clamp(ptr.cam0-dx,0,LY.maxCam);camX=camT;continue}}
+    if(ptr.grab)for(let i=0;i<tabRects.length;i++){const t=tabRects[i];if(ev.clientX>=t.left&&ev.clientX<=t.right&&ev.clientY>=t.top-8&&ev.clientY<=t.bottom+14&&i!==stationIdx()){jumpCarry(i);break}}
+    ptr.lx=ptr.x;ptr.ly=ptr.y;ptr.x=x+(camX-(x-sx));ptr.x=sx+camX;ptr.y=y;
+    if(tool==='knife'){ptr.trail.push({x:ptr.x,y,t:performance.now()});knife(ptr.lx,ptr.ly,ptr.x,y)}}
 });
 function up(){
+  clearTimeout(ptr.lp);
   if(ptr.combo>=3){fx.push({k:'text',x:clamp(ptr.cx,camX+LY.side+70,camX+W-70),y:Math.max(110,ptr.cy-50),t:0,life:70,txt:`${ptr.combo}er-Schnitt!`});sfx.combo(ptr.combo);buzz(40)}
-  if(ptr.pan){const dx=ptr.sx-ptr.sx0;let i=Math.round(ptr.cam0/LY.vw);if(dx<-45)i++;else if(dx>45)i--;goStation(i)}
-  else if(ptr.grab){goStation(camT/LY.vw);const b=ptr.grab,[vx,vy]=bodyVel(b),v=Math.hypot(vx,vy),cap=14;if(v>cap){const k=cap/v;for(const p of b.pts){p.px=p.x-(p.x-p.px)*k;p.py=p.y-(p.y-p.py)*k}}}
+  const quick=performance.now()-ptr.t0<260&&Math.abs(ptr.sx-ptr.sx0)<8&&!ptr.pan&&!ptr.lasso;
+  if(ptr.lasso){const l=ptr.lasso,x0=Math.min(l.x0,ptr.x),x1=Math.max(l.x0,ptr.x),y0=Math.min(l.y0,ptr.y),y1=Math.max(l.y0,ptr.y);sel.clear();
+    for(const b of bodies)if(!blocked(b)&&b.cx>x0&&b.cx<x1&&b.cy>y0&&b.cy<y1)sel.add(b);
+    toast(sel.size?`${sel.size} ausgewählt. Zieh eins davon, alle kommen mit.`:'Nichts ausgewählt. Zieh den Rahmen um das Essen.');ptr.lasso=null}
+  else if(ptr.pan){const dx=ptr.sx-ptr.sx0;let i=Math.round(ptr.cam0/LY.vw);if(dx<-45)i++;else if(dx>45)i--;goStation(i)}
+  else if(ptr.grab){goStation(camT/LY.vw);for(const b of carried()){const[vx,vy]=bodyVel(b),v=Math.hypot(vx,vy),cap=14;if(v>cap){const k=cap/v;for(const p of b.pts){p.px=p.x-(p.x-p.px)*k;p.py=p.y-(p.y-p.py)*k}}}}
+  if(tool==='hand'&&quick){if(ptr.tapBody){sel.has(ptr.tapBody)?sel.delete(ptr.tapBody):sel.add(ptr.tapBody)}else sel.clear()}
+  for(const b of bodies)b.carried=false;
   ptr.combo=0;ptr.down=false;ptr.grab=null;ptr.pan=false;ptr.canPan=false;for(const b of bodies)b.hits=[]}
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
 
@@ -986,6 +1009,7 @@ function landY(x){
   if(x>fryer.x0+4&&x<fryer.x1-4)return fryer.y-2;
   if(x>bowl.x0+6&&x<bowl.x1-6){const u=(x-bowl.cx)/(bowl.w/2);return bowl.rim+bowl.h*Math.sqrt(Math.max(0,1-u*u))-2}
   if(x>plate.x0+6&&x<plate.x1-6)return plate.y-1;
+  for(const d of BREAD)if(x>d.x0+4&&x<d.x1-4)return d.y-1;
   return floorY+rnd(-14,20);
 }
 function puff(x,y,kind){if(puffs.length>220)return;puffs.push({x,y,vx:rnd(-.25,.25),vy:rnd(-1.1,-.5),r:rnd(4,8),life:0,max:rnd(50,90),kind})}
@@ -1068,15 +1092,18 @@ function step(){
   frame++;
   for(const o of[pan,pot])o.T+=(LEVELS[o.lvl]-o.T)*.012;
   grill.T+=([ROOM,210,290][grill.lvl]-grill.T)*.012;fryer.T+=([ROOM,180][fryer.lvl]-fryer.T)*.006;
-  if(ptr.down&&ptr.grab&&LY.vw){if(ptr.sx<LY.side+40)camT=Math.max(0,camT-8);else if(ptr.sx>W-40)camT=Math.min(LY.maxCam,camT+8)}
+  if(ptr.down&&ptr.grab&&LY.vw){if(ptr.sx<LY.side+40)camT=Math.max(0,camT-14);else if(ptr.sx>W-40)camT=Math.min(LY.maxCam,camT+14)}
   const ot=[ROOM,180,250][oven.lvl];oven.T+=((oven.open?lerp(ROOM,ot,.45):ot)-oven.T)*.006;
   if(micro.lvl){micro.T=lerp(micro.T,45,.01);if(--micro.timer<=0||micro.open){micro.lvl=0;if(!micro.open){sfx.ding();toast('Pling! Mikrowelle fertig.')}}}else micro.T=lerp(micro.T,ROOM,.01);
   if(mixT>0){mixT++;const cx=bowl.cx,cy=bowl.rim+bowl.h*.55;
     for(const b of bodies){if(where(b)!=='bowl')continue;for(const p of b.pts){const dx=p.x-cx,dy=p.y-cy;p.x+=-dy*.012+rnd(-.35,.35)-dx*.004;p.y+=dx*.004+rnd(-.35,.35)+.15;p.px+=(p.x-p.px)*.25}b.imp=0;b.health=Math.max(b.health,60)}
     if(mixT>80){mixT=0;mergeBowl()}}
   for(const b of bodies.slice())cookStep(b);
-  for(const b of bodies)for(const p of b.pts){const vx=(p.x-p.px)*.996,vy=(p.y-p.py)*.996;p.px=p.x;p.py=p.y;p.x+=vx;p.y+=vy+G}
-  for(const b of bodies){if(where(b)!=='fryer')continue;let sub=0;for(const p of b.pts)if(p.y>fryer.oil){sub++;p.y-=G*1.45*b.m.dens/(b.m.dens>1?1.3:1);p.px+=(p.x-p.px)*.12;p.py+=(p.y-p.py)*.12}
+  for(const b of bodies){const d=dishOf(b);if(!d){b.coatT=0;b.coatD=-1;continue}if(b.coatD!==d.k){b.coatD=d.k;b.coatT=0}b.coatT++;
+    if(b.coatT===14){const lv=b.bread||0;if(lv===d.k){b.bread=lv+1;sfx.squish(.2);puff(b.cx,b.minY,'steam');if(b.bread===3)toast('Paniert! Jetzt ab in die Fritteuse.')}
+      else if(lv<3&&d.k>lv&&!game.breadHint){game.breadHint=1;toast('Erst Mehl, dann Ei, dann Brösel.')}}}
+  for(const b of bodies)for(const p of b.pts){const vx=(p.x-p.px)*.993,vy=(p.y-p.py)*.993;p.px=p.x;p.py=p.y;p.x+=vx;p.y+=vy+G}
+  for(const b of bodies){if(where(b)!=='fryer')continue;let sub=0;for(const p of b.pts)if(p.y>fryer.oil){sub++;p.y-=G*(b.m.dens<.6?1.3:1.1);p.px+=(p.x-p.px)*.12;p.py+=(p.y-p.py)*.12}
     if(sub&&fryer.T>140&&Math.random()<.06)drop(rnd(fryer.x0+8,fryer.x1-8),fryer.oil-2,rnd(-2,2),rnd(-5,-2),'#f0c050',rnd(1,2),.6)}
   for(let it=0;it<4;it++){
     const first=it===0;
@@ -1087,10 +1114,12 @@ function step(){
       if(a.maxX<c.minX||c.maxX<a.minX||a.maxY<c.minY||c.maxY<a.minY)continue;pushPoints(a,c,first);pushPoints(c,a,first)}
     for(const b of bodies){aabb(b);segHit(b,first);bounds(b,first)}
   }
+  if(ptr.grab&&ptr.down&&sel.has(ptr.grab)){const g=ptr.grab,c=ctr(g);if(g._lc){const dx=c.x-g._lc.x,dy=c.y-g._lc.y;
+    for(const b of sel){if(b===g||!bodies.includes(b))continue;for(const p of b.pts){p.x+=dx;p.y+=dy;p.px+=dx*.92;p.py+=dy*.92}}}g._lc=c}
   for(const b of bodies.slice()){
     const m=b.m;if(b.sndCd>0)b.sndCd--;
     if(b.inv>0){b.inv--;b.imp=0;continue}
-    if(b===ptr.grab){b.imp=0;b.health=Math.max(b.health,30)}
+    if(b===ptr.grab||b.carried){b.imp=0;b.health=Math.max(b.health,30)}
     if(b.imp>3.5&&!b.sndCd){(b.type==='egg'||b.type==='kernel'||b.shard?sfx.bonk:sfx.squish)(clamp(b.imp/25,.05,.6)*(b.type==='kernel'?.3:1));b.sndCd=8}
     let th=b.chunk?m.thresh*.85:m.thresh;if(b.type==='egg'&&b.cook>.5)th*=3;
     if(b.imp>th)b.health-=(b.imp-th)*m.frag*(b.chunk?1.3:1);
@@ -1266,6 +1295,11 @@ function drawBody(b){
   if(b.type==='banana'&&!b.chunk){bananaTex(b);X.globalAlpha=baseA}
   if(b.fried>.05){X.globalAlpha=Math.min(.85,b.fried*.85);X.fillStyle=b.fried>1.3?'#7a400e':'#d8962e';X.fillRect(b.minX-3,b.minY-3,b.maxX-b.minX+6,b.maxY-b.minY+6);
     X.globalAlpha=Math.min(.7,b.fried*.6);X.fillStyle='#ffd27a';for(let i=0;i<b.tex.dots.length;i+=3){const d=b.tex.dots[i];X.beginPath();X.arc(cx+d.x*.6,cy+d.y*.6,1+d.s*1.6,0,TAU);X.fill()}X.globalAlpha=baseA}
+  if(b.bread){const bx0=b.minX-3,by0=b.minY-3,bw=b.maxX-b.minX+6,bh=b.maxY-b.minY+6,d=b.tex.dots;
+    if(b.bread>=3){X.globalAlpha=.82;X.fillStyle=b.fried>.3?mix('#d89a3a','#8a4a12',clamp(b.fried-.6,0,1)):'#e2b468';X.fillRect(bx0,by0,bw,bh);
+      for(let i=0;i<d.length;i++){const q=d[i];X.globalAlpha=.7;X.fillStyle=i%3?'#a8682a':'#fff0c0';X.fillRect(cx+q.x*.9,cy+q.y*.9,1.6+q.s*1.4,1.6+q.s)}}
+    else{if(b.bread>=2){X.globalAlpha=.28;X.fillStyle='#ffc83a';X.fillRect(bx0,by0,bw,bh)}X.globalAlpha=.55;X.fillStyle='#ffffff';for(let i=0;i<d.length;i+=2){const q=d[i];X.fillRect(cx+q.x*.85,cy+q.y*.85,1.4,1.4)}}
+    X.globalAlpha=baseA}
   if(b.grill>.1){X.save();X.translate(cx,cy);X.rotate(.55);X.globalAlpha=Math.min(.75,b.grill);X.strokeStyle='#2a1004';X.lineWidth=Math.max(2,R*.12);for(let k=-4;k<=4;k++){X.beginPath();X.moveTo(k*R*.38,-R*2);X.lineTo(k*R*.38,R*2);X.stroke()}X.restore();X.globalAlpha=baseA}
   if(b.T<-1){X.globalAlpha=clamp(-b.T/25,0,.45);X.fillStyle='#e6f4ff';X.fillRect(b.minX-3,b.minY-3,b.maxX-b.minX+6,b.maxY-b.minY+6);X.globalAlpha=clamp(-b.T/15,0,.9);X.fillStyle='#ffffff';
     for(let i=0;i<b.tex.dots.length;i+=4){const d=b.tex.dots[i];X.fillRect(cx+d.x*.8,cy+d.y*.8,1.5,1.5)}X.globalAlpha=baseA}
@@ -1611,6 +1645,15 @@ function drawCriticBust(){
     X.fillStyle='#fbf3e4';X.beginPath();X.moveTo(x,y+20);X.lineTo(x+6,y);X.lineTo(x+w-6,y);X.lineTo(x+w,y+20);X.closePath();X.fill();X.strokeStyle='rgba(60,40,20,.4)';X.stroke();
     X.fillStyle='#2a1208';X.textAlign='center';X.textBaseline='middle';X.fillText(game.bustName,x+w/2,y+11)}
 }
+function drawBreading(){
+  for(const d of BREAD){const y=d.y;
+    X.fillStyle='rgba(60,30,10,.25)';X.beginPath();X.ellipse(d.cx,floorY+2,d.w*.5,5,0,0,TAU);X.fill();
+    X.fillStyle='#e8e2d6';X.beginPath();X.ellipse(d.cx,y+3,d.w/2+3,8,0,0,TAU);X.fill();
+    X.fillStyle='#ffffff';X.beginPath();X.ellipse(d.cx,y,d.w/2+2,7,0,0,TAU);X.fill();
+    X.fillStyle=d.col;X.beginPath();X.ellipse(d.cx,y-1,d.w/2-4,5,0,0,TAU);X.fill();
+    if(d.k===1){X.fillStyle='rgba(255,255,255,.55)';X.beginPath();X.ellipse(d.cx-d.w*.15,y-2.5,d.w*.12,1.6,0,0,TAU);X.fill()}
+    else{X.fillStyle=d.k?'#a8682a':'#e6dccb';for(let i=0;i<14;i++)X.fillRect(d.cx-d.w/2+6+((i*37)%(d.w-12)),y-3+((i*13)%5),1.6,1.6)}
+    X.font=`700 8px ${UIFONT}`;X.textAlign='center';X.textBaseline='middle';X.fillStyle='rgba(90,60,30,.6)';X.fillText(`${d.k+1}. ${d.name.toUpperCase()}`,d.cx,floorY+16)}}
 function drawKnob(o,name,n){const x=o.kx,y=LY.ky-3,r=13;
   X.fillStyle='rgba(0,0,0,.4)';X.beginPath();X.arc(x+1,y+2,r+1,0,TAU);X.fill();
   X.fillStyle=steel(X,x-r,y-r,x+r,y+r);X.beginPath();X.arc(x,y,r,0,TAU);X.fill();
@@ -1677,7 +1720,7 @@ function render(){
   ctx.restore();
   ctx.drawImage(st,camX*BD,0,W*BD,H*BD,0,0,W,H);
   ctx.save();ctx.translate(-camX,0);
-  const v0=camX-80,v1=camX+W+80,groups={oven:[],micro:[],freezer:[],pot:[],pan:[],grill:[],fryer:[],bowl:[],plate:[],out:[]};
+  const v0=camX-80,v1=camX+W+80,groups={dish:[],oven:[],micro:[],freezer:[],pot:[],pan:[],grill:[],fryer:[],bowl:[],plate:[],out:[]};
   for(const b of bodies){aabb(b);if(b.maxX<v0||b.minX>v1)continue;groups[where(b)||'out'].push(b)}
   for(const b of groups.oven)drawBody(b);drawOvenFront();
   for(const b of groups.micro)drawBody(b);drawMicroFront();
@@ -1689,12 +1732,16 @@ function render(){
   drawFryerBack();for(const b of groups.fryer)drawBody(b);drawFryerFront();
   drawBowlBack();for(const b of groups.bowl)drawBody(b);drawBowlFront();
   drawPlate();for(const b of groups.plate)drawBody(b);
+  drawBreading();for(const b of groups.dish)drawBody(b);
   for(const b of groups.out)drawBody(b);
+  if(sel.size){X.save();X.setLineDash([5,4]);X.strokeStyle='#ffcf3a';X.lineWidth=2.5;for(const b of[...sel]){if(!bodies.includes(b)){sel.delete(b);continue}X.beginPath();trace(b.pts);X.stroke()}X.restore()}
+  if(ptr.lasso){const l=ptr.lasso,x=Math.min(l.x0,ptr.x),y=Math.min(l.y0,ptr.y),w=Math.abs(ptr.x-l.x0),h=Math.abs(ptr.y-l.y0);X.save();X.setLineDash([6,5]);X.fillStyle='rgba(255,207,58,.14)';X.fillRect(x,y,w,h);X.strokeStyle='#ffcf3a';X.lineWidth=2;X.strokeRect(x,y,w,h);X.restore()}
   drawDrops();drawPuffs();drawKnobs();drawFx();if(tool==='knife')drawTrail();
   if(game.mark){const t=performance.now()/300;X.strokeStyle=`rgba(255,210,60,${.55+.35*Math.sin(t)})`;X.lineWidth=3;X.setLineDash([6,5]);X.beginPath();X.arc(game.mark.x,game.mark.y,game.mark.r+3*Math.sin(t),0,TAU);X.stroke();X.setLineDash([])}
   ctx.restore();
   const rg=ctx.createRadialGradient(W/2,H*.45,Math.min(W,H)*.45,W/2,H*.45,Math.max(W,H)*.8);rg.addColorStop(0,'rgba(0,0,0,0)');rg.addColorStop(1,'rgba(30,18,8,.35)');ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);
   if(stationIdx()!==game.lastStn){game.lastStn=stationIdx();updTabs()}
+  tabsEl.classList.toggle('drop',!!(ptr.down&&ptr.grab));
 }
 /* ================= audio ================= */
 let AC=null,NB=null,muted=false,sndBudget=0;
@@ -1833,7 +1880,7 @@ const CRITICS=[
   pantry:{salmon:1,trout:1,shrimp:3,lemon:2,potato:2,dill:2,sweetpotato:1},good:'Ahoi! Das schmeckt nach Meer.',ok:'Seefest, aber nicht mehr.',bad:'Das werfe ich den Möwen hin.'},
  {name:'Frieda Fritt',title:'Königin der Imbissbude',quote:'Knusprig muss es sein. Und heiß. Und viel.',
   look:{skin:'#f0c0a0',hair:'#ffd23a',style:'curly',lips:1,shirt:'#d8341f'},
-  wants:[{t:'fried',w:1.8},{t:'taste',w:1.2,want:{herzhaft:1},hate:{}},{t:'warm',w:1,v:55},{t:'portion',w:1,v:5}],
+  wants:[{t:'fried',w:1.6},{t:'breaded',w:1.2},{t:'taste',w:1.2,want:{herzhaft:1},hate:{}},{t:'warm',w:1,v:55},{t:'portion',w:1,v:5}],
   pantry:{potato:3,fishstick:2,chickenbreast:1,onion:2,cheddar:1,shrimp:2},good:'Knusper-Himmel! Noch eine Portion!',ok:'Geht so. Mehr Knusper!',bad:'Labberig. Pfui.'},
  {name:'Professor Frost',title:'Polarforscher und Eisfan',quote:'Unter null Grad schmeckt alles besser.',
   look:{skin:'#e8d4c8',hair:'#dfe8f0',style:'spiky',glasses:'round',mustache:'#dfe8f0',shirt:'#5a8aa0'},
@@ -1843,7 +1890,7 @@ const CRITICS=[
 CRITICS[6].pantry=Object.fromEntries(Object.entries(CRITICS[6].pantry).filter(([k,v])=>v&&M[k]));
 const LINES={taste:'Das schmeckt mir überhaupt nicht.',raw:'Das ist ja noch roh!',burnt:'Das schmeckt nach Holzkohle.',warm:'Kalt? Ernsthaft?',
   portion:'Davon wird ja keiner satt.',variety:'Etwas eintönig, oder?',fine:'Die Stücke sind viel zu grob.',clean:'Wie sieht denn die Küche aus?!',
-  mixed:'Ich wollte etwas Gemischtes.',baked:'Wo ist das Gebäck?',cold:'Das sollte doch kalt sein!',fried:'Wo ist das Knusprige?',grilled:'Ich schmecke keinen Grill.'};
+  mixed:'Ich wollte etwas Gemischtes.',baked:'Wo ist das Gebäck?',cold:'Das sollte doch kalt sein!',fried:'Wo ist das Knusprige?',breaded:'Wo ist die Panade?',grilled:'Ich schmecke keinen Grill.'};
 const CHAPTERS=[
  {name:'Omas Küche',cats:['gemuese','fleisch','milch','backen'],want:['herzhaft','cremig'],hate:['scharf'],extra:['warm','portion','done','variety'],boss:0,quotes:['Wie bei Muttern, bitte.','Ich hab Hunger wie ein Bär.','Schön deftig soll es sein.','Was Warmes für den Bauch!']},
  {name:'Zuckerbäckerei',cats:['suess','obst','beeren','milch'],want:['süß','cremig'],hate:['herzhaft','scharf'],extra:['mixed','portion','variety','fine'],boss:1,quotes:['Ich habe einen süßen Zahn.','Nachtisch zuerst!','Zucker ist mein Gemüse.']},
@@ -1852,7 +1899,7 @@ const CHAPTERS=[
  {name:'Feuer & Säure',cats:['gemuese','fleisch','obst','fisch'],want:['scharf','sauer'],hate:['süß'],extra:['warm','variety','done','mixed'],boss:4,quotes:['Mach mir Feuer!','Sauer macht lustig.','Ohne Chili ess ich nicht.']},
  {name:'Backstube',cats:['backen','suess','milch','obst','nuesse'],want:['süß','cremig'],hate:['scharf'],extra:['baked','mixed','warm','portion'],boss:5,quotes:['Riecht hier nach Kuchen?','Bitte frisch aus dem Ofen.','Ein Stück vom Glück.']},
  {name:'Am Meer',cats:['fisch','gemuese','pilze','obst'],want:['herzhaft','sauer'],hate:['süß'],extra:['done','grilled','fine','variety'],boss:7,quotes:['Was schwimmt, schmeckt.','Frisch vom Kutter!','Ein Hauch Meer, bitte.']},
- {name:'Imbissbude',cats:['gemuese','fleisch','fisch','backen','milch'],want:['herzhaft'],hate:[],extra:['fried','warm','portion','done'],boss:8,quotes:['Einmal mit alles!','Knusprig, bitte.','Schnell und heiß.']},
+ {name:'Imbissbude',cats:['gemuese','fleisch','fisch','backen','milch'],want:['herzhaft'],hate:[],extra:['fried','breaded','warm','portion','done'],boss:8,quotes:['Einmal mit alles!','Knusprig, bitte.','Schnell und heiß.']},
  {name:'Eiszeit',cats:['suess','beeren','obst','milch','nuesse'],want:['süß','cremig'],hate:['herzhaft'],extra:['cold','mixed','variety','fine'],boss:9,quotes:['Mir ist zu warm.','Eis, Eis, Baby.','Kalt wie mein Herz.']},
  {name:'Die große Gala',cats:null,want:['süß','herzhaft','cremig'],hate:[],extra:['done','warm','variety','portion','clean','fine','mixed'],boss:6,quotes:['Ich erwarte Großes.','Beeindrucken Sie mich.','Heute nur das Beste.']},
 ];
@@ -1860,7 +1907,7 @@ const FIRST=['Hilde','Klaus','Jens','Mia','Karl','Fritz','Lotte','Ben','Ida','Em
 const LAST=['Pfeffer','Krümel','Schmalz','Löffelholz','Senf','Kümmel','Butterbrot','Zwiebel','Knusper','Rübe','Gurkner','Salzmann','Brösel','Schnitzel','Hefe','Muskat','Petersil','Sahnig','Brezel','Quark','Zimt','Grieß','Möhre','Speckmann','Knödel','Paprika','Dill','Rahm','Kloß','Waffel'];
 const TITLES=['Stammgast','Food-Bloggerin','Hobbykoch','Lokalreporter','Feinschmeckerin','Nachbar von oben','Kantinenchef','Taxifahrer','Opernsängerin','Postbote','Zahnärztin','Rentner','Studentin','Bauarbeiter','Gärtnerin','Bürgermeister'];
 const HINT={warm:'warm servieren',portion:'eine große Portion',done:'alles gar, nichts roh',variety:'viele verschiedene Zutaten',fine:'klein schneiden',clean:'sauber arbeiten',
-  mixed:'in der Schüssel mixen',cold:'im Gefrierfach kühlen (Station Fritte)',fried:'in der Fritteuse frittieren',grilled:'auf dem Grill grillen (Station Herd)',baked:'Teig mixen und im Ofen backen'};
+  mixed:'in der Schüssel mixen',cold:'im Gefrierfach kühlen (Station Fritte)',fried:'in der Fritteuse frittieren',grilled:'auf dem Grill grillen (Station Herd)',breaded:'in Mehl, Ei und Bröseln panieren und frittieren',baked:'Teig mixen und im Ofen backen'};
 function randLook(R){const p=a=>a[Math.floor(R()*a.length)];
   const L={skin:p(['#f2c9a8','#e8b890','#c58a5c','#8a5a3a','#f6d3bc','#dc9a72','#6a4028']),hair:p(['#1c1a24','#3a2418','#8a3a1a','#e0c070','#a8a8b0','#ebe6dc','#c8502a','#ff8fb5','#2a4a8a']),
     style:p(['bun','curly','bald','bob','spiky','long','short']),shirt:p(['#7a5a9a','#c0392b','#2c3e70','#3f8f3a','#e8a020','#1a1a1a','#f4efe6','#5a8aa0'])};
@@ -1871,7 +1918,7 @@ function randLook(R){const p=a=>a[Math.floor(R()*a.length)];
 function mkWish(t,d,R){const w={t,w:1};
   if(t==='warm')w.v=Math.round(40+d*20);else if(t==='portion')w.v=Math.round(2+d*4+R());else if(t==='variety')w.v=2+Math.round(d*3);
   else if(t==='fine')w.v=4+Math.round(d*8);else if(t==='clean')w.v=Math.round(60-d*35);else if(t==='mixed')w.v=2+Math.round(d*2);else if(t==='cold')w.v=Math.round(10-d*14);
-  if(t==='done'||t==='baked'||t==='fried'||t==='grilled')w.w=1.3;return w}
+  if(t==='done'||t==='baked'||t==='fried'||t==='grilled'||t==='breaded')w.w=1.3;return w}
 const LVCACHE={};
 function level(idx){
   if(LVCACHE[idx])return LVCACHE[idx];
@@ -1900,12 +1947,12 @@ function level(idx){
 }
 function chipLines(c){const out=[];for(const w of c.wants){
   if(w.t==='taste'){const a=Object.keys(w.want);if(a.length)out.push([a.join(' · '),0]);const h=Object.keys(w.hate);if(h.length)out.push(['nicht '+h.join(', '),1])}
-  else out.push([{warm:`warm (${w.v}°+)`,portion:`satt (${w.v} Bissen)`,done:'gut gegart',variety:`${w.v}+ Zutaten`,fine:`${w.v}+ Stücke`,clean:`Sauerei < ${w.v}%`,mixed:`gemixt (${w.v}+)`,baked:'gebacken',cold:`kalt (≤ ${w.v}°)`,fried:'frittiert',grilled:'gegrillt'}[w.t],0])}
+  else out.push([{warm:`warm (${w.v}°+)`,portion:`satt (${w.v} Bissen)`,done:'gut gegart',variety:`${w.v}+ Zutaten`,fine:`${w.v}+ Stücke`,clean:`Sauerei < ${w.v}%`,mixed:`gemixt (${w.v}+)`,baked:'gebacken',cold:`kalt (≤ ${w.v}°)`,fried:'frittiert',grilled:'gegrillt',breaded:'paniert'}[w.t],0])}
   return out}
 function wishText(w){if(w.t==='taste')return'Geschmack: '+Object.keys(w.want).join(', ')+(Object.keys(w.hate).length?'. Bloß nicht '+Object.keys(w.hate).join(', '):'')+(w.balance?'. Ausgewogen':'');
   return{warm:`Warm serviert, mindestens ${w.v} °C`,portion:`Satt werden: ${w.v} Bissen`,done:'Alles gar: nichts roh, nichts verbrannt',variety:`Mindestens ${w.v} verschiedene Zutaten`,
     fine:`Fein geschnitten: ${w.v}+ Stücke`,clean:`Saubere Küche: Sauerei unter ${w.v} %`,mixed:`Etwas Gemixtes aus ${w.v}+ Zutaten`,baked:'Etwas Gebackenes aus dem Ofen',
-    cold:`Kalt serviert, höchstens ${w.v} °C`,fried:'Etwas Frittiertes',grilled:'Etwas vom Grill'}[w.t]}
+    cold:`Kalt serviert, höchstens ${w.v} °C`,fried:'Etwas Frittiertes',grilled:'Etwas vom Grill',breaded:'Etwas Paniertes, knusprig frittiert'}[w.t]}
 
 /* --- judging --- */
 function dishName(b){
@@ -1916,14 +1963,17 @@ function dishName(b){
   else if(b.type==='dough'&&b.cook>.45)n='Brot';
   else if(b.type==='kernel')n='Maiskorn';
   if(b.cook>1.5)n='verbrannt: '+n;else if(m.needsCook&&b.cook<.45&&!/rohes/.test(n))n='roh: '+n;
+  if(b.bread>=3){const meat=['steak','porkchop','chickenbreast','turkey','chickenleg','duck','lambchop'],cat=m.cat;
+    if(b.fried>.4)return meat.includes(b.type)?(b.type==='chickenbreast'||b.type==='turkey'?'Hähnchenschnitzel':'Schnitzel'):cat==='fisch'?'Backfisch':cat==='milch'?'Backkäse':'Paniert: '+n;
+    return n+' (paniert, nicht frittiert)'}
   if(b.fried>.4)n+=' (frittiert)';else if(b.grill>.4)n+=' (gegrillt)';
   return n}
 function analyse(items){
-  let tot=0,T=0,raw=0,burnt=0,pieces=0,mixedMax=0,baked=0,fried=0,grilled=0;const prof=[0,0,0,0,0],ingr={},names={};
+  let tot=0,T=0,raw=0,burnt=0,pieces=0,mixedMax=0,baked=0,fried=0,grilled=0,breaded=0;const prof=[0,0,0,0,0],ingr={},names={};
   for(const b of items){const w=Math.abs(polyArea(b.pts));tot+=w;const m=b.m;
     const q=b.cook>1.5?.35:1;for(let i=0;i<5;i++)prof[i]+=m.taste[i]*w*q;
     if(b.cook>.45&&b.cook<1.5&&(m.needsCook||m.mix))prof[1]+=.12*w;
-    if(b.fried>.4){prof[1]+=.2*w;fried+=w}if(b.grill>.4){prof[1]+=.15*w;grilled+=w}
+    if(b.fried>.4){prof[1]+=.2*w;fried+=w}if(b.bread>=3){breaded+=w*(b.fried>.4?1:.5);if(b.fried>.4)prof[1]+=.1*w}if(b.grill>.4){prof[1]+=.15*w;grilled+=w}
     T+=b.T*w;
     if(b.cook>1.5||b.fried>1.3)burnt+=w;else if(m.needsCook&&b.cook<.45)raw+=w;
     for(const k in m.ingr)ingr[k]=(ingr[k]||0)+m.ingr[k]*w;
@@ -1931,7 +1981,7 @@ function analyse(items){
     if(m.rise&&b.cook>.45&&b.cook<1.5&&b.grow>1.08)baked=1;else if(m.rise&&b.cook>.2)baked=Math.max(baked,.4);
     pieces++;const nm=dishName(b);names[nm]=(names[nm]||0)+1}
   if(tot)for(let i=0;i<5;i++)prof[i]/=tot;
-  return{tot,T:tot?T/tot:ROOM,raw:tot?raw/tot:0,burnt:tot?burnt/tot:0,fried:tot?fried/tot:0,grilled:tot?grilled/tot:0,pieces,mixedMax,baked,prof,
+  return{tot,T:tot?T/tot:ROOM,raw:tot?raw/tot:0,burnt:tot?burnt/tot:0,fried:tot?fried/tot:0,grilled:tot?grilled/tot:0,breaded:tot?breaded/tot:0,pieces,mixedMax,baked,prof,
     variety:Object.keys(ingr).filter(k=>ingr[k]/tot>.03).length,bites:tot/900,names}}
 function judge(c,items){
   const a=analyse(items),res=[];
@@ -1952,6 +2002,7 @@ function judge(c,items){
     else if(w.t==='mixed'){s=clamp(a.mixedMax/w.v,0,1);label='Gemixt';note=a.mixedMax?a.mixedMax+' Zutaten':'nichts'}
     else if(w.t==='baked'){s=a.baked;label='Gebacken';note=a.baked>=1?'goldbraun':a.baked?'noch roh':'nichts'}
     else if(w.t==='fried'){s=clamp(a.fried/.3,0,1);label='Frittiert';note=Math.round(a.fried*100)+' %'}
+    else if(w.t==='breaded'){s=clamp(a.breaded/.3,0,1);label='Paniert';note=Math.round(a.breaded*100)+' %'}
     else if(w.t==='grilled'){s=clamp(a.grilled/.3,0,1);label='Gegrillt';note=Math.round(a.grilled*100)+' %'}
     res.push({t:w.t,w:w.w,s,label,note})}
   let score=0,ws=0;for(const r of res){score+=r.s*r.w;ws+=r.w}score=Math.round(score/ws*100);

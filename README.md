@@ -17,10 +17,16 @@ Die Küche hat 5 Stationen. Wisch auf einer freien Stelle nach links oder rechts
 | Brett | Schneidebrett und Glasschüssel mit Mixer |
 | Herd | Pfanne, Glastopf und Grill, jeweils mit Drehknopf |
 | Ofen | Backofen (180 °C oder 250 °C) und Mikrowelle |
-| Fritte | Fritteuse und Gefrierfach |
+| Fritte | Fritteuse, Gefrierfach und Panierstraße |
 | Teller | Teller und der Gast am Tisch |
 
 **Werkzeuge:** Greifen, Messer und Fleischklopfer.
+
+**Mehrere Sachen auf einmal:** Finger kurz auf eine freie Stelle halten und einen Rahmen ziehen. Alles darin ist ausgewählt (gelb gestrichelt). Ziehst du eins davon, kommen alle mit. Antippen fügt einzelne Stücke hinzu oder nimmt sie weg.
+
+**Schnell zur Station:** Essen beim Tragen oben auf einen Tab ziehen, dann springt die Küche sofort dorthin.
+
+**Panieren:** Bei der Fritteuse stehen drei Schalen. Erst Mehl, dann Ei, dann Brösel, danach ab in die Fritteuse. Aus Fleisch wird ein Schnitzel, aus Fisch ein Backfisch, aus Käse Backkäse.
 
 **Mixen:** Zutaten in die Schüssel legen und auf MIXEN tippen. Daraus wird zum Beispiel ein Obst-Smoothie, eine Schoko-Creme, Scharfe Salsa, ein Rührei-Mix oder Kuchenteig. Kuchenteig wird im Ofen zu Kuchen, eine Frucht-Creme im Gefrierfach zu Eis.
 
