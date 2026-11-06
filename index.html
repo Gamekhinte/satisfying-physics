@@ -38,6 +38,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{height:100%;margin:0}
+html{background:#1c1712}
 body{background:var(--bg);color:var(--fg);font-family:var(--ui);overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 #app{position:fixed;inset:0;overflow:hidden}
 canvas#c{position:absolute;inset:0;width:100%;height:100%;touch-action:none;display:block}
@@ -56,7 +57,8 @@ button,select{font-family:var(--ui)}
 .food{position:relative;appearance:none;border:0;background:transparent;color:var(--muted);font:500 10px/1.15 var(--ui);display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 2px;border-radius:10px;cursor:pointer;flex:none;text-align:center}
 .food:active{background:rgba(255,255,255,.08)}
 .food canvas{width:38px;height:38px}
-.food .n{position:absolute;top:2px;right:6px;min-width:18px;background:var(--tomato);color:#fff;font:700 10px var(--ui);border-radius:9px;padding:1px 5px;font-variant-numeric:tabular-nums}
+.food .lb{font:600 8px/1.1 var(--ui);letter-spacing:.01em;opacity:.85;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.food .n{position:absolute;top:12px;right:6px;min-width:18px;background:var(--tomato);color:#fff;font:700 10px var(--ui);border-radius:9px;padding:1px 5px;font-variant-numeric:tabular-nums}
 .food[disabled]{opacity:.28;cursor:default}
 .food.pulse,.tab.pulse,.cta.pulse{animation:pulse 1s ease-in-out infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 3px var(--mustard)}}
@@ -213,7 +215,7 @@ button,select{font-family:var(--ui)}
         <div class="pair"><button class="cta" id="goDaily" style="background:#2c3e70">Tagesgast <small id="dailyProg"></small></button><button class="cta" id="goBook" style="background:#7a4a1a">Rezepte <small id="bookProg"></small></button></div>
         <button class="cta yellow" id="goTut">Tutorial <small>3 Minuten</small></button>
         <p class="note" id="menuNote"></p>
-        <p class="note" style="opacity:.6">Version 13.1 · Toni, Anrichten, Waffeln</p>
+        <p class="note" style="opacity:.6">Version 13.2 · Toni, Anrichten, Waffeln</p>
       </div>
     </div>
   </div>
@@ -2270,7 +2272,7 @@ function trayButton(type){
   if(trayBtns[type])return trayBtns[type];
   const btn=document.createElement('button');btn.className='food';btn.setAttribute('aria-label',M[type].label+' holen');btn.dataset.type=type;
   const l=document.createElement('span');l.textContent=M[type].label;const n=document.createElement('span');n.className='n';n.hidden=true;
-  btn.append(iconFor(type),l,n);
+  l.className='lb';btn.append(l,iconFor(type),n);
   btn.addEventListener('click',()=>{audioInit();if(game.pantry){if(!game.pantry[type])return;game.pantry[type]--;updTray()}spawn(type)});
   return trayBtns[type]={btn,n};
 }
